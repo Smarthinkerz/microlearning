@@ -103,3 +103,8 @@
 - [x] Library router with public browse, categories, and admin seed endpoints
 - [x] AI generateAndSave endpoint that auto-saves generated lessons
 - [x] Library tests (33 total tests passing)
+
+## Auto-Seed Fix
+- [x] Auto-seed 30+ lessons into database on server startup (no manual action needed)
+- [x] Ensure lessons appear immediately in Lesson Library after first load
+- [x] Create default organization if none exists so lessons have an orgId
