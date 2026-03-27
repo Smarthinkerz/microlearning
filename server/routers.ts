@@ -777,10 +777,142 @@ function findFreeSlot(
   }
   return null;
 }
+// ─── Admin CRM Router ─────────────────────────────────────────────────
+const crmRouter = router({
+  // Branding & Appearance
+  getBranding: publicProcedure.query(async () => {
+    const row = await db.getPlatformSetting("branding");
+    if (!row?.settingValue) {
+      return {
+        appName: "MicroLearn",
+        logoUrl: "",
+        faviconUrl: "",
+        primaryColor: "#14b8a6",
+        primaryHue: 175,
+        accentColor: "#0d9488",
+        theme: "dark",
+        sidebarStyle: "default",
+        fontFamily: "Inter",
+        heroTitle: "Shift-Smart MicroLearning",
+        heroSubtitle: "3–10 minute lessons delivered around your work schedule",
+        footerText: "© 2026 MicroLearn. All rights reserved.",
+        customCss: "",
+      };
+    }
+    return row.settingValue;
+  }),
+  updateBranding: adminProcedure.input(z.object({
+    appName: z.string().optional(),
+    logoUrl: z.string().optional(),
+    faviconUrl: z.string().optional(),
+    primaryColor: z.string().optional(),
+    primaryHue: z.number().optional(),
+    accentColor: z.string().optional(),
+    theme: z.enum(["dark", "light"]).optional(),
+    sidebarStyle: z.enum(["default", "compact", "minimal"]).optional(),
+    fontFamily: z.string().optional(),
+    heroTitle: z.string().optional(),
+    heroSubtitle: z.string().optional(),
+    footerText: z.string().optional(),
+    customCss: z.string().optional(),
+  })).mutation(async ({ input, ctx }) => {
+    const existing = await db.getPlatformSetting("branding");
+    const current = (existing?.settingValue ?? {}) as Record<string, unknown>;
+    const merged = { ...current, ...input };
+    await db.upsertPlatformSetting("branding", merged, ctx.user.id);
+    return { success: true };
+  }),
 
-// ─── Main Router ─────────────────────────────────────────────────────
-export const appRouter = router({
-  system: systemRouter,
+  // Dashboard stats
+  getStats: adminProcedure.query(async () => {
+    const userCount = await db.getUserCount();
+    const lessonCount = await db.getLessonCount();
+    const orgCount = await db.getOrgCount();
+    const publishedCount = await db.getPublishedLessonsCount();
+    return { userCount, lessonCount, orgCount, publishedCount };
+  }),
+
+  // User management
+  listUsers: adminProcedure.input(z.object({
+    search: z.string().optional(),
+    role: z.string().optional(),
+    orgId: z.number().optional(),
+  }).optional()).query(async ({ input }) => {
+    return db.getAllUsers(input?.search, input?.role, input?.orgId);
+  }),
+  updateUser: adminProcedure.input(z.object({
+    id: z.number(),
+    name: z.string().optional(),
+    email: z.string().optional(),
+    appRole: z.enum(["learner", "employer_admin", "content_author", "super_admin"]).optional(),
+    orgId: z.number().nullable().optional(),
+  })).mutation(async ({ input }) => {
+    const { id, ...data } = input;
+    await db.updateUser(id, data as any);
+    return { success: true };
+  }),
+  deleteUser: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    await db.deleteUser(input.id);
+    return { success: true };
+  }),
+
+  // Lesson management
+  listLessons: adminProcedure.input(z.object({
+    search: z.string().optional(),
+    status: z.string().optional(),
+    category: z.string().optional(),
+  }).optional()).query(async ({ input }) => {
+    return db.getAllLessonsAdmin(input?.search, input?.status, input?.category);
+  }),
+  updateLesson: adminProcedure.input(z.object({
+    id: z.number(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    category: z.string().optional(),
+    difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+    status: z.enum(["draft", "in_review", "published", "archived"]).optional(),
+    durationMinutes: z.number().optional(),
+    contentType: z.enum(["video", "quiz", "scenario", "assessment", "mixed", "article"]).optional(),
+  })).mutation(async ({ input }) => {
+    const { id, ...data } = input;
+    if (data.status === "published") {
+      (data as any).publishedAt = new Date();
+    }
+    await db.updateLesson(id, data);
+    return { success: true };
+  }),
+  deleteLesson: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    await db.deleteLesson(input.id);
+    return { success: true };
+  }),
+
+  // Organization management
+  listOrgs: adminProcedure.query(async () => {
+    return db.getAllOrganizations();
+  }),
+  createOrg: adminProcedure.input(z.object({
+    name: z.string().min(1),
+    slug: z.string().min(1),
+    industry: z.string().optional(),
+    maxUsers: z.number().optional(),
+  })).mutation(async ({ input }) => {
+    return db.createOrganization(input);
+  }),
+  updateOrg: adminProcedure.input(z.object({
+    id: z.number(),
+    name: z.string().optional(),
+    industry: z.string().optional(),
+    maxUsers: z.number().optional(),
+    isActive: z.boolean().optional(),
+  })).mutation(async ({ input }) => {
+    const { id, ...data } = input;
+    await db.updateOrganization(id, data);
+    return { success: true };
+  }),
+});
+
+// ─── Main Router ───────────────────────────────────────────────────────
+export const appRouter = router({  system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -801,6 +933,7 @@ export const appRouter = router({
   audit: auditRouter,
   ai: aiRouter,
   compliance: complianceRouter,
+  crm: crmRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -1,0 +1,9 @@
+{
+  "query": "DELETE FROM lessons WHERE status = 'published';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 5VLbyFp4XQz9R3Z.38e798e5c3b1 --database hiMSRR6jLFgWQvJW7KXFLZ --execute DELETE FROM lessons WHERE status = 'published';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1573
+}

@@ -108,3 +108,22 @@
 - [x] Auto-seed 30+ lessons into database on server startup (no manual action needed)
 - [x] Ensure lessons appear immediately in Lesson Library after first load
 - [x] Create default organization if none exists so lessons have an orgId
+
+## Replace Seed Lessons with User's 30 Lessons
+- [x] Replace seedLessons.ts with exact 30 lessons across 6 categories
+- [x] Each lesson has 3-5 multiple-choice quiz questions
+- [x] Categories: Safety & Compliance, Customer Service & Soft Skills, Productivity & Efficiency, Health & Wellbeing, Technical & Job Skills, Personal Development
+- [x] Lessons auto-seed on startup
+
+## Admin CRM Panel
+- [x] Frontend customization: colors, logo, layout, content editing
+- [x] Backend management: lessons CRUD, attendees/users management
+- [x] Organization settings management
+- [x] Theme/branding controls (color picker, logo upload, font, sidebar style)
+- [x] Platform settings table for persistent branding storage
+- [x] CRM stats dashboard (user count, lesson count, org count, published count)
+- [x] User management: search, filter by role, edit role/org, delete
+- [x] Lesson management: search, filter by status/category, edit metadata, delete
+- [x] Organization management: create, edit, activate/deactivate
+- [x] CRM tests (13 tests passing)
+- [x] All 46 tests passing

@@ -11,6 +11,7 @@ import {
   auditLogs,
   notifications,
   webhookConfigs,
+  platformSettings,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -477,4 +478,83 @@ export async function getLearnerStats(userId: number) {
     totalAttempts: attemptStats?.totalAttempts ?? 0,
     totalCertificates: certCount[0]?.count ?? 0,
   };
+}
+
+// ─── Platform Settings (CRM) ────────────────────────────────────────
+export async function getPlatformSetting(key: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(platformSettings).where(eq(platformSettings.settingKey, key)).limit(1);
+  return rows.length > 0 ? rows[0] : null;
+}
+
+export async function upsertPlatformSetting(key: string, value: Record<string, unknown>, userId?: number) {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await db.select().from(platformSettings).where(eq(platformSettings.settingKey, key)).limit(1);
+  if (existing.length > 0) {
+    await db.update(platformSettings).set({ settingValue: value, updatedBy: userId }).where(eq(platformSettings.settingKey, key));
+  } else {
+    await db.insert(platformSettings).values({ settingKey: key, settingValue: value, updatedBy: userId });
+  }
+}
+
+export async function getAllPlatformSettings() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(platformSettings);
+}
+
+// ─── Admin CRM: User Management ─────────────────────────────────────
+export async function getAllUsers(search?: string, role?: string, orgId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [];
+  if (role) conditions.push(eq(users.appRole, role as any));
+  if (orgId) conditions.push(eq(users.orgId, orgId));
+  if (search) conditions.push(sql`(${users.name} LIKE ${`%${search}%`} OR ${users.email} LIKE ${`%${search}%`})`);
+  if (conditions.length > 0) {
+    return db.select().from(users).where(and(...conditions)).orderBy(desc(users.createdAt));
+  }
+  return db.select().from(users).orderBy(desc(users.createdAt));
+}
+
+export async function getUserCount() {
+  const db = await getDb();
+  if (!db) return 0;
+  const [result] = await db.select({ count: sql<number>`count(*)` }).from(users);
+  return result?.count ?? 0;
+}
+
+export async function deleteUser(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(users).where(eq(users.id, id));
+}
+
+export async function getAllLessonsAdmin(search?: string, status?: string, category?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [];
+  if (status) conditions.push(eq(lessons.status, status as any));
+  if (category) conditions.push(eq(lessons.category, category));
+  if (search) conditions.push(sql`${lessons.title} LIKE ${`%${search}%`}`);
+  if (conditions.length > 0) {
+    return db.select().from(lessons).where(and(...conditions)).orderBy(desc(lessons.createdAt));
+  }
+  return db.select().from(lessons).orderBy(desc(lessons.createdAt));
+}
+
+export async function getLessonCount() {
+  const db = await getDb();
+  if (!db) return 0;
+  const [result] = await db.select({ count: sql<number>`count(*)` }).from(lessons);
+  return result?.count ?? 0;
+}
+
+export async function getOrgCount() {
+  const db = await getDb();
+  if (!db) return 0;
+  const [result] = await db.select({ count: sql<number>`count(*)` }).from(organizations);
+  return result?.count ?? 0;
 }

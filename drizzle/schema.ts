@@ -176,6 +176,34 @@ export const notifications = mysqlTable("notifications", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+// ─── Platform Settings (CRM Branding & Config) ─────────────────────
+export const platformSettings = mysqlTable("platform_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  settingKey: varchar("settingKey", { length: 128 }).notNull().unique(),
+  settingValue: json("settingValue").$type<Record<string, unknown>>(),
+  updatedBy: int("updatedBy"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PlatformBranding = {
+  appName: string;
+  logoUrl: string;
+  faviconUrl: string;
+  primaryColor: string;
+  primaryHue: number;
+  accentColor: string;
+  theme: "dark" | "light";
+  sidebarStyle: "default" | "compact" | "minimal";
+  fontFamily: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  footerText: string;
+  customCss: string;
+};
+
+export type PlatformSettings = typeof platformSettings.$inferSelect;
+export type InsertPlatformSettings = typeof platformSettings.$inferInsert;
+
 // ─── WFM Webhook Configs ─────────────────────────────────────────────
 export const webhookConfigs = mysqlTable("webhook_configs", {
   id: int("id").autoincrement().primaryKey(),
@@ -254,3 +282,4 @@ export type Certificate = typeof certificates.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type WebhookConfig = typeof webhookConfigs.$inferSelect;
+export type PlatformSettingsRow = typeof platformSettings.$inferSelect;

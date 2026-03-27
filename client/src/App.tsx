@@ -22,6 +22,7 @@ import Compliance from "./pages/Compliance";
 import SettingsPage from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import LessonLibrary from "./pages/LessonLibrary";
+import AdminCRM from "./pages/AdminCRM";
 
 function DashboardRoutes() {
   return (
@@ -44,6 +45,7 @@ function DashboardRoutes() {
         <Route path="/compliance" component={Compliance} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/notifications" component={Notifications} />
+        <Route path="/admin" component={AdminCRM} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
