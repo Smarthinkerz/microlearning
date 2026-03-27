@@ -5,31 +5,65 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import DashboardLayout from "./components/DashboardLayout";
+import Dashboard from "./pages/Dashboard";
+import MyLessons from "./pages/MyLessons";
+import LessonPlayer from "./pages/LessonPlayer";
+import Shifts from "./pages/Shifts";
+import Assignments from "./pages/Assignments";
+import Certificates from "./pages/Certificates";
+import ContentAuthoring from "./pages/ContentAuthoring";
+import LessonEditor from "./pages/LessonEditor";
+import ReviewQueue from "./pages/ReviewQueue";
+import Roster from "./pages/Roster";
+import AssignLessons from "./pages/AssignLessons";
+import Analytics from "./pages/Analytics";
+import Compliance from "./pages/Compliance";
+import SettingsPage from "./pages/Settings";
+import Notifications from "./pages/Notifications";
+
+function DashboardRoutes() {
+  return (
+    <DashboardLayout>
+      <Switch>
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/lessons" component={MyLessons} />
+        <Route path="/lessons/:id" component={LessonPlayer} />
+        <Route path="/shifts" component={Shifts} />
+        <Route path="/assignments" component={Assignments} />
+        <Route path="/certificates" component={Certificates} />
+        <Route path="/authoring" component={ContentAuthoring} />
+        <Route path="/authoring/new" component={LessonEditor} />
+        <Route path="/authoring/:id" component={LessonEditor} />
+        <Route path="/review" component={ReviewQueue} />
+        <Route path="/roster" component={Roster} />
+        <Route path="/assign" component={AssignLessons} />
+        <Route path="/analytics" component={Analytics} />
+        <Route path="/compliance" component={Compliance} />
+        <Route path="/settings" component={SettingsPage} />
+        <Route path="/notifications" component={Notifications} />
+        <Route component={NotFound} />
+      </Switch>
+    </DashboardLayout>
+  );
+}
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
+      <Route path="/" component={Home} />
+      <Route path="/404" component={NotFound} />
+      <Route>
+        <DashboardRoutes />
+      </Route>
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
           <Router />

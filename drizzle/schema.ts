@@ -1,28 +1,256 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+  boolean,
+  json,
+  bigint,
+} from "drizzle-orm/mysql-core";
 
-/**
- * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
- */
-export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
+// ─── Organizations (Multi-Tenant) ────────────────────────────────────
+export const organizations = mysqlTable("organizations", {
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  industry: varchar("industry", { length: 128 }),
+  logoUrl: text("logoUrl"),
+  settings: json("settings").$type<Record<string, unknown>>(),
+  maxUsers: int("maxUsers").default(100),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Users ───────────────────────────────────────────────────────────
+export const users = mysqlTable("users", {
+  id: int("id").autoincrement().primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  appRole: mysqlEnum("appRole", ["learner", "employer_admin", "content_author", "super_admin"]).default("learner").notNull(),
+  orgId: int("orgId"),
+  timezone: varchar("timezone", { length: 64 }).default("UTC"),
+  avatarUrl: text("avatarUrl"),
+  notificationPreferences: json("notificationPreferences").$type<{
+    email: boolean;
+    push: boolean;
+    inApp: boolean;
+    quietHoursStart?: string;
+    quietHoursEnd?: string;
+  }>(),
+  lastActiveAt: timestamp("lastActiveAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
+// ─── Shifts ──────────────────────────────────────────────────────────
+export const shifts = mysqlTable("shifts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  orgId: int("orgId").notNull(),
+  title: varchar("title", { length: 255 }),
+  startTime: bigint("startTime", { mode: "number" }).notNull(),
+  endTime: bigint("endTime", { mode: "number" }).notNull(),
+  breakStartTime: bigint("breakStartTime", { mode: "number" }),
+  breakEndTime: bigint("breakEndTime", { mode: "number" }),
+  shiftType: mysqlEnum("shiftType", ["morning", "afternoon", "night", "split", "custom"]).default("custom"),
+  location: varchar("location", { length: 255 }),
+  externalId: varchar("externalId", { length: 255 }),
+  source: mysqlEnum("source", ["manual", "webhook", "import"]).default("manual"),
+  isRecurring: boolean("isRecurring").default(false),
+  recurrenceRule: text("recurrenceRule"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Lessons ─────────────────────────────────────────────────────────
+export const lessons = mysqlTable("lessons", {
+  id: int("id").autoincrement().primaryKey(),
+  orgId: int("orgId").notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  content: json("content").$type<LessonContent>(),
+  contentType: mysqlEnum("contentType", ["video", "quiz", "scenario", "assessment", "mixed", "article"]).default("mixed"),
+  durationMinutes: int("durationMinutes").default(5),
+  difficulty: mysqlEnum("difficulty", ["beginner", "intermediate", "advanced"]).default("beginner"),
+  category: varchar("category", { length: 128 }),
+  tags: json("tags").$type<string[]>(),
+  thumbnailUrl: text("thumbnailUrl"),
+  authorId: int("authorId").notNull(),
+  status: mysqlEnum("status", ["draft", "in_review", "published", "archived"]).default("draft"),
+  reviewerId: int("reviewerId"),
+  reviewNotes: text("reviewNotes"),
+  publishedAt: timestamp("publishedAt"),
+  contentSchemaVersion: int("contentSchemaVersion").default(1),
+  language: varchar("language", { length: 10 }).default("en"),
+  xapiActivityId: varchar("xapiActivityId", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Lesson Assignments ──────────────────────────────────────────────
+export const lessonAssignments = mysqlTable("lesson_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  lessonId: int("lessonId").notNull(),
+  userId: int("userId").notNull(),
+  orgId: int("orgId").notNull(),
+  assignedBy: int("assignedBy"),
+  status: mysqlEnum("status", ["pending", "available", "in_progress", "completed", "expired", "skipped"]).default("pending"),
+  priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).default("normal"),
+  scheduledStartTime: bigint("scheduledStartTime", { mode: "number" }),
+  scheduledEndTime: bigint("scheduledEndTime", { mode: "number" }),
+  dueDate: bigint("dueDate", { mode: "number" }),
+  completedAt: bigint("completedAt", { mode: "number" }),
+  isScheduleAware: boolean("isScheduleAware").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Lesson Attempts / Progress ──────────────────────────────────────
+export const lessonAttempts = mysqlTable("lesson_attempts", {
+  id: int("id").autoincrement().primaryKey(),
+  assignmentId: int("assignmentId").notNull(),
+  userId: int("userId").notNull(),
+  lessonId: int("lessonId").notNull(),
+  orgId: int("orgId").notNull(),
+  startedAt: bigint("startedAt", { mode: "number" }).notNull(),
+  completedAt: bigint("completedAt", { mode: "number" }),
+  timeSpentSeconds: int("timeSpentSeconds").default(0),
+  score: int("score"),
+  maxScore: int("maxScore"),
+  passed: boolean("passed"),
+  responses: json("responses").$type<AttemptResponse[]>(),
+  progress: int("progress").default(0),
+  currentStep: int("currentStep").default(0),
+  status: mysqlEnum("status", ["in_progress", "completed", "abandoned"]).default("in_progress"),
+  syncStatus: mysqlEnum("syncStatus", ["synced", "pending", "conflict"]).default("synced"),
+  clientTimestamp: bigint("clientTimestamp", { mode: "number" }),
+  serverTimestamp: bigint("serverTimestamp", { mode: "number" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Certificates ────────────────────────────────────────────────────
+export const certificates = mysqlTable("certificates", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  lessonId: int("lessonId").notNull(),
+  orgId: int("orgId").notNull(),
+  attemptId: int("attemptId"),
+  certificateNumber: varchar("certificateNumber", { length: 128 }).notNull().unique(),
+  issuedAt: bigint("issuedAt", { mode: "number" }).notNull(),
+  expiresAt: bigint("expiresAt", { mode: "number" }),
+  pdfUrl: text("pdfUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── Audit Logs ──────────────────────────────────────────────────────
+export const auditLogs = mysqlTable("audit_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  orgId: int("orgId"),
+  action: varchar("action", { length: 128 }).notNull(),
+  resourceType: varchar("resourceType", { length: 64 }).notNull(),
+  resourceId: int("resourceId"),
+  details: json("details").$type<Record<string, unknown>>(),
+  ipAddress: varchar("ipAddress", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── Notifications ───────────────────────────────────────────────────
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  orgId: int("orgId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  type: mysqlEnum("type", ["lesson_available", "lesson_reminder", "shift_change", "assignment", "achievement", "system"]).default("system"),
+  isRead: boolean("isRead").default(false).notNull(),
+  actionUrl: text("actionUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── WFM Webhook Configs ─────────────────────────────────────────────
+export const webhookConfigs = mysqlTable("webhook_configs", {
+  id: int("id").autoincrement().primaryKey(),
+  orgId: int("orgId").notNull(),
+  provider: varchar("provider", { length: 128 }).notNull(),
+  webhookUrl: text("webhookUrl"),
+  secretKey: varchar("secretKey", { length: 255 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastSyncAt: timestamp("lastSyncAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Content Types ───────────────────────────────────────────────────
+export type LessonContentBlock = {
+  id: string;
+  type: "text" | "video" | "quiz" | "scenario" | "assessment" | "image";
+  data: Record<string, unknown>;
+  order: number;
+};
+
+export type QuizQuestion = {
+  id: string;
+  question: string;
+  type: "multiple_choice" | "true_false" | "fill_blank" | "matching";
+  options?: { id: string; text: string; isCorrect: boolean }[];
+  correctAnswer?: string;
+  explanation?: string;
+  points: number;
+};
+
+export type ScenarioBranch = {
+  id: string;
+  text: string;
+  nextNodeId: string;
+  feedback?: string;
+  isCorrect?: boolean;
+};
+
+export type ScenarioNode = {
+  id: string;
+  type: "prompt" | "choice" | "outcome";
+  content: string;
+  branches?: ScenarioBranch[];
+  imageUrl?: string;
+};
+
+export type LessonContent = {
+  blocks: LessonContentBlock[];
+  quizQuestions?: QuizQuestion[];
+  scenarioNodes?: ScenarioNode[];
+  passingScore?: number;
+};
+
+export type AttemptResponse = {
+  questionId: string;
+  answer: string | string[];
+  isCorrect?: boolean;
+  timeSpentSeconds?: number;
+};
+
+// ─── Type Exports ────────────────────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
-
-// TODO: Add your tables here
+export type Organization = typeof organizations.$inferSelect;
+export type InsertOrganization = typeof organizations.$inferInsert;
+export type Shift = typeof shifts.$inferSelect;
+export type InsertShift = typeof shifts.$inferInsert;
+export type Lesson = typeof lessons.$inferSelect;
+export type InsertLesson = typeof lessons.$inferInsert;
+export type LessonAssignment = typeof lessonAssignments.$inferSelect;
+export type InsertLessonAssignment = typeof lessonAssignments.$inferInsert;
+export type LessonAttempt = typeof lessonAttempts.$inferSelect;
+export type InsertLessonAttempt = typeof lessonAttempts.$inferInsert;
+export type Certificate = typeof certificates.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type WebhookConfig = typeof webhookConfigs.$inferSelect;
