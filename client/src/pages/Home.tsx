@@ -68,7 +68,7 @@ export default function Home() {
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-7 w-7 text-primary" />
-            <span className="text-xl font-bold gradient-text">MicroLearn</span>
+            <span className="text-xl font-bold gradient-text">LearnShift</span>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -233,7 +233,7 @@ export default function Home() {
         <div className="container flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-primary" />
-            <span className="font-semibold gradient-text">MicroLearn</span>
+            <span className="font-semibold gradient-text">Smarthinkerz LearnShift</span>
           </div>
           <p className="text-sm text-muted-foreground">
             Adaptive micro-learning for shift workers.

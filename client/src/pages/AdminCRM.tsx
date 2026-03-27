@@ -58,7 +58,7 @@ function BrandingTab() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>App Name</Label>
-              <Input value={form.appName || ""} onChange={e => update("appName", e.target.value)} placeholder="MicroLearn" />
+              <Input value={form.appName || ""} onChange={e => update("appName", e.target.value)} placeholder="Smarthinkerz LearnShift" />
             </div>
             <div>
               <Label>Font Family</Label>

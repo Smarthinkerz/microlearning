@@ -27,7 +27,7 @@ export async function autoSeedLessons() {
       orgId = orgs[0].id;
     } else {
       const newOrg = await db.createOrganization({
-        name: "MicroLearning Platform",
+        name: "Smarthinkerz LearnShift",
         slug: "platform-default",
         industry: "General",
         maxUsers: 1000,

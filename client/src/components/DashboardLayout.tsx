@@ -102,7 +102,7 @@ export default function DashboardLayout({
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2 mb-4">
               <GraduationCap className="h-10 w-10 text-primary" />
-              <span className="text-2xl font-bold gradient-text">MicroLearn</span>
+              <span className="text-2xl font-bold gradient-text">LearnShift</span>
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-center text-foreground">
               Sign in to continue
@@ -219,7 +219,7 @@ function DashboardLayoutContent({
                 <div className="flex items-center gap-2 min-w-0">
                   <GraduationCap className="h-5 w-5 text-primary shrink-0" />
                   <span className="font-semibold tracking-tight truncate text-foreground">
-                    MicroLearn
+                    LearnShift
                   </span>
                 </div>
               )}
@@ -309,7 +309,7 @@ function DashboardLayoutContent({
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
               <div className="flex items-center gap-3">
                 <span className="tracking-tight text-foreground font-medium">
-                  {activeMenuItem?.label ?? "MicroLearn"}
+                  {activeMenuItem?.label ?? "LearnShift"}
                 </span>
               </div>
             </div>

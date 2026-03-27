@@ -40,7 +40,7 @@ describe("CRM Router", () => {
     const caller = appRouter.createCaller(ctx);
     const result = await caller.crm.getBranding();
     expect(result).toBeDefined();
-    expect((result as any).appName || "MicroLearn").toBeTruthy();
+    expect((result as any).appName || "Smarthinkerz LearnShift").toBeTruthy();
   });
 
   it("getStats requires admin role", async () => {

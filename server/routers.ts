@@ -209,7 +209,7 @@ const libraryRouter = router({
         orgId = orgs[0].id;
       } else {
         const newOrg = await db.createOrganization({
-          name: "MicroLearning Platform",
+          name: "Smarthinkerz LearnShift",
           slug: "platform-default",
           industry: "General",
           maxUsers: 1000,
@@ -594,7 +594,7 @@ Return as JSON with this structure:
         const orgs = await db.getAllOrganizations();
         if (orgs.length > 0) orgId = orgs[0].id;
         else {
-          const newOrg = await db.createOrganization({ name: "MicroLearning Platform", slug: "platform-default", industry: "General", maxUsers: 1000 });
+          const newOrg = await db.createOrganization({ name: "Smarthinkerz LearnShift", slug: "platform-default", industry: "General", maxUsers: 1000 });
           orgId = (newOrg as any).id;
         }
       }
@@ -724,10 +724,10 @@ const complianceRouter = router({
       const lessonAttempts = attempts.filter(a => a.lessonId === input.lessonId);
       for (const attempt of lessonAttempts) {
         xapiStatements.push({
-          actor: { mbox: `mailto:user${attempt.userId}@microlearning.local` },
+          actor: { mbox: `mailto:user${attempt.userId}@learnshift.smarthinkerz.com` },
           verb: { id: attempt.status === "completed" ? "http://adlnet.gov/expapi/verbs/completed" : "http://adlnet.gov/expapi/verbs/attempted" },
           object: {
-            id: lesson.xapiActivityId || `https://microlearning.local/lessons/${lesson.id}`,
+            id: lesson.xapiActivityId || `https://learnshift.smarthinkerz.com/lessons/${lesson.id}`,
             definition: { name: { en: lesson.title }, type: "http://adlnet.gov/expapi/activities/lesson" },
           },
           result: {
@@ -784,7 +784,7 @@ const crmRouter = router({
     const row = await db.getPlatformSetting("branding");
     if (!row?.settingValue) {
       return {
-        appName: "MicroLearn",
+        appName: "Smarthinkerz LearnShift",
         logoUrl: "",
         faviconUrl: "",
         primaryColor: "#14b8a6",
@@ -793,9 +793,9 @@ const crmRouter = router({
         theme: "dark",
         sidebarStyle: "default",
         fontFamily: "Inter",
-        heroTitle: "Shift-Smart MicroLearning",
+        heroTitle: "Shift-Smart Learning by Smarthinkerz",
         heroSubtitle: "3–10 minute lessons delivered around your work schedule",
-        footerText: "© 2026 MicroLearn. All rights reserved.",
+        footerText: "© 2026 Smarthinkerz LearnShift. All rights reserved.",
         customCss: "",
       };
     }

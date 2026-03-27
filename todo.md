@@ -142,3 +142,9 @@
 - [x] Image blocks embedded in lesson content for inline display in player
 - [x] 30 lessons seeded, 15 with thumbnails and image blocks
 - [x] All 46 tests passing
+
+## App Rename & Theme Update
+- [x] Rename app to "Smarthinkerz LearnShift" across all UI (sidebar, landing page, PWA manifest, etc.)
+- [x] Lighten the dark background to a softer, less intense dark tone (oklch 0.145 → 0.21)
+- [x] Updated all references: DashboardLayout, Home, AdminCRM, manifest.json, index.html, offline.html, autoSeed, routers, tests
+- [x] All 46 tests passing with zero MicroLearn references remaining

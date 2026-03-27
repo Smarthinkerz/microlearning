@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const DB_NAME = "MicroLearningCoach";
+const DB_NAME = "SmarthinkezLearnShift";
 const DB_VERSION = 1;
 
 function openDB(): Promise<IDBDatabase> {
