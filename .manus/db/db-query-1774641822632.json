@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COUNT(*) as total, SUM(CASE WHEN thumbnailUrl IS NOT NULL THEN 1 ELSE 0 END) as with_thumb FROM lessons;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 5VLbyFp4XQz9R3Z.38e798e5c3b1 --database hiMSRR6jLFgWQvJW7KXFLZ --execute SELECT COUNT(*) as total, SUM(CASE WHEN thumbnailUrl IS NOT NULL THEN 1 ELSE 0 END) as with_thumb FROM lessons;",
+  "rows": [
+    {
+      "total": "30",
+      "with_thumb": "15"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\twith_thumb\n30\t15\n",
+  "stderr": "",
+  "execution_time_ms": 1540
+}

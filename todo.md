@@ -127,3 +127,18 @@
 - [x] Organization management: create, edit, activate/deactivate
 - [x] CRM tests (13 tests passing)
 - [x] All 46 tests passing
+
+## Admin CRM Separation
+- [x] Remove Admin CRM from DashboardLayout sidebar navigation
+- [x] Move Admin CRM to standalone /admin-crm route with own layout
+- [x] Admin CRM accessible only via direct URL with auth guard
+- [x] Learners never see or access Admin CRM
+- [x] Back-to-dashboard link in CRM header
+
+## Lesson Media Generation
+- [x] Generated 15 original images across all 6 categories
+- [x] Uploaded images to CDN and integrated into seed lesson content
+- [x] Lessons display thumbnail images in library cards (with hover zoom)
+- [x] Image blocks embedded in lesson content for inline display in player
+- [x] 30 lessons seeded, 15 with thumbnails and image blocks
+- [x] All 46 tests passing

@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, title, thumbnailUrl FROM lessons WHERE thumbnailUrl IS NOT NULL LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 5VLbyFp4XQz9R3Z.38e798e5c3b1 --database hiMSRR6jLFgWQvJW7KXFLZ --execute SELECT id, title, thumbnailUrl FROM lessons WHERE thumbnailUrl IS NOT NULL LIMIT 5;",
+  "rows": [
+    {
+      "id": "90001",
+      "title": "Fire Safety Basics: How to Use Extinguishers",
+      "thumbnailUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-fire-safety-o8eCu6PWmnJSPc8YGwg6N9.webp"
+    },
+    {
+      "id": "90002",
+      "title": "Emergency Evacuation Routes: Quick Orientation",
+      "thumbnailUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-evacuation-mM5yCpvCqt9K5CwiiP49wN.webp"
+    },
+    {
+      "id": "90003",
+      "title": "PPE Essentials: Gloves, Masks, and Helmets",
+      "thumbnailUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-ppe-dWEpmpeLLVebrCX7nQaBq2.webp"
+    },
+    {
+      "id": "90004",
+      "title": "Safe Lifting Techniques: Preventing Back Injuries",
+      "thumbnailUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-safe-lifting-TU8YVtU2hPEpZHLfUhjGo5.webp"
+    },
+    {
+      "id": "90005",
+      "title": "Electrical Safety: Handling Plugs and Cords",
+      "thumbnailUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-electrical-safety-5Qr9YmUcZAzjorqfjKGo4b.webp"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tthumbnailUrl\n90001\tFire Safety Basics: How to Use Extinguishers\thttps://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-fire-safety-o8eCu6PWmnJSPc8YGwg6N9.webp\n90002\tEmergency Evacuation Routes: Quick Orientation\thttps://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-evacuation-mM5yCpvCqt9K5CwiiP49wN.webp\n90003\tPPE Essentials: Gloves, Masks, and Helmets\thttps://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-ppe-dWEpmpeLLVebrCX7nQaBq2.webp\n90004\tSafe Lifting Techniques: Preventing Back Injuries\thttps://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-safe-lifting-TU8YVtU2hPEpZHLfUhjGo5.webp\n90005\tElectrical Safety: Handling Plugs and Cords\thttps://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-electrical-safety-5Qr9YmUcZAzjorqfjKGo4b.webp\n",
+  "stderr": "",
+  "execution_time_ms": 1497
+}

@@ -51,6 +51,7 @@ export async function autoSeedLessons() {
       authorId: 1, // system author
       status: "published" as const,
       publishedAt: new Date(),
+      thumbnailUrl: sl.thumbnailUrl || null,
     }));
 
     await db.bulkCreateLessons(lessonsToInsert);

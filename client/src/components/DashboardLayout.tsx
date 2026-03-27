@@ -40,7 +40,6 @@ import {
   Award,
   FileText,
   Library,
-  Wrench,
 } from "lucide-react";
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -69,7 +68,6 @@ const allMenuItems: MenuItem[] = [
   { icon: Zap, label: "Assign Lessons", path: "/assign", roles: ["employer_admin", "super_admin"] },
   { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["employer_admin", "super_admin"] },
   { icon: Shield, label: "Compliance", path: "/compliance", roles: ["employer_admin", "super_admin"] },
-  { icon: Wrench, label: "Admin CRM", path: "/admin", roles: ["super_admin"] },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 

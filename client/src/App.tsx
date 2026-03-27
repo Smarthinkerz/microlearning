@@ -45,17 +45,21 @@ function DashboardRoutes() {
         <Route path="/compliance" component={Compliance} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/notifications" component={Notifications} />
-        <Route path="/admin" component={AdminCRM} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
   );
 }
 
+function AdminCRMRoute() {
+  return <AdminCRM />;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/admin-crm" component={AdminCRMRoute} />
       <Route path="/404" component={NotFound} />
       <Route>
         <DashboardRoutes />

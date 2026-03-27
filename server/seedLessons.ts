@@ -15,10 +15,15 @@ export type SeedLesson = {
   tags: string[];
   language: string;
   content: LessonContent;
+  thumbnailUrl?: string;
 };
 
 function tb(id: string, text: string, order: number) {
   return { id, type: "text" as const, data: { text }, order };
+}
+
+function ib(id: string, url: string, caption: string, order: number) {
+  return { id, type: "image" as const, data: { url, caption }, order };
 }
 
 function qq(
@@ -48,6 +53,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("fs1-b1", "Fire is one of the most dangerous workplace hazards. Every year, thousands of workplace fires cause injuries, deaths, and billions in property damage. As a shift worker, you may be the first person to discover a fire — knowing how to respond in the first 30 seconds can save lives.\n\nThere are five classes of fire:\n• Class A — Ordinary combustibles (wood, paper, cloth)\n• Class B — Flammable liquids (gasoline, oil, grease)\n• Class C — Electrical equipment\n• Class D — Combustible metals\n• Class K — Cooking oils and fats", 0),
+        ib("fire-safety-basics-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-fire-safety-o8eCu6PWmnJSPc8YGwg6N9.webp", "Fire Safety Basics", 1),
         tb("fs1-b2", "The PASS Technique for Using a Fire Extinguisher:\n\n1. P — Pull the pin. This unlocks the operating lever.\n2. A — Aim low. Point the nozzle at the base of the fire, not the flames.\n3. S — Squeeze the lever slowly and evenly.\n4. S — Sweep the nozzle from side to side at the base of the fire.\n\nImportant: Only attempt to fight a fire if it is small and contained, you have a clear escape route behind you, and you have the correct type of extinguisher. If in doubt, evacuate immediately and call emergency services.", 1),
         tb("fs1-b3", "Fire Prevention Tips:\n\n• Keep work areas free of clutter and combustible materials\n• Never block fire exits or extinguisher access points\n• Report damaged electrical cords or overloaded outlets immediately\n• Know the location of all fire extinguishers on your floor\n• Participate in fire drills — they save lives when a real emergency occurs\n\nRemember: Your life is more valuable than any property. When in doubt, get out.", 2),
       ],
@@ -79,6 +85,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 75,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-fire-safety-o8eCu6PWmnJSPc8YGwg6N9.webp",
   },
 
   // 2. Emergency Evacuation Routes
@@ -90,6 +97,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("ev2-b1", "In an emergency, seconds matter. Knowing your evacuation route before an emergency occurs is critical. Every workplace is required to have clearly marked evacuation routes, and as a shift worker, you must familiarize yourself with these routes at the start of every shift — especially if you work in different areas.\n\nKey evacuation principles:\n• Know at least two exit routes from your work area\n• Never use elevators during a fire evacuation\n• Walk quickly but do not run — running causes panic and injuries\n• Help colleagues with disabilities if safe to do so\n• Close doors behind you to slow the spread of fire and smoke", 0),
+        ib("emergency-evacuation-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-evacuation-mM5yCpvCqt9K5CwiiP49wN.webp", "Emergency Evacuation Routes", 1),
         tb("ev2-b2", "Assembly Points:\n\nEvery workplace has designated assembly points where employees gather after evacuating. These are chosen to be:\n• A safe distance from the building\n• Away from emergency vehicle access routes\n• Large enough to accommodate all staff\n\nOnce at the assembly point:\n1. Report to your shift supervisor or fire warden\n2. Do NOT re-enter the building for any reason\n3. Account for all team members — report anyone missing\n4. Wait for the official all-clear before returning\n\nRemember: Practice evacuations regularly. The more familiar the route, the faster and safer your response.", 1),
       ],
       quizQuestions: [
@@ -114,6 +122,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 70,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-evacuation-mM5yCpvCqt9K5CwiiP49wN.webp",
   },
 
   // 3. PPE Essentials
@@ -125,6 +134,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("ppe3-b1", "Personal Protective Equipment (PPE) is your last line of defense against workplace hazards. While engineering and administrative controls should reduce risks first, PPE protects you from remaining dangers.\n\nCommon types of PPE:\n• Head protection — Hard hats and bump caps protect against falling objects and head impacts\n• Eye protection — Safety glasses, goggles, and face shields guard against debris, chemicals, and radiation\n• Hand protection — Gloves vary by hazard: cut-resistant, chemical-resistant, thermal, and disposable\n• Respiratory protection — Masks and respirators filter dust, fumes, and airborne pathogens\n• Foot protection — Steel-toed boots protect against crushing and puncture hazards", 0),
+        ib("ppe-essentials-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-ppe-dWEpmpeLLVebrCX7nQaBq2.webp", "PPE Essentials", 1),
         tb("ppe3-b2", "Proper PPE Use:\n\n1. Inspect before every use — check for cracks, tears, or wear\n2. Ensure proper fit — ill-fitting PPE reduces protection\n3. Wear all required PPE for your task — never skip items\n4. Replace damaged PPE immediately — do not attempt repairs\n5. Clean and store properly after each use\n\nCommon mistakes:\n• Wearing gloves that are too large (reduces grip and dexterity)\n• Not replacing disposable masks after recommended use period\n• Removing PPE in hazardous areas because it's uncomfortable\n\nRemember: PPE only works when worn correctly and consistently.", 1),
       ],
       quizQuestions: [
@@ -155,6 +165,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 75,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-ppe-dWEpmpeLLVebrCX7nQaBq2.webp",
   },
 
   // 4. Safe Lifting Techniques
@@ -166,6 +177,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("sl4-b1", "Back injuries are the #1 workplace injury, accounting for nearly 20% of all workplace injuries and illnesses. Most are caused by improper lifting. Whether you're moving boxes, equipment, or supplies, proper technique is essential.\n\nThe Safe Lifting Steps:\n1. Plan your lift — assess the weight, your path, and where you'll set it down\n2. Stand close to the load with feet shoulder-width apart\n3. Bend at the knees, NOT the waist\n4. Get a firm grip with both hands\n5. Lift with your legs, keeping your back straight\n6. Keep the load close to your body\n7. Avoid twisting — pivot with your feet instead", 0),
+        ib("safe-lifting-techniq-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-safe-lifting-TU8YVtU2hPEpZHLfUhjGo5.webp", "Safe Lifting Techniques", 1),
         tb("sl4-b2", "When NOT to Lift Alone:\n\n• The object weighs more than 50 pounds (23 kg)\n• You can't get a good grip on it\n• You can't see over or around it\n• The path is obstructed or uneven\n• The object is awkwardly shaped\n\nAlternatives to manual lifting:\n• Use a dolly, hand truck, or cart\n• Ask a coworker for help (team lift)\n• Use a forklift or hoist for heavy items\n\nRemember: There is no shame in asking for help. One back injury can affect you for life.", 1),
       ],
       quizQuestions: [
@@ -196,6 +208,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 75,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-safe-lifting-TU8YVtU2hPEpZHLfUhjGo5.webp",
   },
 
   // 5. Electrical Safety
@@ -207,6 +220,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("es5-b1", "Electricity is invisible but deadly. Electrical accidents cause approximately 160 workplace deaths and thousands of injuries each year. Even low-voltage equipment can be dangerous if mishandled.\n\nCommon electrical hazards:\n• Damaged or frayed cords and plugs\n• Overloaded outlets and power strips\n• Wet conditions near electrical equipment\n• Missing ground prongs on plugs\n• Improper use of extension cords as permanent wiring\n• Exposed wires or open electrical panels", 0),
+        ib("electrical-safety-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-electrical-safety-5Qr9YmUcZAzjorqfjKGo4b.webp", "Electrical Safety", 1),
         tb("es5-b2", "Safe Electrical Practices:\n\n1. Inspect cords before use — never use damaged cords\n2. Pull plugs by the plug body, never by the cord\n3. Never daisy-chain power strips or extension cords\n4. Keep electrical equipment away from water and wet surfaces\n5. Report any tingling sensation, sparks, or burning smells immediately\n6. Never attempt electrical repairs unless you are a qualified electrician\n7. Use Ground Fault Circuit Interrupters (GFCIs) in wet areas\n\nIf someone is being electrocuted:\n• Do NOT touch them directly\n• Disconnect the power source if safe to do so\n• Call emergency services immediately\n• Begin CPR if they are unresponsive and not breathing", 1),
       ],
       quizQuestions: [
@@ -237,6 +251,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 75,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-electrical-safety-5Qr9YmUcZAzjorqfjKGo4b.webp",
   },
 
   // 6. Food Hygiene Rules
@@ -248,6 +263,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("fh6-b1", "Foodborne illness affects 1 in 6 people every year. If you work in food service, hospitality, or any role involving food handling, proper hygiene is non-negotiable.\n\nThe 20-Second Handwashing Rule:\n1. Wet hands with clean running water\n2. Apply soap and lather thoroughly\n3. Scrub all surfaces — backs of hands, between fingers, under nails\n4. Scrub for at least 20 seconds (hum 'Happy Birthday' twice)\n5. Rinse under clean running water\n6. Dry with a clean towel or air dryer\n\nWhen to wash hands:\n• Before handling food\n• After using the restroom\n• After touching raw meat, poultry, or seafood\n• After sneezing, coughing, or touching your face\n• After handling garbage or cleaning chemicals", 0),
+        ib("food-hygiene-rules-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-food-hygiene-BtzURbFqifBaLarD4YG6aK.webp", "Food Hygiene Rules", 1),
         tb("fh6-b2", "Preventing Cross-Contamination:\n\nCross-contamination occurs when harmful bacteria transfer from one food or surface to another.\n\n• Use separate cutting boards for raw meat and vegetables\n• Never place cooked food on surfaces that held raw meat\n• Store raw meat on the lowest shelf in the refrigerator\n• Use different utensils for raw and cooked foods\n• Clean and sanitize surfaces between tasks\n\nTemperature Danger Zone: 40°F–140°F (4°C–60°C)\nBacteria multiply rapidly in this range. Keep cold foods below 40°F and hot foods above 140°F. Never leave perishable food in the danger zone for more than 2 hours.", 1),
       ],
       quizQuestions: [
@@ -278,6 +294,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 75,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-food-hygiene-BtzURbFqifBaLarD4YG6aK.webp",
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -293,6 +310,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("gc7-b1", "You never get a second chance at a first impression. Research shows customers form opinions about a business within the first 7 seconds of interaction. Your greeting sets the tone for the entire experience.\n\nThe 3-Step Professional Greeting:\n1. Acknowledge — Make eye contact and smile within 3 seconds of the customer approaching\n2. Welcome — Use a warm, genuine greeting: 'Good morning! Welcome to [business name]'\n3. Assist — Offer help: 'How can I help you today?'\n\nKey principles:\n• Be genuine — customers can detect fake enthusiasm\n• Use the customer's name if you know it\n• Adjust your energy to match the setting (calm in healthcare, upbeat in retail)\n• Stand up straight and face the customer directly", 0),
+        ib("greeting-customers-p-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-greeting-customers-JcDnpvFk8FExohkHSiULc3.webp", "Greeting Customers Professionally", 1),
         tb("gc7-b2", "Common Greeting Mistakes:\n\n• Ignoring customers while finishing a task — always acknowledge first\n• Using robotic scripts — personalize your greeting\n• Being too aggressive — 'Can I help you?' before they've even looked around\n• Greeting while looking at your phone or screen\n• Using slang or overly casual language in professional settings\n\nFor phone greetings:\n• Answer within 3 rings\n• State your name and the business name\n• Smile while speaking — it changes your tone of voice\n• 'Thank you for calling [business]. This is [name], how may I help you?'", 1),
       ],
       quizQuestions: [
@@ -317,6 +335,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 70,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-greeting-customers-JcDnpvFk8FExohkHSiULc3.webp",
   },
 
   // 8. Handling Complaints Calmly
@@ -328,6 +347,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("hc8-b1", "Customer complaints are inevitable — but how you handle them determines whether you lose a customer or create a loyal advocate. Studies show that customers whose complaints are resolved quickly are more loyal than those who never had a problem.\n\nThe HEARD Technique:\n• H — Hear them out. Let the customer speak without interrupting.\n• E — Empathize. Show you understand their frustration: 'I can see why that would be frustrating.'\n• A — Apologize sincerely. Even if it's not your fault: 'I'm sorry you had this experience.'\n• R — Resolve the issue. Take action or escalate to someone who can.\n• D — Diagnose. After resolving, identify the root cause to prevent recurrence.", 0),
+        ib("handling-complaints--img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-handling-complaints-dsmJKss9c3B73Bwm2FYsvL.webp", "Handling Complaints Calmly", 1),
         tb("hc8-b2", "De-escalation Tips:\n\n• Keep your voice calm and steady — match their volume going DOWN, not up\n• Use the customer's name — it personalizes the interaction\n• Never say 'That's not my department' — own the problem\n• Avoid defensive language: 'But...' or 'Actually...'\n• Offer choices: 'I can do X or Y for you — which would you prefer?'\n• If a customer becomes abusive, calmly set boundaries: 'I want to help you, but I need us to speak respectfully.'\n\nRemember: The customer is not always right, but they always deserve respect.", 1),
       ],
       quizQuestions: [
@@ -358,6 +378,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 75,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-handling-complaints-dsmJKss9c3B73Bwm2FYsvL.webp",
   },
 
   // 9. Active Listening in Busy Environments
@@ -513,6 +534,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("tm13-b1", "Shift work has a fixed time boundary — when the clock runs out, your shift is over. Effective time management ensures you complete your tasks without rushing at the end or leaving work for the next shift.\n\nThe Shift Time Management Framework:\n1. First 15 minutes — Review tasks, prioritize, and plan your shift\n2. Power blocks — Tackle the hardest tasks when your energy is highest\n3. Batch similar tasks — Group related activities to reduce context-switching\n4. Built-in buffers — Leave 10-15% of your shift for unexpected issues\n5. Last 15 minutes — Clean up, document, and prepare handover", 0),
+        ib("time-management-duri-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-time-management-EYcKMMZkNzFQUrMTZp2zgR.webp", "Time Management During Shifts", 1),
         tb("tm13-b2", "Time Wasters to Eliminate:\n\n• Excessive socializing during peak work periods\n• Repeatedly checking your phone\n• Not having materials ready before starting a task\n• Redoing work because of unclear instructions — ask questions upfront\n• Perfectionism on tasks that need 'good enough'\n\nThe 2-Minute Rule:\nIf a task takes less than 2 minutes, do it immediately. Don't add it to your list — the time spent tracking it exceeds the time to complete it.\n\nRemember: Time management isn't about working faster — it's about working smarter.", 1),
       ],
       quizQuestions: [
@@ -537,6 +559,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 70,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-time-management-EYcKMMZkNzFQUrMTZp2zgR.webp",
   },
 
   // 14. Prioritizing Tasks Under Pressure
@@ -583,6 +606,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("cl15-b1", "Checklists are used by surgeons, pilots, and astronauts — not because they're forgetful, but because checklists catch errors that even experts miss. In shift work, checklists ensure consistency across shifts and prevent costly mistakes.\n\nWhy Checklists Work:\n• They reduce reliance on memory (especially during fatigue)\n• They ensure every step is completed in the correct order\n• They create accountability — you can prove work was done\n• They speed up routine tasks by eliminating decision-making\n• They improve handovers — the next shift knows exactly what's been done", 0),
+        ib("using-checklists-eff-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-checklist-MqfkHYJhYP7UB97wWcomdS.webp", "Using Checklists Effectively", 1),
         tb("cl15-b2", "Creating Effective Checklists:\n\n1. Keep items short and actionable — 'Check oil level' not 'Make sure the oil is okay'\n2. List items in logical order — follow the natural workflow\n3. Include only critical steps — too many items cause checklist fatigue\n4. Use checkboxes — the physical act of checking creates satisfaction\n5. Review and update regularly — remove outdated items, add new ones\n\nTypes of Shift Checklists:\n• Opening checklist — tasks to start the shift\n• Closing checklist — tasks to end the shift\n• Safety checklist — equipment and environment checks\n• Handover checklist — information for the next shift\n• Quality checklist — standards verification", 1),
       ],
       quizQuestions: [
@@ -607,6 +631,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 70,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-checklist-MqfkHYJhYP7UB97wWcomdS.webp",
   },
 
   // 16. Reducing Workplace Distractions
@@ -698,6 +723,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("mf18-b1", "Night shift workers are 30% more likely to have accidents than day shift workers. Your body's circadian rhythm naturally promotes sleep at night, making night shifts inherently challenging.\n\nThe Science of Fatigue:\n• Your body temperature drops between 2-6 AM — this is your lowest alertness period\n• Sleep debt accumulates — you can't 'make up' lost sleep in one day\n• Fatigue impairs judgment similar to alcohol — 17 hours awake = 0.05% BAC equivalent\n• Chronic sleep deprivation increases risk of heart disease, diabetes, and depression", 0),
+        ib("managing-fatigue-on--img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-fatigue-management-6dmH7V9jsG6EJsFeXVZEdW.webp", "Managing Fatigue on Night Shifts", 1),
         tb("mf18-b2", "Fatigue Management Strategies:\n\nBefore Your Shift:\n• Sleep 7-9 hours in a dark, cool, quiet room\n• Use blackout curtains and white noise machines\n• Avoid caffeine 6 hours before planned sleep\n• Take a 20-minute 'power nap' before your shift\n\nDuring Your Shift:\n• Strategic caffeine — drink coffee early in the shift, not late\n• Bright light exposure — helps reset your alertness\n• Move regularly — walk, stretch, change positions every 30-60 minutes\n• Eat light, protein-rich meals — avoid heavy carbs that cause drowsiness\n• Stay hydrated — dehydration worsens fatigue\n\nAfter Your Shift:\n• Wear sunglasses on the drive home to reduce light exposure\n• Go to sleep as soon as possible\n• Maintain a consistent sleep schedule, even on days off", 1),
       ],
       quizQuestions: [
@@ -728,6 +754,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 75,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-fatigue-management-6dmH7V9jsG6EJsFeXVZEdW.webp",
   },
 
   // 19. Quick Stretching Routines at Work
@@ -739,6 +766,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("sr19-b1", "Sitting or standing in the same position for hours causes muscle stiffness, reduced circulation, and increased injury risk. Just 2 minutes of stretching every hour can dramatically reduce these risks.\n\nUpper Body Stretches (30 seconds each):\n• Neck rolls — Slowly roll your head in a circle, 5 times each direction\n• Shoulder shrugs — Raise shoulders to ears, hold 3 seconds, release\n• Chest opener — Clasp hands behind back, squeeze shoulder blades together\n• Wrist circles — Extend arms and rotate wrists, 10 times each direction", 0),
+        ib("quick-stretching-rou-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-stretching-5p7qtkKPmLpidVX2FfPDsw.webp", "Quick Stretching Routines at Work", 1),
         tb("sr19-b2", "Lower Body Stretches (30 seconds each):\n• Standing quad stretch — Hold one foot behind you, keep knees together\n• Calf raises — Rise onto toes, hold 3 seconds, lower slowly\n• Hip circles — Hands on hips, rotate hips in large circles\n• Hamstring stretch — Place heel on a low surface, lean forward gently\n\nWhen to Stretch:\n• At the start of your shift (warm-up)\n• Every 60 minutes during your shift\n• After any heavy lifting or repetitive task\n• When you feel stiffness or tension building\n\nRemember: Stretch gently — never bounce or force a stretch. If it hurts, stop.", 1),
       ],
       quizQuestions: [
@@ -763,6 +791,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 70,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-stretching-5p7qtkKPmLpidVX2FfPDsw.webp",
   },
 
   // 20. Hydration and Nutrition Tips
@@ -965,6 +994,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("fo25-b1", "Forklifts are responsible for approximately 85 deaths and 34,900 serious injuries in the workplace each year. They are powerful machines that demand respect and proper training.\n\nPre-Operation Inspection (Every Shift):\n✓ Tires — check for damage and proper inflation\n✓ Forks — check for cracks, bends, or wear\n✓ Fluid levels — hydraulic fluid, engine oil, coolant\n✓ Brakes — test both service and parking brakes\n✓ Lights and horn — ensure all are working\n✓ Seat belt — must be functional and worn at all times\n✓ Mast and chains — check for damage or unusual wear\n\nNever operate a forklift that fails inspection. Report it immediately.", 0),
+        ib("safe-forklift-operat-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-forklift-SPYniiQmwTK7K96y8xa6fR.webp", "Safe Forklift Operation Principles", 1),
         tb("fo25-b2", "Safe Operating Principles:\n\n• Always wear your seat belt — tip-overs are the #1 cause of forklift deaths\n• Travel with forks 4-6 inches off the ground\n• Never exceed the rated load capacity\n• Look in the direction of travel — use mirrors and spotters\n• Slow down at intersections, corners, and near pedestrians\n• Never allow passengers on the forklift\n• Sound the horn at blind corners and intersections\n• Keep a safe following distance from other vehicles\n\nLoad Handling:\n• Center the load on the forks\n• Tilt the mast back slightly to stabilize\n• If the load blocks your view, travel in reverse\n• Never raise or lower loads while moving\n• Set loads down gently — don't drop them", 1),
       ],
       quizQuestions: [
@@ -995,6 +1025,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 75,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-forklift-SPYniiQmwTK7K96y8xa6fR.webp",
   },
 
   // 26. Handling Hazardous Materials (intro)
@@ -1006,6 +1037,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("hm26-b1", "Hazardous materials (hazmat) are substances that can cause harm to people, property, or the environment. They're found in nearly every industry — cleaning chemicals in hospitality, solvents in manufacturing, medications in healthcare.\n\nThe GHS Labeling System (Globally Harmonized System):\nAll hazardous chemicals must have labels with:\n• Product identifier — chemical name\n• Signal word — 'Danger' (severe) or 'Warning' (less severe)\n• Hazard pictograms — red-bordered diamond symbols showing hazard types\n• Hazard statements — describe the nature of the hazard\n• Precautionary statements — how to handle, store, and dispose safely\n• Supplier information — manufacturer contact details", 0),
+        ib("handling-hazardous-m-img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-hazmat-P2ANfJBJatAwEPFS7L2t7T.webp", "Handling Hazardous Materials", 1),
         tb("hm26-b2", "Safety Data Sheets (SDS):\n\nEvery hazardous chemical in your workplace has a 16-section SDS. Key sections to know:\n• Section 2 — Hazard identification\n• Section 4 — First aid measures\n• Section 7 — Handling and storage\n• Section 8 — Exposure controls and PPE requirements\n\nBasic Handling Rules:\n1. Read the label BEFORE handling any chemical\n2. Wear the required PPE (check the SDS)\n3. Never mix chemicals unless specifically instructed\n4. Use chemicals only for their intended purpose\n5. Store chemicals in their original containers\n6. Know the location of eyewash stations and emergency showers\n7. Report spills immediately — do not attempt cleanup without proper training\n\nRemember: If you don't know what it is, don't touch it.", 1),
       ],
       quizQuestions: [
@@ -1036,6 +1068,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 75,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-hazmat-P2ANfJBJatAwEPFS7L2t7T.webp",
   },
 
   // 27. Digital Tools: Logging into HR Systems
@@ -1086,6 +1119,7 @@ export const SEED_LESSONS: SeedLesson[] = [
     content: {
       blocks: [
         tb("sg28-b1", "Career growth doesn't happen by accident — it happens by design. The SMART framework turns vague wishes into actionable plans.\n\nSMART Goals:\n• S — Specific: What exactly do you want to achieve?\n• M — Measurable: How will you know you've achieved it?\n• A — Achievable: Is it realistic given your current situation?\n• R — Relevant: Does it align with your career direction?\n• T — Time-bound: When will you achieve it by?\n\nVague goal: 'I want to get promoted.'\nSMART goal: 'I will complete the shift supervisor certification by September 30th by studying 30 minutes per day and passing the exam with 85% or higher.'", 0),
+        ib("setting-smart-goals--img", "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-smart-goals-CojxDmKMXgCjLR8y62Ffmw.webp", "Setting SMART Goals for Career Growth", 1),
         tb("sg28-b2", "Career Growth Paths for Shift Workers:\n\n• Lateral moves — Learn different roles to become more versatile\n• Vertical moves — Advance to supervisor, team lead, or manager\n• Skill-based growth — Get certified in specialized areas\n• Cross-training — Learn adjacent roles to increase your value\n\nAction Steps:\n1. Identify where you want to be in 1 year and 3 years\n2. Talk to people who are already in those roles\n3. Identify the skills and certifications you need\n4. Set 3 SMART goals for the next 90 days\n5. Review progress weekly and adjust as needed\n\nRemember: Small, consistent steps beat big, sporadic efforts. 30 minutes of learning per day = 182 hours per year.", 1),
       ],
       quizQuestions: [
@@ -1116,6 +1150,7 @@ export const SEED_LESSONS: SeedLesson[] = [
       ],
       passingScore: 70,
     },
+    thumbnailUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/lesson-smart-goals-CojxDmKMXgCjLR8y62Ffmw.webp",
   },
 
   // 29. Building Confidence in Workplace Communication

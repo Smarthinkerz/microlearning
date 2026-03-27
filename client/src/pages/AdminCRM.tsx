@@ -14,7 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Palette, Users, BookOpen, Building2, BarChart3, Loader2,
   Search, Pencil, Trash2, Plus, Eye, Save, RefreshCw,
-  Type, Layout, Sun, Moon, Image as ImageIcon,
+  Type, Layout, Sun, Moon, Image as ImageIcon, Wrench,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
@@ -680,27 +680,56 @@ function OrganizationsTab() {
 
 // ─── Main CRM Page ──────────────────────────────────────────────────
 export default function AdminCRM() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth({ redirectOnUnauthenticated: true });
   const appRole = (user as any)?.appRole || "learner";
   const { data: stats } = trpc.crm.getStats.useQuery(undefined, {
     enabled: appRole === "super_admin" || (user as any)?.role === "admin",
   });
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (appRole !== "super_admin" && (user as any)?.role !== "admin") {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
           <p className="text-muted-foreground mt-2">Admin CRM is only accessible to super admins.</p>
+          <a href="/dashboard" className="mt-4 inline-block text-primary hover:underline text-sm">Back to Dashboard</a>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background">
+      {/* Standalone Admin Header */}
+      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <a href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors text-sm flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              Dashboard
+            </a>
+            <Separator orientation="vertical" className="h-5" />
+            <h1 className="text-base font-semibold text-foreground flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-primary" />
+              Admin CRM
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">{user?.name || "Admin"}</Badge>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Admin CRM</h1>
         <p className="text-muted-foreground">Manage platform branding, users, lessons, and organizations.</p>
       </div>
 
@@ -768,6 +797,7 @@ export default function AdminCRM() {
           <OrganizationsTab />
         </TabsContent>
       </Tabs>
+      </main>
     </div>
   );
 }

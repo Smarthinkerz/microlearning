@@ -333,8 +333,20 @@ export default function LessonLibrary() {
                   className="cursor-pointer hover:border-primary/40 transition-all duration-200 group relative overflow-hidden"
                   onClick={() => setLocation(`/lessons/${lesson.id}`)}
                 >
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/60 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <CardContent className="pt-5 pb-4">
+                  {lesson.thumbnailUrl && (
+                    <div className="w-full h-36 overflow-hidden">
+                      <img
+                        src={lesson.thumbnailUrl}
+                        alt={lesson.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  {!lesson.thumbnailUrl && (
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/60 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
+                  <CardContent className="pt-4 pb-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{typeIcon(lesson.contentType)}</span>
