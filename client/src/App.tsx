@@ -21,6 +21,7 @@ import Analytics from "./pages/Analytics";
 import Compliance from "./pages/Compliance";
 import SettingsPage from "./pages/Settings";
 import Notifications from "./pages/Notifications";
+import LessonLibrary from "./pages/LessonLibrary";
 
 function DashboardRoutes() {
   return (
@@ -28,6 +29,7 @@ function DashboardRoutes() {
       <Switch>
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/lessons" component={MyLessons} />
+        <Route path="/library" component={LessonLibrary} />
         <Route path="/lessons/:id" component={LessonPlayer} />
         <Route path="/shifts" component={Shifts} />
         <Route path="/assignments" component={Assignments} />

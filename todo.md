@@ -88,3 +88,18 @@
 - [x] Certificate router tests
 - [x] Audit router RBAC tests
 - [x] Input validation tests
+
+## Pre-built Lesson Library
+- [x] Create 30+ pre-built micro-lessons covering shift worker topics
+- [x] Seed lessons into database on first run / via admin action
+- [x] Lessons cover: workplace safety, communication, time management, equipment, compliance, health, leadership, customer service, etc.
+- [x] Each lesson has full content blocks and quiz questions
+
+## AI Lesson Generation Enhancement
+- [x] Ensure AI generation produces complete lessons with content blocks and quizzes
+- [x] AI generation accessible from Lesson Library and Content Studio for any user-chosen topic
+- [x] Generated lessons are immediately available in the lesson library
+- [x] Lesson Library page with grid/category views, filters, and search
+- [x] Library router with public browse, categories, and admin seed endpoints
+- [x] AI generateAndSave endpoint that auto-saves generated lessons
+- [x] Library tests (33 total tests passing)

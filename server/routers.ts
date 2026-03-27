@@ -6,6 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
+import { SEED_LESSONS } from "./seedLessons";
 
 // ─── Role middleware ─────────────────────────────────────────────────
 const employerAdminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -172,6 +173,67 @@ const shiftRouter = router({
   })).mutation(async ({ input }) => {
     await db.bulkCreateShifts(input.shifts.map(s => ({ ...s, source: "manual" as const })));
     return { success: true };
+  }),
+});
+
+// ─── Lesson Library Router (public catalog) ────────────────────────
+const libraryRouter = router({
+  browse: publicProcedure.input(z.object({
+    search: z.string().optional(),
+    difficulty: z.string().optional(),
+    contentType: z.string().optional(),
+    category: z.string().optional(),
+  }).optional()).query(async ({ input }) => {
+    return db.getAllPublishedLessons(
+      input?.search,
+      input?.difficulty,
+      input?.contentType,
+      input?.category
+    );
+  }),
+  categories: publicProcedure.query(async () => {
+    const all = await db.getAllPublishedLessons();
+    const cats = new Set(all.map((l: any) => l.category).filter(Boolean));
+    return Array.from(cats).sort();
+  }),
+  seed: adminProcedure.mutation(async ({ ctx }) => {
+    const count = await db.getPublishedLessonsCount();
+    if (count >= 30) {
+      return { seeded: 0, message: "Library already has 30+ lessons" };
+    }
+    // Create a default org if none exists
+    let orgId = ctx.user.orgId;
+    if (!orgId) {
+      const orgs = await db.getAllOrganizations();
+      if (orgs.length > 0) {
+        orgId = orgs[0].id;
+      } else {
+        const newOrg = await db.createOrganization({
+          name: "MicroLearning Platform",
+          slug: "platform-default",
+          industry: "General",
+          maxUsers: 1000,
+        });
+        orgId = (newOrg as any).id;
+      }
+    }
+    const lessonsToInsert = SEED_LESSONS.map(sl => ({
+      orgId: orgId!,
+      title: sl.title,
+      description: sl.description,
+      content: sl.content,
+      contentType: sl.contentType as any,
+      durationMinutes: sl.durationMinutes,
+      difficulty: sl.difficulty as any,
+      category: sl.category,
+      tags: sl.tags,
+      language: sl.language,
+      authorId: ctx.user.id,
+      status: "published" as const,
+      publishedAt: new Date(),
+    }));
+    await db.bulkCreateLessons(lessonsToInsert);
+    return { seeded: lessonsToInsert.length, message: `Seeded ${lessonsToInsert.length} lessons` };
   }),
 });
 
@@ -479,6 +541,83 @@ const auditRouter = router({
 
 // ─── AI Router ───────────────────────────────────────────────────────
 const aiRouter = router({
+  generateAndSave: protectedProcedure.input(z.object({
+    topic: z.string().min(1),
+    industry: z.string().optional(),
+    difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+    durationMinutes: z.number().min(1).max(30).optional(),
+    contentType: z.enum(["quiz", "scenario", "article", "mixed"]).optional(),
+    language: z.string().optional(),
+    autoPublish: z.boolean().optional(),
+  })).mutation(async ({ input, ctx }) => {
+    const prompt = `Generate a micro-learning lesson for shift workers.
+Topic: ${input.topic}
+Industry: ${input.industry || "general"}
+Difficulty: ${input.difficulty || "beginner"}
+Duration: ${input.durationMinutes || 5} minutes
+Content Type: ${input.contentType || "mixed"}
+Language: ${input.language || "English"}
+
+Create a structured lesson with:
+1. A compelling title
+2. A brief description (2-3 sentences)
+3. Content blocks including text explanations and key takeaways
+4. 3-5 quiz questions with multiple choice answers
+5. Practical tips relevant to shift workers
+
+Return as JSON with this structure:
+{
+  "title": "string",
+  "description": "string",
+  "durationMinutes": number,
+  "category": "string",
+  "tags": ["string"],
+  "blocks": [{ "id": "string", "type": "text", "data": {"text": "string"}, "order": number }],
+  "quizQuestions": [{ "id": "string", "question": "string", "type": "multiple_choice", "options": [{ "id": "string", "text": "string", "isCorrect": boolean }], "explanation": "string", "points": number }],
+  "passingScore": number
+}`;
+
+    const result = await invokeLLM({
+      messages: [
+        { role: "system", content: "You are an expert instructional designer specializing in micro-learning content for shift workers. Always return valid JSON." },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const content = result.choices[0]?.message?.content;
+    try {
+      const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
+      // Auto-save the generated lesson
+      let orgId = (ctx.user as any).orgId;
+      if (!orgId) {
+        const orgs = await db.getAllOrganizations();
+        if (orgs.length > 0) orgId = orgs[0].id;
+        else {
+          const newOrg = await db.createOrganization({ name: "MicroLearning Platform", slug: "platform-default", industry: "General", maxUsers: 1000 });
+          orgId = (newOrg as any).id;
+        }
+      }
+      const saved = await db.createLesson({
+        orgId,
+        title: parsed.title || input.topic,
+        description: parsed.description || "",
+        content: { blocks: parsed.blocks || [], quizQuestions: parsed.quizQuestions || [], passingScore: parsed.passingScore || 70 },
+        contentType: (input.contentType || "mixed") as any,
+        durationMinutes: parsed.durationMinutes || input.durationMinutes || 5,
+        difficulty: (input.difficulty || "beginner") as any,
+        category: parsed.category || input.industry || "General",
+        tags: parsed.tags || [input.topic.toLowerCase()],
+        language: input.language || "en",
+        authorId: ctx.user.id,
+        status: input.autoPublish ? "published" as const : "draft" as const,
+        publishedAt: input.autoPublish ? new Date() : undefined,
+      });
+      return { ...parsed, saved: true, lessonId: (saved as any)?.id };
+    } catch {
+      return { error: "Failed to parse AI response", raw: content };
+    }
+  }),
   generateLesson: contentAuthorProcedure.input(z.object({
     topic: z.string().min(1),
     industry: z.string().optional(),
@@ -654,6 +793,7 @@ export const appRouter = router({
   user: userRouter,
   shift: shiftRouter,
   lesson: lessonRouter,
+  library: libraryRouter,
   assignment: assignmentRouter,
   attempt: attemptRouter,
   notification: notificationRouter,

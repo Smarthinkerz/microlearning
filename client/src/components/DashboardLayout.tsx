@@ -39,6 +39,7 @@ import {
   ClipboardList,
   Award,
   FileText,
+  Library,
 } from "lucide-react";
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -57,6 +58,7 @@ type MenuItem = {
 const allMenuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: BookOpen, label: "My Lessons", path: "/lessons", roles: ["learner", "content_author", "employer_admin", "super_admin"] },
+  { icon: Library, label: "Lesson Library", path: "/library" },
   { icon: Calendar, label: "My Shifts", path: "/shifts", roles: ["learner", "employer_admin", "super_admin"] },
   { icon: ClipboardList, label: "Assignments", path: "/assignments", roles: ["learner"] },
   { icon: Award, label: "Certificates", path: "/certificates", roles: ["learner"] },

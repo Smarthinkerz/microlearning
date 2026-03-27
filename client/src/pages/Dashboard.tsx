@@ -16,6 +16,9 @@ import {
   Zap,
   Target,
   BarChart3,
+  Library,
+  Wand2,
+  Database,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -150,6 +153,9 @@ export default function Dashboard() {
                 <div className="text-center py-8 text-muted-foreground">
                   <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-primary/50" />
                   <p className="text-sm">All caught up! No pending lessons.</p>
+                  <Button variant="link" size="sm" className="mt-2" onClick={() => setLocation("/library")}>
+                    Browse the Lesson Library <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -210,6 +216,18 @@ export default function Dashboard() {
               title="View Analytics"
               description="See detailed learning reports"
               onClick={() => setLocation("/analytics")}
+            />
+            <QuickAction
+              icon={Library}
+              title="Lesson Library"
+              description="Browse all published lessons"
+              onClick={() => setLocation("/library")}
+            />
+            <QuickAction
+              icon={Wand2}
+              title="AI Generate"
+              description="Create lessons with AI"
+              onClick={() => setLocation("/library")}
             />
           </div>
         </>

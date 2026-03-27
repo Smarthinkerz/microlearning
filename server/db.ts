@@ -214,6 +214,38 @@ export async function getLessonsInReview(orgId: number) {
   ).orderBy(desc(lessons.updatedAt));
 }
 
+export async function getAllPublishedLessons(search?: string, difficulty?: string, contentType?: string, category?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [eq(lessons.status, "published" as any)];
+  if (difficulty && difficulty !== "all") conditions.push(eq(lessons.difficulty, difficulty as any));
+  if (contentType && contentType !== "all") conditions.push(eq(lessons.contentType, contentType as any));
+  if (category && category !== "all") conditions.push(eq(lessons.category, category));
+  if (search) {
+    conditions.push(
+      or(
+        like(lessons.title, `%${search}%`),
+        like(lessons.description, `%${search}%`)
+      )
+    );
+  }
+  return db.select().from(lessons).where(and(...conditions)).orderBy(desc(lessons.updatedAt));
+}
+
+export async function getPublishedLessonsCount() {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ count: sql<number>`count(*)` }).from(lessons).where(eq(lessons.status, "published" as any));
+  return result[0]?.count ?? 0;
+}
+
+export async function bulkCreateLessons(lessonList: InsertLesson[]) {
+  const db = await getDb();
+  if (!db) return;
+  if (lessonList.length === 0) return;
+  await db.insert(lessons).values(lessonList);
+}
+
 // ─── Lesson Assignments ──────────────────────────────────────────────
 export async function createAssignment(assignment: InsertLessonAssignment) {
   const db = await getDb();
