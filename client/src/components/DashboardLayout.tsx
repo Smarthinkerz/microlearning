@@ -40,6 +40,7 @@ import {
   Award,
   FileText,
   Library,
+  Home,
 } from "lucide-react";
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -276,6 +277,10 @@ function DashboardLayoutContent({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => setLocation("/")} className="cursor-pointer">
+                  <Home className="mr-2 h-4 w-4" />
+                  <span>Home Page</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLocation("/settings")} className="cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>

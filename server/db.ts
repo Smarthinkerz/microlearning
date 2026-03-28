@@ -195,6 +195,19 @@ export async function getLessonsByOrg(orgId: number, status?: string) {
   return db.select().from(lessons).where(and(...conditions)).orderBy(desc(lessons.updatedAt));
 }
 
+export async function getLessonsByAuthorOrDefaultOrg(authorId: number, status?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [or(eq(lessons.authorId, authorId))];
+  // Also get lessons from default org
+  const orgs = await db.select().from(organizations).limit(1);
+  if (orgs.length > 0) {
+    conditions[0] = or(eq(lessons.authorId, authorId), eq(lessons.orgId, orgs[0].id));
+  }
+  if (status) conditions.push(eq(lessons.status, status as any));
+  return db.select().from(lessons).where(and(...conditions)).orderBy(desc(lessons.updatedAt));
+}
+
 export async function updateLesson(id: number, data: Partial<InsertLesson>) {
   const db = await getDb();
   if (!db) return;

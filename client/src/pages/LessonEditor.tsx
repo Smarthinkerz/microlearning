@@ -124,7 +124,7 @@ export default function LessonEditor() {
     };
 
     if (isNew) {
-      createMutation.mutate({ ...payload, orgId: orgId || 0 });
+      createMutation.mutate({ ...payload, orgId: orgId || undefined });
     } else {
       updateMutation.mutate({ id: lessonId, ...payload });
     }

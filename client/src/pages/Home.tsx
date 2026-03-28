@@ -28,11 +28,8 @@ export default function Home() {
   const [isMuted, setIsMuted] = useState(true);
   const mainVideoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    if (isAuthenticated && !loading) {
-      setLocation("/dashboard");
-    }
-  }, [isAuthenticated, loading, setLocation]);
+  // Don't auto-redirect - let authenticated users see the front page
+  // They can navigate to dashboard via the nav bar
 
   const togglePlay = () => {
     const video = mainVideoRef.current;
@@ -98,24 +95,45 @@ export default function Home() {
             <span className="text-xl font-bold gradient-text">Smarthinkerz LearnShift</span>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                window.location.href = getLoginUrl();
-              }}
-            >
-              Sign in
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                window.location.href = getLoginUrl();
-              }}
-            >
-              Get Started
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocation("/dashboard")}
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setLocation("/library")}
+                >
+                  Lesson Library
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    window.location.href = getLoginUrl();
+                  }}
+                >
+                  Sign in
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    window.location.href = getLoginUrl();
+                  }}
+                >
+                  Get Started
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </nav>

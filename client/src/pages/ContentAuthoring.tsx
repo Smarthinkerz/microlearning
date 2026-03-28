@@ -19,8 +19,7 @@ export default function ContentAuthoring() {
   const utils = trpc.useUtils();
 
   const { data: allLessons, isLoading } = trpc.lesson.getByOrg.useQuery(
-    { orgId: orgId! },
-    { enabled: !!orgId }
+    { orgId: orgId || undefined }
   );
 
   const deleteMutation = trpc.lesson.delete.useMutation({

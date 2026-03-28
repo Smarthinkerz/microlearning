@@ -240,7 +240,7 @@ const libraryRouter = router({
 // ─── Lesson Router ───────────────────────────────────────────────────
 const lessonRouter = router({
   create: contentAuthorProcedure.input(z.object({
-    orgId: z.number(),
+    orgId: z.number().optional(),
     title: z.string().min(1).max(500),
     description: z.string().optional(),
     content: z.any().optional(),
@@ -251,16 +251,30 @@ const lessonRouter = router({
     tags: z.array(z.string()).optional(),
     language: z.string().optional(),
   })).mutation(async ({ input, ctx }) => {
-    return db.createLesson({ ...input, authorId: ctx.user.id, status: "draft" });
+    let orgId = input.orgId || (ctx.user as any).orgId;
+    if (!orgId) {
+      const orgs = await db.getAllOrganizations();
+      if (orgs.length > 0) orgId = orgs[0].id;
+      else {
+        const newOrg = await db.createOrganization({ name: "Smarthinkerz LearnShift", slug: "platform-default", industry: "General", maxUsers: 1000 });
+        orgId = (newOrg as any).id;
+      }
+    }
+    return db.createLesson({ ...input, orgId, authorId: ctx.user.id, status: "draft" });
   }),
   getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
     return db.getLessonById(input.id);
   }),
   getByOrg: protectedProcedure.input(z.object({
-    orgId: z.number(),
+    orgId: z.number().optional(),
     status: z.string().optional(),
-  })).query(async ({ input }) => {
-    return db.getLessonsByOrg(input.orgId, input.status);
+  })).query(async ({ input, ctx }) => {
+    // If orgId provided, filter by org; otherwise get lessons authored by current user or from their org
+    if (input.orgId) {
+      return db.getLessonsByOrg(input.orgId, input.status);
+    }
+    // Fallback: get lessons authored by the current user + lessons from default org
+    return db.getLessonsByAuthorOrDefaultOrg(ctx.user.id, input.status);
   }),
   update: contentAuthorProcedure.input(z.object({
     id: z.number(),

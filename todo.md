@@ -156,3 +156,7 @@
 - [x] Update hero section: background video plays behind with overlay, main advert video featured prominently on right
 - [x] Video player with play/pause, mute/unmute controls and hover overlay
 - [x] All 46 tests passing
+
+## Bug Fixes
+- [x] Fix: Lessons created via Content Studio/Editor don't appear after saving (auto-assign org, query by author when no orgId)
+- [x] Fix: No way to navigate from dashboard back to home/front page (added Home Page link in user dropdown, removed auto-redirect on Home)
