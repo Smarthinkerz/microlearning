@@ -7,7 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { autoSeedLessons } from "../autoSeed";
+import { autoSeedLessons, autoSeedPlans } from "../autoSeed";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -62,6 +62,7 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
     // Auto-seed the lesson library on startup
     autoSeedLessons().catch(err => console.error("[AutoSeed] Error:", err));
+    autoSeedPlans().catch(err => console.error("[AutoSeed Plans] Error:", err));
   });
 }
 

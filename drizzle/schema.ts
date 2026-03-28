@@ -204,6 +204,85 @@ export type PlatformBranding = {
 export type PlatformSettings = typeof platformSettings.$inferSelect;
 export type InsertPlatformSettings = typeof platformSettings.$inferInsert;
 
+// ─── Subscription Plans ─────────────────────────────────────────────
+export const subscriptionPlans = mysqlTable("subscription_plans", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  slug: varchar("slug", { length: 64 }).notNull().unique(),
+  tier: mysqlEnum("tier", ["starter", "pro", "enterprise", "consumer_free", "consumer_premium"]).notNull(),
+  priceMonthly: int("priceMonthly").notNull(), // in cents (e.g. 395 = $3.95)
+  priceYearly: int("priceYearly"), // in cents, annual total
+  currency: varchar("currency", { length: 3 }).default("USD"),
+  isPerUser: boolean("isPerUser").default(true).notNull(),
+  maxUsers: int("maxUsers"), // null = unlimited
+  features: json("features").$type<PlanFeatures>(),
+  addOns: json("addOns").$type<AddOn[]>(),
+  isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Organization Subscriptions ─────────────────────────────────────
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  orgId: int("orgId").notNull(),
+  planId: int("planId").notNull(),
+  status: mysqlEnum("status", ["active", "trial", "past_due", "canceled", "expired"]).default("trial").notNull(),
+  currentPeriodStart: bigint("currentPeriodStart", { mode: "number" }).notNull(),
+  currentPeriodEnd: bigint("currentPeriodEnd", { mode: "number" }).notNull(),
+  canceledAt: bigint("canceledAt", { mode: "number" }),
+  trialEndsAt: bigint("trialEndsAt", { mode: "number" }),
+  quantity: int("quantity").default(1), // number of user seats
+  externalPaymentId: varchar("externalPaymentId", { length: 255 }), // Tap gateway charge ID
+  externalCustomerId: varchar("externalCustomerId", { length: 255 }), // Tap customer ID
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── Payment History ────────────────────────────────────────────────
+export const payments = mysqlTable("payments", {
+  id: int("id").autoincrement().primaryKey(),
+  orgId: int("orgId").notNull(),
+  subscriptionId: int("subscriptionId"),
+  amount: int("amount").notNull(), // in cents
+  currency: varchar("currency", { length: 3 }).default("USD"),
+  status: mysqlEnum("status", ["pending", "succeeded", "failed", "refunded"]).default("pending").notNull(),
+  paymentMethod: varchar("paymentMethod", { length: 64 }), // tap, card, etc.
+  externalChargeId: varchar("externalChargeId", { length: 255 }),
+  description: text("description"),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  paidAt: bigint("paidAt", { mode: "number" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── Consumer Lesson Packs (In-App Purchases) ───────────────────────
+export const lessonPacks = mysqlTable("lesson_packs", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  description: text("description"),
+  price: int("price").notNull(), // in cents (e.g. 199 = $1.99)
+  currency: varchar("currency", { length: 3 }).default("USD"),
+  lessonIds: json("lessonIds").$type<number[]>(),
+  category: varchar("category", { length: 128 }),
+  thumbnailUrl: text("thumbnailUrl"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ─── User Pack Purchases ────────────────────────────────────────────
+export const userPackPurchases = mysqlTable("user_pack_purchases", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  packId: int("packId").notNull(),
+  paymentId: int("paymentId"),
+  purchasedAt: bigint("purchasedAt", { mode: "number" }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 // ─── WFM Webhook Configs ─────────────────────────────────────────────
 export const webhookConfigs = mysqlTable("webhook_configs", {
   id: int("id").autoincrement().primaryKey(),
@@ -265,6 +344,36 @@ export type AttemptResponse = {
   timeSpentSeconds?: number;
 };
 
+// ─── Plan Feature Types ─────────────────────────────────────────────
+export type PlanFeatures = {
+  maxLessons: number; // -1 = unlimited
+  offlineAccess: boolean;
+  basicTracking: boolean;
+  fullAnalytics: boolean;
+  adaptiveRecommendations: boolean;
+  contentAuthoring: boolean;
+  cohortManagement: boolean;
+  scormXapiExport: boolean;
+  rbac: boolean;
+  sso: boolean;
+  hrisIntegration: boolean;
+  whiteLabel: boolean;
+  customOnboarding: boolean;
+  sla: boolean;
+  dedicatedManager: boolean;
+  gamification: boolean;
+  pushNotifications: boolean;
+  emailSupport: boolean;
+  prioritySupport: boolean;
+};
+
+export type AddOn = {
+  id: string;
+  name: string;
+  priceMonthly: number; // in cents
+  description: string;
+};
+
 // ─── Type Exports ────────────────────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -283,3 +392,12 @@ export type Notification = typeof notifications.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type WebhookConfig = typeof webhookConfigs.$inferSelect;
 export type PlatformSettingsRow = typeof platformSettings.$inferSelect;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
+export type LessonPack = typeof lessonPacks.$inferSelect;
+export type InsertLessonPack = typeof lessonPacks.$inferInsert;
+export type UserPackPurchase = typeof userPackPurchases.$inferSelect;

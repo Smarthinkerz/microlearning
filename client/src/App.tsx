@@ -23,6 +23,7 @@ import SettingsPage from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import LessonLibrary from "./pages/LessonLibrary";
 import AdminCRM from "./pages/AdminCRM";
+import Pricing from "./pages/Pricing";
 
 function DashboardRoutes() {
   return (
@@ -60,6 +61,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/admin-crm" component={AdminCRMRoute} />
+      <Route path="/pricing" component={Pricing} />
       <Route path="/404" component={NotFound} />
       <Route>
         <DashboardRoutes />

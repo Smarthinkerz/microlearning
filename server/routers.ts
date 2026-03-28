@@ -924,9 +924,283 @@ const crmRouter = router({
     return { success: true };
   }),
 });
+// ─── Subscription & Pricing Router ─────────────────────────────────────────
+const subscriptionRouter = router({
+  getPlans: publicProcedure.query(async () => {
+    return db.getAllPlans();
+  }),
 
-// ─── Main Router ───────────────────────────────────────────────────────
-export const appRouter = router({  system: systemRouter,
+  getPlan: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    return db.getPlanById(input.id);
+  }),
+
+  getMySubscription: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user.orgId) return null;
+    return db.getOrgSubscription(ctx.user.orgId);
+  }),
+
+  subscribe: protectedProcedure.input(z.object({
+    planSlug: z.string(),
+    quantity: z.number().min(1).default(1),
+  })).mutation(async ({ ctx, input }) => {
+    const plan = await db.getPlanBySlug(input.planSlug);
+    if (!plan) throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
+    
+    let orgId = ctx.user.orgId;
+    if (!orgId) {
+      // Auto-create org for the user
+      const orgs = await db.getAllOrganizations();
+      orgId = orgs[0]?.id || 1;
+    }
+    
+    const now = Date.now();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    
+    // Create subscription (trial for now, payment integration will activate)
+    await db.createSubscription({
+      orgId,
+      planId: plan.id,
+      status: "trial",
+      currentPeriodStart: now,
+      currentPeriodEnd: now + thirtyDays,
+      trialEndsAt: now + (14 * 24 * 60 * 60 * 1000), // 14-day trial
+      quantity: input.quantity,
+    });
+    
+    return { success: true, message: "Subscription created with 14-day trial" };
+  }),
+
+  // Tap Payment Gateway: Create a checkout session
+  createCheckout: protectedProcedure.input(z.object({
+    planSlug: z.string(),
+    quantity: z.number().min(1).default(1),
+    origin: z.string(), // Frontend origin for redirect URL
+  })).mutation(async ({ ctx, input }) => {
+    const { isTapConfigured, buildSubscriptionCharge, createCharge } = await import("./tapPayment");
+    
+    if (!isTapConfigured()) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Payment gateway is not yet configured. Please contact support.",
+      });
+    }
+    
+    const plan = await db.getPlanBySlug(input.planSlug);
+    if (!plan) throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
+    
+    let orgId = ctx.user.orgId;
+    if (!orgId) {
+      const orgs = await db.getAllOrganizations();
+      orgId = orgs[0]?.id || 1;
+    }
+    
+    const amount = (plan.priceMonthly / 100) * input.quantity; // Convert cents to dollars
+    
+    const chargeRequest = buildSubscriptionCharge({
+      planName: plan.name,
+      amount,
+      customerEmail: ctx.user.email || "customer@example.com",
+      customerName: ctx.user.name || "Customer",
+      orgId,
+      planId: plan.id,
+      redirectUrl: `${input.origin}/pricing?payment=callback`,
+      webhookUrl: `${input.origin}/api/webhooks/tap`,
+    });
+    
+    const charge = await createCharge(chargeRequest);
+    
+    // Record pending payment
+    await db.createPayment({
+      orgId,
+      amount: Math.round(amount * 100),
+      currency: plan.currency || "USD",
+      status: "pending",
+      paymentMethod: "tap",
+      externalChargeId: charge.id,
+      description: `${plan.name} Plan - ${input.quantity} seat(s)`,
+      metadata: { planSlug: input.planSlug, quantity: input.quantity },
+    });
+    
+    return {
+      success: true,
+      chargeId: charge.id,
+      redirectUrl: charge.transaction?.url || charge.redirect?.url,
+    };
+  }),
+
+  // Verify a Tap charge after redirect
+  verifyPayment: protectedProcedure.input(z.object({
+    chargeId: z.string(),
+  })).mutation(async ({ ctx, input }) => {
+    const { isTapConfigured, getCharge } = await import("./tapPayment");
+    
+    if (!isTapConfigured()) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Payment gateway is not configured.",
+      });
+    }
+    
+    const charge = await getCharge(input.chargeId);
+    const payment = await db.getPaymentByExternalChargeId(input.chargeId);
+    
+    if (!payment) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Payment record not found" });
+    }
+    
+    if (charge.status === "CAPTURED") {
+      // Payment successful
+      await db.updatePaymentStatus(payment.id, "succeeded", Date.now());
+      
+      // Activate subscription
+      const orgId = payment.orgId;
+      const sub = await db.getOrgSubscription(orgId);
+      if (sub) {
+        await db.updateSubscriptionStatus(sub.id, "active");
+        await db.updateSubscriptionExternalIds(sub.id, charge.id, charge.customer?.id);
+      }
+      
+      return { success: true, status: "captured", message: "Payment successful! Subscription activated." };
+    } else if (charge.status === "DECLINED" || charge.status === "CANCELLED") {
+      await db.updatePaymentStatus(payment.id, "failed");
+      return { success: false, status: charge.status.toLowerCase(), message: "Payment was declined or cancelled." };
+    } else {
+      return { success: false, status: charge.status.toLowerCase(), message: `Payment status: ${charge.status}` };
+    }
+  }),
+
+  // Check if Tap is configured (for frontend to show/hide payment buttons)
+  isPaymentConfigured: publicProcedure.query(async () => {
+    const { isTapConfigured } = await import("./tapPayment");
+    return { configured: isTapConfigured() };
+  }),
+
+  cancelSubscription: protectedProcedure.input(z.object({
+    subscriptionId: z.number(),
+  })).mutation(async ({ input }) => {
+    await db.updateSubscriptionStatus(input.subscriptionId, "canceled", Date.now());
+    return { success: true };
+  }),
+
+  getPaymentHistory: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user.orgId) return [];
+    return db.getPaymentsByOrg(ctx.user.orgId);
+  }),
+
+  // Lesson Packs (Consumer)
+  getLessonPacks: publicProcedure.query(async () => {
+    return db.getAllLessonPacks();
+  }),
+
+  getMyPurchases: protectedProcedure.query(async ({ ctx }) => {
+    return db.getUserPurchasedPacks(ctx.user.id);
+  }),
+
+  purchasePack: protectedProcedure.input(z.object({
+    packId: z.number(),
+  })).mutation(async ({ ctx, input }) => {
+    // Record purchase (payment will be handled by Tap gateway when integrated)
+    await db.recordPackPurchase(ctx.user.id, input.packId);
+    return { success: true, message: "Pack purchased successfully" };
+  }),
+
+  // Admin: seed default plans
+  seedPlans: adminProcedure.mutation(async () => {
+    const existingCount = await db.getPlansCount();
+    if (existingCount > 0) return { message: "Plans already exist", seeded: false };
+    
+    const defaultPlans = [
+      {
+        name: "Starter",
+        slug: "starter",
+        tier: "starter" as const,
+        priceMonthly: 395,
+        priceYearly: 3950,
+        isPerUser: true,
+        sortOrder: 1,
+        features: {
+          maxLessons: 30, offlineAccess: true, basicTracking: true, fullAnalytics: false,
+          adaptiveRecommendations: false, contentAuthoring: false, cohortManagement: false,
+          scormXapiExport: false, rbac: false, sso: false, hrisIntegration: false,
+          whiteLabel: false, customOnboarding: false, sla: false, dedicatedManager: false,
+          gamification: false, pushNotifications: true, emailSupport: true, prioritySupport: false,
+        },
+      },
+      {
+        name: "Pro",
+        slug: "pro",
+        tier: "pro" as const,
+        priceMonthly: 895,
+        priceYearly: 8950,
+        isPerUser: true,
+        sortOrder: 2,
+        features: {
+          maxLessons: -1, offlineAccess: true, basicTracking: true, fullAnalytics: true,
+          adaptiveRecommendations: true, contentAuthoring: true, cohortManagement: true,
+          scormXapiExport: true, rbac: true, sso: false, hrisIntegration: false,
+          whiteLabel: false, customOnboarding: false, sla: false, dedicatedManager: false,
+          gamification: true, pushNotifications: true, emailSupport: true, prioritySupport: true,
+        },
+      },
+      {
+        name: "Enterprise",
+        slug: "enterprise",
+        tier: "enterprise" as const,
+        priceMonthly: 1200,
+        priceYearly: 12000,
+        isPerUser: true,
+        sortOrder: 3,
+        features: {
+          maxLessons: -1, offlineAccess: true, basicTracking: true, fullAnalytics: true,
+          adaptiveRecommendations: true, contentAuthoring: true, cohortManagement: true,
+          scormXapiExport: true, rbac: true, sso: true, hrisIntegration: true,
+          whiteLabel: true, customOnboarding: true, sla: true, dedicatedManager: true,
+          gamification: true, pushNotifications: true, emailSupport: true, prioritySupport: true,
+        },
+      },
+      {
+        name: "Free",
+        slug: "consumer-free",
+        tier: "consumer_free" as const,
+        priceMonthly: 0,
+        isPerUser: false,
+        sortOrder: 4,
+        features: {
+          maxLessons: 5, offlineAccess: false, basicTracking: true, fullAnalytics: false,
+          adaptiveRecommendations: false, contentAuthoring: false, cohortManagement: false,
+          scormXapiExport: false, rbac: false, sso: false, hrisIntegration: false,
+          whiteLabel: false, customOnboarding: false, sla: false, dedicatedManager: false,
+          gamification: true, pushNotifications: true, emailSupport: false, prioritySupport: false,
+        },
+      },
+      {
+        name: "Premium",
+        slug: "consumer-premium",
+        tier: "consumer_premium" as const,
+        priceMonthly: 299,
+        priceYearly: 2990,
+        isPerUser: false,
+        sortOrder: 5,
+        features: {
+          maxLessons: -1, offlineAccess: true, basicTracking: true, fullAnalytics: false,
+          adaptiveRecommendations: true, contentAuthoring: false, cohortManagement: false,
+          scormXapiExport: false, rbac: false, sso: false, hrisIntegration: false,
+          whiteLabel: false, customOnboarding: false, sla: false, dedicatedManager: false,
+          gamification: true, pushNotifications: true, emailSupport: true, prioritySupport: false,
+        },
+      },
+    ];
+    
+    for (const plan of defaultPlans) {
+      await db.createPlan(plan);
+    }
+    return { message: `Seeded ${defaultPlans.length} plans`, seeded: true };
+  }),
+});
+
+// ─── Main Router ─────────────────────────────────────────────────────────
+export const appRouter = router({
+  system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -948,6 +1222,7 @@ export const appRouter = router({  system: systemRouter,
   ai: aiRouter,
   compliance: complianceRouter,
   crm: crmRouter,
+  subscription: subscriptionRouter,
 });
 
 export type AppRouter = typeof appRouter;

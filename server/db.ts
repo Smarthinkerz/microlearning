@@ -12,6 +12,11 @@ import {
   notifications,
   webhookConfigs,
   platformSettings,
+  subscriptionPlans, InsertSubscriptionPlan,
+  subscriptions, InsertSubscription,
+  payments, InsertPayment,
+  lessonPacks, InsertLessonPack,
+  userPackPurchases,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -570,4 +575,137 @@ export async function getOrgCount() {
   if (!db) return 0;
   const [result] = await db.select({ count: sql<number>`count(*)` }).from(organizations);
   return result?.count ?? 0;
+}
+
+// ─── Subscription Plans ─────────────────────────────────────────────
+export async function getAllPlans() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true)).orderBy(subscriptionPlans.sortOrder);
+}
+
+export async function getPlanById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getPlanBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.slug, slug)).limit(1);
+  return result[0];
+}
+
+export async function createPlan(plan: InsertSubscriptionPlan) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(subscriptionPlans).values(plan);
+}
+
+export async function getPlansCount() {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ count: sql<number>`count(*)` }).from(subscriptionPlans);
+  return result[0]?.count ?? 0;
+}
+
+// ─── Subscriptions ──────────────────────────────────────────────────
+export async function getOrgSubscription(orgId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(subscriptions).where(eq(subscriptions.orgId, orgId)).orderBy(desc(subscriptions.createdAt)).limit(1);
+  return result[0];
+}
+
+export async function createSubscription(sub: InsertSubscription) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(subscriptions).values(sub);
+}
+
+export async function updateSubscriptionStatus(id: number, status: string, canceledAt?: number) {
+  const db = await getDb();
+  if (!db) return;
+  const updateData: Record<string, unknown> = { status };
+  if (canceledAt) updateData.canceledAt = canceledAt;
+  await db.update(subscriptions).set(updateData).where(eq(subscriptions.id, id));
+}
+
+export async function updateSubscriptionExternalIds(
+  id: number,
+  externalPaymentId: string,
+  externalCustomerId?: string
+) {
+  const db = await getDb();
+  if (!db) return;
+  const updateData: Record<string, unknown> = { externalPaymentId };
+  if (externalCustomerId) updateData.externalCustomerId = externalCustomerId;
+  await db.update(subscriptions).set(updateData).where(eq(subscriptions.id, id));
+}
+
+export async function getSubscriptionById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(subscriptions).where(eq(subscriptions.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getPaymentByExternalChargeId(chargeId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(payments).where(eq(payments.externalChargeId, chargeId)).limit(1);
+  return result[0];
+}
+
+// ─── Payments ───────────────────────────────────────────────────────
+export async function createPayment(payment: InsertPayment) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(payments).values(payment);
+}
+
+export async function getPaymentsByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(payments).where(eq(payments.orgId, orgId)).orderBy(desc(payments.createdAt));
+}
+
+export async function updatePaymentStatus(id: number, status: string, paidAt?: number) {
+  const db = await getDb();
+  if (!db) return;
+  const updateData: Record<string, unknown> = { status };
+  if (paidAt) updateData.paidAt = paidAt;
+  await db.update(payments).set(updateData).where(eq(payments.id, id));
+}
+
+// ─── Lesson Packs ───────────────────────────────────────────────────
+export async function getAllLessonPacks() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(lessonPacks).where(eq(lessonPacks.isActive, true));
+}
+
+export async function createLessonPack(pack: InsertLessonPack) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(lessonPacks).values(pack);
+}
+
+export async function getUserPurchasedPacks(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(userPackPurchases).where(eq(userPackPurchases.userId, userId));
+}
+
+export async function recordPackPurchase(userId: number, packId: number, paymentId?: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(userPackPurchases).values({
+    userId,
+    packId,
+    paymentId: paymentId ?? 0,
+    purchasedAt: Date.now(),
+  });
 }

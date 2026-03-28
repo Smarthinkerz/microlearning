@@ -91,11 +91,18 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-10 object-contain" />
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-16 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocation("/pricing")}
+                >
+                  Pricing
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -113,6 +120,13 @@ export default function Home() {
               </>
             ) : (
               <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocation("/pricing")}
+                >
+                  Pricing
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -330,16 +344,26 @@ export default function Home() {
             <p className="text-muted-foreground text-lg mb-8">
               Join organizations delivering smarter, shift-aware training to their frontline teams.
             </p>
-            <Button
-              size="lg"
-              className="text-base px-8"
-              onClick={() => {
-                window.location.href = getLoginUrl();
-              }}
-            >
-              Get Started Now
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button
+                size="lg"
+                className="text-base px-8"
+                onClick={() => {
+                  window.location.href = getLoginUrl();
+                }}
+              >
+                Get Started Now
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-base px-8 bg-transparent"
+                onClick={() => setLocation("/pricing")}
+              >
+                View Pricing
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -348,7 +372,7 @@ export default function Home() {
       <footer className="py-8 border-t border-border/30">
         <div className="container flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-8 object-contain" />
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-14 w-auto object-contain" />
           </div>
           <p className="text-sm text-muted-foreground">
             Adaptive micro-learning for shift workers.

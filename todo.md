@@ -169,3 +169,31 @@
 - [x] Updated service worker brand name and IndexedDB name
 - [x] Removed all GraduationCap icon references from codebase
 - [x] All 46 tests passing
+
+## Logo Size Fix
+- [x] Make logo bigger in nav bar (h-16), sidebar (h-16), sign-in (h-20), and footer (h-14)
+
+## Subscription Tier System
+- [x] Add subscriptions/tiers table to database schema
+- [x] Build pricing page with 5 tiers: Starter ($3.95), Pro ($8.95), Enterprise ($12), Consumer Free, Consumer Premium ($2.99)
+- [x] Feature comparison table on pricing page
+- [x] Available add-ons section
+- [x] FAQ section
+- [x] Pricing link in nav bar (both auth and unauth states)
+- [x] View Pricing CTA on home page
+- [x] Auto-seed plans on server startup
+- [ ] Feature gating based on subscription tier
+- [ ] Tier management in Admin CRM
+
+## Payment Integration (Tap Gateway)
+- [x] Tap payment gateway service module (server/tapPayment.ts)
+- [x] ENV vars prepared for TAP_SECRET_KEY, TAP_PUBLIC_KEY, TAP_WEBHOOK_SECRET
+- [x] createCheckout tRPC endpoint (creates Tap charge + redirect)
+- [x] verifyPayment tRPC endpoint (verifies charge status after redirect)
+- [x] isPaymentConfigured public endpoint (frontend checks if Tap is ready)
+- [x] DB helpers: updateSubscriptionExternalIds, getSubscriptionById, getPaymentByExternalChargeId
+- [x] Subscription tests (22 tests) + Tap module tests (5 tests) — all 68 tests passing
+- [ ] Connect Tap API keys when provided by user
+- [ ] Payment flow: select tier → checkout → activate subscription (end-to-end with live keys)
+- [ ] Subscription status tracking and renewal management
+- [ ] Tap webhook handler for async charge updates
