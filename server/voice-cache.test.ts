@@ -130,11 +130,77 @@ describe("Voice Audio Cache", () => {
     });
   });
 
+  describe("Server-side subscription enforcement", () => {
+    it("synthesize blocks free-tier users with FORBIDDEN error", async () => {
+      const caller = appRouter.createCaller(createUserContext()); // no orgId = free tier
+      try {
+        await caller.voice.synthesize({
+          text: "Test text",
+          voiceId: "EXAVITQu4vr4xnSDxMaL",
+          stability: 0.5,
+          similarityBoost: 0.75,
+        });
+        expect.fail("Should have thrown FORBIDDEN");
+      } catch (err: any) {
+        expect(err.code).toBe("FORBIDDEN");
+        expect(err.message).toContain("Pro, Premium, and Enterprise");
+      }
+    });
+
+    it("synthesizeLesson blocks free-tier users with FORBIDDEN error", async () => {
+      const caller = appRouter.createCaller(createUserContext()); // no orgId = free tier
+      try {
+        await caller.voice.synthesizeLesson({
+          lessonId: 1,
+          voiceId: "EXAVITQu4vr4xnSDxMaL",
+          stability: 0.5,
+          similarityBoost: 0.75,
+        });
+        expect.fail("Should have thrown FORBIDDEN");
+      } catch (err: any) {
+        expect(err.code).toBe("FORBIDDEN");
+        expect(err.message).toContain("Pro, Premium, and Enterprise");
+      }
+    });
+
+    it("synthesize allows admin users regardless of subscription", async () => {
+      const caller = appRouter.createCaller(createAdminContext());
+      // Admin bypasses subscription check; will fail at ElevenLabs/cache level, not FORBIDDEN
+      try {
+        await caller.voice.synthesize({
+          text: "Admin test",
+          voiceId: "EXAVITQu4vr4xnSDxMaL",
+          stability: 0.5,
+          similarityBoost: 0.75,
+          skipCache: true,
+        });
+      } catch (err: any) {
+        // Should NOT be FORBIDDEN — any other error is acceptable (e.g., ElevenLabs rate limit)
+        expect(err.code).not.toBe("FORBIDDEN");
+      }
+    }, 15000);
+
+    it("synthesizeLesson allows admin users regardless of subscription", async () => {
+      const caller = appRouter.createCaller(createAdminContext());
+      try {
+        await caller.voice.synthesizeLesson({
+          lessonId: 99999,
+          voiceId: "EXAVITQu4vr4xnSDxMaL",
+          stability: 0.5,
+          similarityBoost: 0.75,
+          skipCache: true,
+        });
+      } catch (err: any) {
+        // Should NOT be FORBIDDEN — any other error is acceptable (e.g., NOT_FOUND for lesson)
+        expect(err.code).not.toBe("FORBIDDEN");
+      }
+    }, 15000);
+  });
+
   describe("synthesize with cache", () => {
     it("synthesize endpoint accepts skipCache parameter", async () => {
-      const caller = appRouter.createCaller(createUserContext());
-      // Will fail because ElevenLabs is configured but the cache check + TTS call may take time
-      // Just verify the input schema accepts skipCache without a validation error
+      // Use admin context since free-tier users are now blocked
+      const caller = appRouter.createCaller(createAdminContext());
       await expect(
         caller.voice.synthesize({
           text: "Test text",
@@ -147,8 +213,8 @@ describe("Voice Audio Cache", () => {
     }, 15000);
 
     it("synthesizeLesson endpoint accepts skipCache parameter", async () => {
-      const caller = appRouter.createCaller(createUserContext());
-      // Will fail because lesson doesn't exist, but input validation with skipCache passes
+      // Use admin context since free-tier users are now blocked
+      const caller = appRouter.createCaller(createAdminContext());
       await expect(
         caller.voice.synthesizeLesson({
           lessonId: 99999,

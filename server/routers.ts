@@ -1308,10 +1308,28 @@ const voiceRouter = router({
     similarityBoost: z.number().min(0).max(1).optional(),
     style: z.number().min(0).max(1).optional(),
     skipCache: z.boolean().optional(),
-  })).mutation(async ({ input }) => {
+  })).mutation(async ({ ctx, input }) => {
     const { textToSpeech, isElevenLabsConfigured, VOICES } = await import("./elevenLabs");
     if (!isElevenLabsConfigured()) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Voice service not configured" });
+    }
+
+    // Server-side subscription check: voice narration requires Pro/Premium/Enterprise
+    const { FREE_TIER_FEATURES, hasFeature } = await import("../shared/featureGating");
+    let userFeatures = FREE_TIER_FEATURES;
+    if (ctx.user.orgId) {
+      const sub = await db.getOrgSubscription(ctx.user.orgId);
+      if (sub && sub.status !== "canceled" && sub.status !== "expired") {
+        const plan = await db.getPlanById(sub.planId);
+        if (plan?.features) userFeatures = plan.features as any;
+      }
+    }
+    // Admin users bypass the check
+    if (ctx.user.role !== "admin" && !hasFeature(userFeatures, "voiceNarration")) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "AI voice narration is available on Pro, Premium, and Enterprise plans. Please upgrade to access this feature.",
+      });
     }
 
     const voiceId = input.voiceId || VOICES.sarah;
@@ -1366,10 +1384,28 @@ const voiceRouter = router({
     stability: z.number().min(0).max(1).optional(),
     similarityBoost: z.number().min(0).max(1).optional(),
     skipCache: z.boolean().optional(),
-  })).mutation(async ({ input }) => {
+  })).mutation(async ({ ctx, input }) => {
     const { textToSpeech, isElevenLabsConfigured, VOICES } = await import("./elevenLabs");
     if (!isElevenLabsConfigured()) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Voice service not configured" });
+    }
+
+    // Server-side subscription check: voice narration requires Pro/Premium/Enterprise
+    const { FREE_TIER_FEATURES, hasFeature } = await import("../shared/featureGating");
+    let userFeatures = FREE_TIER_FEATURES;
+    if (ctx.user.orgId) {
+      const sub = await db.getOrgSubscription(ctx.user.orgId);
+      if (sub && sub.status !== "canceled" && sub.status !== "expired") {
+        const plan = await db.getPlanById(sub.planId);
+        if (plan?.features) userFeatures = plan.features as any;
+      }
+    }
+    // Admin users bypass the check
+    if (ctx.user.role !== "admin" && !hasFeature(userFeatures, "voiceNarration")) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "AI voice narration is available on Pro, Premium, and Enterprise plans. Please upgrade to access this feature.",
+      });
     }
 
     const voiceId = input.voiceId || VOICES.sarah;

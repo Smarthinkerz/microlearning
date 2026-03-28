@@ -253,3 +253,19 @@
 - [x] Update VoicePlayer UI: Zap icon + "Cached" badge for cache hits, "Regenerate" button bypasses cache (skipCache=true)
 - [x] Cache invalidation via skipCache param and admin clearCacheEntry
 - [x] 14 voice-cache tests passing (hash determinism, admin endpoints, RBAC, skipCache input validation)
+
+## Voice Cache Admin Panel
+- [x] Add Voice Cache tab/section to Admin CRM (6th tab with Volume2 icon)
+- [x] Display cache stats (total entries, total hits, hit rate %, total storage size)
+- [x] List cached entries with details (text hash, voice, lesson, size, hits, created, last accessed)
+- [x] Clear individual cache entries from the admin panel (trash button per entry)
+- [x] Format file sizes (B/KB/MB/GB) and timestamps for readability
+- [x] Refresh button to reload cache data
+
+## Server-Side Voice Tier Enforcement
+- [x] Add subscription check in voice.synthesize endpoint (block Free/Starter users at API level)
+- [x] Add subscription check in voice.synthesizeLesson endpoint
+- [x] Return clear FORBIDDEN error with upgrade prompt for unauthorized users
+- [x] Admin users bypass subscription check
+- [x] Write tests for server-side enforcement (4 new tests: free-tier blocked, admin allowed)
+- [x] All 18 voice-cache tests passing

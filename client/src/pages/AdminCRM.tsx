@@ -16,6 +16,7 @@ import {
   Search, Pencil, Trash2, Plus, Eye, Save, RefreshCw,
   Type, Layout, Sun, Moon, Image as ImageIcon, Wrench,
   CreditCard, DollarSign, TrendingUp, Crown, ToggleLeft,
+  Volume2, Zap, HardDrive, Clock, Hash, Trash2 as Trash2Icon,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
@@ -1034,6 +1035,160 @@ function SubscriptionsTab() {
   );
 }
 
+// ─── Voice Cache Tab ─────────────────────────────────────────────────
+function VoiceCacheTab() {
+  const { data: stats, isLoading: statsLoading } = trpc.voice.cacheStats.useQuery();
+  const { data: entries, isLoading: entriesLoading, refetch } = trpc.voice.cacheEntries.useQuery({ limit: 100 });
+  const utils = trpc.useUtils();
+
+  const clearEntry = trpc.voice.clearCacheEntry.useMutation({
+    onSuccess: () => {
+      toast.success("Cache entry cleared");
+      utils.voice.cacheStats.invalidate();
+      utils.voice.cacheEntries.invalidate();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  };
+
+  const formatDate = (d: any) => {
+    if (!d) return "—";
+    return new Date(d).toLocaleString(undefined, {
+      month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+  };
+
+  const isLoading = statsLoading || entriesLoading;
+
+  if (isLoading) {
+    return <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  }
+
+  const totalEntries = Number(stats?.totalEntries ?? 0);
+  const totalHits = Number(stats?.totalHits ?? 0);
+  const totalSize = Number(stats?.totalSizeBytes ?? 0);
+  const hitRate = totalEntries > 0 ? ((totalHits / Math.max(totalEntries + totalHits, 1)) * 100).toFixed(1) : "0.0";
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <HardDrive className="h-5 w-5 text-primary mx-auto mb-1" />
+            <p className="text-2xl font-bold text-foreground">{totalEntries}</p>
+            <p className="text-xs text-muted-foreground">Cached Entries</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Zap className="h-5 w-5 text-amber-400 mx-auto mb-1" />
+            <p className="text-2xl font-bold text-foreground">{totalHits}</p>
+            <p className="text-xs text-muted-foreground">Cache Hits</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <TrendingUp className="h-5 w-5 text-emerald-400 mx-auto mb-1" />
+            <p className="text-2xl font-bold text-foreground">{hitRate}%</p>
+            <p className="text-xs text-muted-foreground">Hit Rate</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <HardDrive className="h-5 w-5 text-blue-400 mx-auto mb-1" />
+            <p className="text-2xl font-bold text-foreground">{formatBytes(totalSize)}</p>
+            <p className="text-xs text-muted-foreground">Storage Used</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Cache Entries Table */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Volume2 className="h-4 w-4 text-primary" /> Cached Audio Entries
+          </CardTitle>
+          <Button size="sm" variant="outline" onClick={() => refetch()} className="gap-1.5">
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {!entries || entries.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Volume2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No cached audio entries yet.</p>
+              <p className="text-xs mt-1">Audio will be cached automatically when users generate voice narration.</p>
+            </div>
+          ) : (
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-2">
+                {entries.map((entry: any) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <span className="text-xs font-mono text-muted-foreground truncate">
+                          {entry.textHash?.substring(0, 16)}...
+                        </span>
+                        {entry.lessonId && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            Lesson #{entry.lessonId}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Volume2 className="h-3 w-3" />
+                          {entry.voiceId?.substring(0, 8)}...
+                        </span>
+                        <span>{formatBytes(entry.sizeBytes || 0)}</span>
+                        <span>{entry.charCount || 0} chars</span>
+                        <span className="flex items-center gap-1">
+                          <Zap className="h-3 w-3 text-amber-400" />
+                          {entry.hitCount || 0} hits
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-2.5 w-2.5" />
+                          Created: {formatDate(entry.createdAt)}
+                        </span>
+                        <span>
+                          Last used: {formatDate(entry.lastAccessedAt)}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                      onClick={() => clearEntry.mutate({ id: entry.id })}
+                      disabled={clearEntry.isPending}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Main CRM Page ──────────────────────────────────────────────────
 export default function AdminCRM() {
   const { user, loading } = useAuth({ redirectOnUnauthenticated: true });
@@ -1125,7 +1280,7 @@ export default function AdminCRM() {
 
       {/* Tabs */}
       <Tabs defaultValue="branding" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="branding" className="flex items-center gap-1.5">
             <Palette className="h-3.5 w-3.5" /> Branding
           </TabsTrigger>
@@ -1140,6 +1295,9 @@ export default function AdminCRM() {
           </TabsTrigger>
           <TabsTrigger value="subscriptions" className="flex items-center gap-1.5">
             <CreditCard className="h-3.5 w-3.5" /> Subs
+          </TabsTrigger>
+          <TabsTrigger value="voicecache" className="flex items-center gap-1.5">
+            <Volume2 className="h-3.5 w-3.5" /> Voice
           </TabsTrigger>
         </TabsList>
 
@@ -1157,6 +1315,9 @@ export default function AdminCRM() {
         </TabsContent>
         <TabsContent value="subscriptions" className="mt-6">
           <SubscriptionsTab />
+        </TabsContent>
+        <TabsContent value="voicecache" className="mt-6">
+          <VoiceCacheTab />
         </TabsContent>
       </Tabs>
       </main>
