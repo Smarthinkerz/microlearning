@@ -4,27 +4,54 @@ import { getLoginUrl } from "@/const";
 import {
   GraduationCap,
   Clock,
-  Wifi,
   WifiOff,
   BarChart3,
   Shield,
   Zap,
   ArrowRight,
-  CheckCircle2,
   Smartphone,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+
+const MAIN_VIDEO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/SmarthinkerzMainAdvrt_ce3b6444.mp4";
+const BG_VIDEO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/Smarthinkerz-MicroLearneradv_8937c4ee.mp4";
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const mainVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (isAuthenticated && !loading) {
       setLocation("/dashboard");
     }
   }, [isAuthenticated, loading, setLocation]);
+
+  const togglePlay = () => {
+    const video = mainVideoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play();
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const toggleMute = () => {
+    const video = mainVideoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setIsMuted(video.muted);
+  };
 
   const features = [
     {
@@ -68,7 +95,7 @@ export default function Home() {
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-7 w-7 text-primary" />
-            <span className="text-xl font-bold gradient-text">LearnShift</span>
+            <span className="text-xl font-bold gradient-text">Smarthinkerz LearnShift</span>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -93,44 +120,116 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm mb-6">
-              <Zap className="h-3.5 w-3.5" />
-              Adaptive Learning for Shift Workers
+      {/* Hero with Background Video */}
+      <section className="relative pt-20 min-h-[100vh] flex items-center overflow-hidden">
+        {/* Background Video */}
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            src={BG_VIDEO_URL}
+          />
+          {/* Dark overlay for readability */}
+          <div className="absolute inset-0 bg-background/75 backdrop-blur-[2px]" />
+          {/* Gradient fade at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background to-transparent" />
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 container py-16">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Text */}
+            <div className="text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/25 text-primary text-sm mb-6">
+                <Zap className="h-3.5 w-3.5" />
+                Adaptive Learning for Shift Workers
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-6">
+                Train Your Workforce
+                <br />
+                <span className="gradient-text">Without Disrupting Shifts</span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed">
+                Deliver schedule-aware micro-lessons that fit between shifts and breaks.
+                AI-powered, offline-ready, and enterprise-compliant training for frontline teams.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center lg:items-start gap-3">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto text-base px-8"
+                  onClick={() => {
+                    window.location.href = getLoginUrl();
+                  }}
+                >
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto text-base px-8 bg-transparent"
+                  onClick={() => {
+                    document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  See Features
+                </Button>
+              </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6">
-              Train Your Workforce
-              <br />
-              <span className="gradient-text">Without Disrupting Shifts</span>
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
-              Deliver schedule-aware micro-lessons that fit between shifts and breaks.
-              AI-powered, offline-ready, and enterprise-compliant training for frontline teams.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto text-base px-8"
-                onClick={() => {
-                  window.location.href = getLoginUrl();
-                }}
-              >
-                Start Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto text-base px-8 bg-transparent"
-                onClick={() => {
-                  document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                See Features
-              </Button>
+
+            {/* Right: Featured Main Video */}
+            <div className="relative group">
+              <div className="relative rounded-2xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10">
+                <video
+                  ref={mainVideoRef}
+                  src={MAIN_VIDEO_URL}
+                  muted={isMuted}
+                  playsInline
+                  loop
+                  className="w-full aspect-video object-cover"
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                />
+                {/* Video overlay with play button when paused */}
+                {!isPlaying && (
+                  <div
+                    className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer transition-all"
+                    onClick={togglePlay}
+                  >
+                    <div className="h-16 w-16 rounded-full bg-primary/90 flex items-center justify-center shadow-lg hover:bg-primary transition-colors">
+                      <Play className="h-7 w-7 text-primary-foreground ml-1" />
+                    </div>
+                  </div>
+                )}
+                {/* Controls bar */}
+                <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-between">
+                  <button
+                    onClick={togglePlay}
+                    className="h-8 w-8 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:bg-white/30 transition-colors"
+                  >
+                    {isPlaying ? (
+                      <Pause className="h-4 w-4 text-white" />
+                    ) : (
+                      <Play className="h-4 w-4 text-white ml-0.5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={toggleMute}
+                    className="h-8 w-8 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:bg-white/30 transition-colors"
+                  >
+                    {isMuted ? (
+                      <VolumeX className="h-4 w-4 text-white" />
+                    ) : (
+                      <Volume2 className="h-4 w-4 text-white" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              {/* Glow effect behind video */}
+              <div className="absolute -inset-4 bg-primary/5 rounded-3xl blur-2xl -z-10" />
             </div>
           </div>
         </div>

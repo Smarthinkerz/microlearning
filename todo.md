@@ -148,3 +148,11 @@
 - [x] Lighten the dark background to a softer, less intense dark tone (oklch 0.145 → 0.21)
 - [x] Updated all references: DashboardLayout, Home, AdminCRM, manifest.json, index.html, offline.html, autoSeed, routers, tests
 - [x] All 46 tests passing with zero MicroLearn references remaining
+
+## Theme Lightening & Video Integration
+- [x] Lighten the dark theme further (background oklch 0.21 → 0.27, cards/sidebar proportionally lighter)
+- [x] Upload SmarthinkerzMainAdvrt.mp4 to CDN as featured front video
+- [x] Upload Smarthinkerz-MicroLearneradv.mp4 to CDN as background video
+- [x] Update hero section: background video plays behind with overlay, main advert video featured prominently on right
+- [x] Video player with play/pause, mute/unmute controls and hover overlay
+- [x] All 46 tests passing
