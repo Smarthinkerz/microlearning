@@ -272,3 +272,7 @@
 
 ## Logo Size Fix
 - [x] Increase logo size in all navigation areas: Home nav (h-28), Home footer (h-20), Dashboard sign-in (h-28), Dashboard sidebar (h-24), Pricing nav (h-24), Pricing footer (h-16)
+
+## Logo Replacement (New Image)
+- [x] Process new logo (removed beige background via flood-fill, cropped dark border, converted to transparent PNG)
+- [x] Upload to CDN and replaced all 5 old logo URLs across Home, Pricing, DashboardLayout
