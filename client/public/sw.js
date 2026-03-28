@@ -1,13 +1,12 @@
-const CACHE_NAME = 'smarthinkerz-learnshift-v1';
+const CACHE_NAME = 'smarthinkerz-learnshift-v2';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
   '/offline.html',
 ];
 
-// Install: cache static assets
+// Install: cache only offline fallback assets (NOT the root page)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -17,7 +16,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate: clean ALL old caches to force fresh content
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -29,7 +28,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first with cache fallback for API, cache-first for assets
+// Fetch handler
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -37,12 +36,27 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // API requests: network-first
+  // Skip Vite HMR and dev-only requests entirely
+  if (url.pathname.startsWith('/@') || url.pathname.startsWith('/__manus__') || url.pathname.startsWith('/node_modules')) {
+    return;
+  }
+
+  // Navigation requests (HTML pages): ALWAYS network-first, never serve stale HTML
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .catch(() => {
+          return caches.match(OFFLINE_URL) || new Response('Offline', { status: 503 });
+        })
+    );
+    return;
+  }
+
+  // API requests: network-first with cache fallback
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Cache successful API responses for offline use
           if (response.ok && !url.pathname.includes('/auth/')) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
@@ -64,7 +78,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: stale-while-revalidate
+  // Static assets (images, fonts, CSS, JS): stale-while-revalidate
   event.respondWith(
     caches.match(request).then((cached) => {
       const fetchPromise = fetch(request)
@@ -78,13 +92,8 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // If offline and no cache, show offline page for navigation
-          if (request.mode === 'navigate') {
-            return caches.match(OFFLINE_URL);
-          }
-          return new Response('', { status: 503 });
+          return cached || new Response('', { status: 503 });
         });
-
       return cached || fetchPromise;
     })
   );
@@ -99,7 +108,6 @@ self.addEventListener('sync', (event) => {
 
 async function syncOfflineProgress() {
   try {
-    // Get pending progress from IndexedDB
     const db = await openDB();
     const tx = db.transaction('offlineProgress', 'readonly');
     const store = tx.objectStore('offlineProgress');
@@ -112,7 +120,6 @@ async function syncOfflineProgress() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(item.data),
         });
-        // Remove synced item
         const deleteTx = db.transaction('offlineProgress', 'readwrite');
         deleteTx.objectStore('offlineProgress').delete(item.id);
       } catch (e) {
