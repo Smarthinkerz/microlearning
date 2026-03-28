@@ -923,6 +923,69 @@ const crmRouter = router({
     await db.updateOrganization(id, data);
     return { success: true };
   }),
+
+  // ─── Subscription Management ──────────────────────────────────────
+  getSubscriptionStats: adminProcedure.query(async () => {
+    return db.getSubscriptionStats();
+  }),
+
+  listPlans: adminProcedure.query(async () => {
+    return db.getAllPlansAdmin();
+  }),
+
+  updatePlan: adminProcedure.input(z.object({
+    id: z.number(),
+    name: z.string().optional(),
+    slug: z.string().optional(),
+    priceMonthly: z.number().optional(),
+    priceYearly: z.number().optional(),
+    isPerUser: z.boolean().optional(),
+    maxUsers: z.number().nullable().optional(),
+    isActive: z.boolean().optional(),
+    sortOrder: z.number().optional(),
+  })).mutation(async ({ input }) => {
+    const { id, ...data } = input;
+    await db.updatePlan(id, data as any);
+    return { success: true };
+  }),
+
+  createPlan: adminProcedure.input(z.object({
+    name: z.string().min(1),
+    slug: z.string().min(1),
+    tier: z.enum(["starter", "pro", "enterprise", "consumer_free", "consumer_premium"]),
+    priceMonthly: z.number(),
+    priceYearly: z.number().optional(),
+    isPerUser: z.boolean().default(true),
+    sortOrder: z.number().default(0),
+  })).mutation(async ({ input }) => {
+    const existing = await db.getPlanBySlug(input.slug);
+    if (existing) throw new TRPCError({ code: "CONFLICT", message: "Plan slug already exists" });
+    await db.createPlan(input as any);
+    return { success: true };
+  }),
+
+  listSubscriptions: adminProcedure.query(async () => {
+    return db.getAllSubscriptionsAdmin();
+  }),
+
+  updateSubscription: adminProcedure.input(z.object({
+    id: z.number(),
+    status: z.enum(["active", "trial", "past_due", "canceled", "expired"]).optional(),
+    planId: z.number().optional(),
+    quantity: z.number().optional(),
+  })).mutation(async ({ input }) => {
+    const { id, status, planId, quantity } = input;
+    if (status) await db.updateSubscriptionStatus(id, status);
+    if (planId) await db.updateSubscriptionPlan(id, planId);
+    if (quantity !== undefined) {
+      await db.updateSubscriptionQuantity(id, quantity);
+    }
+    return { success: true };
+  }),
+
+  listPayments: adminProcedure.query(async () => {
+    return db.getAllPaymentsAdmin();
+  }),
 });
 // ─── Subscription & Pricing Router ─────────────────────────────────────────
 const subscriptionRouter = router({
@@ -937,6 +1000,29 @@ const subscriptionRouter = router({
   getMySubscription: protectedProcedure.query(async ({ ctx }) => {
     if (!ctx.user.orgId) return null;
     return db.getOrgSubscription(ctx.user.orgId);
+  }),
+
+  getMyEntitlements: protectedProcedure.query(async ({ ctx }) => {
+    const { FREE_TIER_FEATURES } = await import("../shared/featureGating");
+    if (!ctx.user.orgId) {
+      return { tier: "free", planName: "Free", features: FREE_TIER_FEATURES, subscriptionStatus: null };
+    }
+    const sub = await db.getOrgSubscription(ctx.user.orgId);
+    if (!sub || sub.status === "canceled" || sub.status === "expired") {
+      return { tier: "free", planName: "Free", features: FREE_TIER_FEATURES, subscriptionStatus: sub?.status || null };
+    }
+    const plan = await db.getPlanById(sub.planId);
+    if (!plan) {
+      return { tier: "free", planName: "Free", features: FREE_TIER_FEATURES, subscriptionStatus: sub.status };
+    }
+    return {
+      tier: plan.tier,
+      planName: plan.name,
+      features: plan.features || FREE_TIER_FEATURES,
+      subscriptionStatus: sub.status,
+      trialEndsAt: sub.trialEndsAt,
+      currentPeriodEnd: sub.currentPeriodEnd,
+    };
   }),
 
   subscribe: protectedProcedure.input(z.object({
@@ -1198,6 +1284,108 @@ const subscriptionRouter = router({
   }),
 });
 
+// ─── Voice Router ─────────────────────────────────────────────────────────
+const voiceRouter = router({
+  isConfigured: publicProcedure.query(async () => {
+    const { isElevenLabsConfigured } = await import("./elevenLabs");
+    return { configured: isElevenLabsConfigured() };
+  }),
+
+  getVoices: protectedProcedure.query(async () => {
+    const { VOICES } = await import("./elevenLabs");
+    // Return curated list of voices (since the API key may not have voices_read permission)
+    return Object.entries(VOICES).map(([key, id]) => ({
+      id,
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      key,
+    }));
+  }),
+
+  synthesize: protectedProcedure.input(z.object({
+    text: z.string().min(1).max(5000),
+    voiceId: z.string().optional(),
+    stability: z.number().min(0).max(1).optional(),
+    similarityBoost: z.number().min(0).max(1).optional(),
+    style: z.number().min(0).max(1).optional(),
+  })).mutation(async ({ input }) => {
+    const { textToSpeech, isElevenLabsConfigured } = await import("./elevenLabs");
+    if (!isElevenLabsConfigured()) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Voice service not configured" });
+    }
+
+    const audioBuffer = await textToSpeech({
+      text: input.text,
+      voiceId: input.voiceId,
+      stability: input.stability,
+      similarityBoost: input.similarityBoost,
+      style: input.style,
+    });
+
+    // Upload to S3
+    const { storagePut } = await import("./storage");
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const fileKey = `voice-audio/${timestamp}-${randomSuffix}.mp3`;
+    const { url } = await storagePut(fileKey, audioBuffer, "audio/mpeg");
+
+    return { url, fileKey, sizeBytes: audioBuffer.length };
+  }),
+
+  synthesizeLesson: protectedProcedure.input(z.object({
+    lessonId: z.number(),
+    voiceId: z.string().optional(),
+    stability: z.number().min(0).max(1).optional(),
+    similarityBoost: z.number().min(0).max(1).optional(),
+  })).mutation(async ({ input }) => {
+    const { textToSpeech, isElevenLabsConfigured } = await import("./elevenLabs");
+    if (!isElevenLabsConfigured()) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Voice service not configured" });
+    }
+
+    const lesson = await db.getLessonById(input.lessonId);
+    if (!lesson) throw new TRPCError({ code: "NOT_FOUND", message: "Lesson not found" });
+
+    // Extract text from lesson content blocks
+    const content = lesson.content as any;
+    const blocks = content?.blocks || [];
+    const textParts: string[] = [];
+
+    // Add title and description
+    textParts.push(lesson.title);
+    if (lesson.description) textParts.push(lesson.description);
+
+    // Extract text from content blocks
+    for (const block of blocks) {
+      if (block.type === "text") {
+        const text = block.data?.text || block.data?.content || "";
+        if (text) textParts.push(text);
+      }
+    }
+
+    const fullText = textParts.join(". \n\n");
+    if (!fullText.trim()) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Lesson has no text content to narrate" });
+    }
+
+    // Limit to 5000 chars per ElevenLabs request
+    const truncatedText = fullText.length > 5000 ? fullText.substring(0, 4997) + "..." : fullText;
+
+    const audioBuffer = await textToSpeech({
+      text: truncatedText,
+      voiceId: input.voiceId,
+      stability: input.stability,
+      similarityBoost: input.similarityBoost,
+    });
+
+    const { storagePut } = await import("./storage");
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const fileKey = `voice-audio/lesson-${input.lessonId}-${randomSuffix}.mp3`;
+    const { url } = await storagePut(fileKey, audioBuffer, "audio/mpeg");
+
+    return { url, fileKey, sizeBytes: audioBuffer.length, charCount: truncatedText.length };
+  }),
+});
+
 // ─── Main Router ─────────────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
@@ -1223,6 +1411,7 @@ export const appRouter = router({
   compliance: complianceRouter,
   crm: crmRouter,
   subscription: subscriptionRouter,
+  voice: voiceRouter,
 });
 
 export type AppRouter = typeof appRouter;

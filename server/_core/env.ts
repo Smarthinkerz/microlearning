@@ -11,4 +11,6 @@ export const ENV = {
   tapSecretKey: process.env.TAP_SECRET_KEY ?? "",
   tapPublicKey: process.env.TAP_PUBLIC_KEY ?? "",
   tapWebhookSecret: process.env.TAP_WEBHOOK_SECRET ?? "",
+  // ElevenLabs Voice
+  elevenLabsApiKey: process.env.ELEVENLABS_API_KEY ?? "",
 };

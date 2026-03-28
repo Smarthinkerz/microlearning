@@ -91,7 +91,7 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-16 w-auto object-contain" />
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_26b18f8b.png" alt="Smarthinkerz LearnShift" className="h-16 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
@@ -372,7 +372,7 @@ export default function Home() {
       <footer className="py-8 border-t border-border/30">
         <div className="container flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-14 w-auto object-contain" />
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_26b18f8b.png" alt="Smarthinkerz LearnShift" className="h-14 w-auto object-contain" />
           </div>
           <p className="text-sm text-muted-foreground">
             Adaptive micro-learning for shift workers.

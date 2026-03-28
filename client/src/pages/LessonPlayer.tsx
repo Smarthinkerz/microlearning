@@ -13,6 +13,7 @@ import {
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
+import { VoicePlayer } from "@/components/VoicePlayer";
 
 export default function LessonPlayer() {
   const { id } = useParams<{ id: string }>();
@@ -117,6 +118,10 @@ export default function LessonPlayer() {
             </Button>
           </CardContent>
         </Card>
+        {/* Voice narration for the entire lesson */}
+        <div className="mt-4">
+          <VoicePlayer lessonId={lessonId} />
+        </div>
       </div>
     );
   }
@@ -188,10 +193,16 @@ export default function LessonPlayer() {
                 {currentItem.data?.type || "content"}
               </Badge>
               {currentItem.data?.type === "text" && (
-                <div className="prose prose-invert max-w-none">
-                  <div className="text-foreground leading-relaxed whitespace-pre-wrap">
-                    {currentItem.data?.data?.text || currentItem.data?.data?.content || "Content block"}
+                <div className="space-y-3">
+                  <div className="prose prose-invert max-w-none">
+                    <div className="text-foreground leading-relaxed whitespace-pre-wrap">
+                      {currentItem.data?.data?.text || currentItem.data?.data?.content || "Content block"}
+                    </div>
                   </div>
+                  <VoicePlayer
+                    text={currentItem.data?.data?.text || currentItem.data?.data?.content || ""}
+                    compact
+                  />
                 </div>
               )}
               {currentItem.data?.type === "video" && (

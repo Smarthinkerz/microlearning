@@ -18,6 +18,8 @@ import {
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { useEntitlements } from "@/hooks/useEntitlements";
+import { Lock, Crown } from "lucide-react";
 
 const CATEGORY_ICONS: Record<string, any> = {
   "Safety": Shield,
@@ -84,6 +86,10 @@ export default function LessonLibrary() {
 
   const lessonCount = lessons?.length ?? 0;
   const isAdmin = user && ["employer_admin", "super_admin", "admin"].includes((user as any).appRole || (user as any).role);
+  const { limit, isLessonLimitReached, tier, planName } = useEntitlements();
+  const maxLessons = limit("maxLessons");
+  const limitReached = isLessonLimitReached(lessonCount);
+  const isUnlimited = maxLessons === -1;
 
   const difficultyColor = (d: string) => {
     switch (d) {
@@ -241,6 +247,29 @@ export default function LessonLibrary() {
           )}
         </div>
       </div>
+
+      {/* Lesson Limit Banner */}
+      {user && !isUnlimited && (
+        <div className={`rounded-lg border p-3 flex items-center justify-between ${
+          limitReached
+            ? "bg-amber-500/5 border-amber-500/30"
+            : "bg-muted/50 border-border"
+        }`}>
+          <div className="flex items-center gap-2">
+            {limitReached ? <Lock className="h-4 w-4 text-amber-400" /> : <BookOpen className="h-4 w-4 text-muted-foreground" />}
+            <span className="text-sm text-foreground">
+              {limitReached
+                ? `You've reached your ${maxLessons}-lesson limit on the ${planName} plan.`
+                : `${lessonCount} of ${maxLessons} lessons used (${planName} plan)`}
+            </span>
+          </div>
+          {limitReached && (
+            <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10" onClick={() => setLocation("/pricing")}>
+              <Crown className="mr-1.5 h-3.5 w-3.5" /> Upgrade
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">

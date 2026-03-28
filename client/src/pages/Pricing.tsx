@@ -16,7 +16,7 @@ import {
   Headphones, Star, ChevronLeft
 } from "lucide-react";
 
-const LOGO_URL = "https://manus-storage.oss-cn-beijing.aliyuncs.com/user-file-webdev/fda936c2/smarthinkerz-logo.png";
+const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_26b18f8b.png";
 
 type PlanFeatures = {
   maxLessons: number;

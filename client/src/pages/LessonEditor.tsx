@@ -15,6 +15,7 @@ import {
 import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
+import { FeatureGate } from "@/components/FeatureGate";
 
 type ContentBlock = {
   id: string;
@@ -176,6 +177,7 @@ export default function LessonEditor() {
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   return (
+    <FeatureGate feature="contentAuthoring">
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -413,5 +415,6 @@ export default function LessonEditor() {
         </CardContent>
       </Card>
     </div>
+    </FeatureGate>
   );
 }

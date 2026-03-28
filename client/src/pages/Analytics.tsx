@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { BarChart3, Users, BookOpen, TrendingUp, Calendar, CheckCircle2, Clock, Target } from "lucide-react";
+import { FeatureGate } from "@/components/FeatureGate";
+import { useEntitlements } from "@/hooks/useEntitlements";
 
 export default function Analytics() {
   const { user } = useAuth();
@@ -38,6 +40,8 @@ export default function Analytics() {
   const inProgressAssignments = stats?.inProgressAssignments ?? 0;
   const pendingAssignments = totalAssignments - completedAssignments - inProgressAssignments;
 
+  const { can } = useEntitlements();
+
   return (
     <div className="space-y-6">
       <div>
@@ -45,7 +49,7 @@ export default function Analytics() {
         <p className="text-muted-foreground">Organization learning performance overview.</p>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - basic tracking available to all */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard icon={Users} label="Total Learners" value={stats?.totalUsers ?? 0} color="text-blue-400" />
         <KPICard icon={BookOpen} label="Published Lessons" value={stats?.totalLessons ?? 0} color="text-green-400" />
@@ -53,7 +57,8 @@ export default function Analytics() {
         <KPICard icon={Calendar} label="Active Shifts" value={stats?.totalShifts ?? 0} color="text-purple-400" />
       </div>
 
-      {/* Detailed Stats */}
+      {/* Detailed Stats - gated behind fullAnalytics (Pro+) */}
+      <FeatureGate feature="fullAnalytics">
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Assignment Breakdown */}
         <Card>
@@ -117,6 +122,7 @@ export default function Analytics() {
           </CardContent>
         </Card>
       </div>
+      </FeatureGate>
     </div>
   );
 }

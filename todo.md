@@ -197,3 +197,38 @@
 - [ ] Payment flow: select tier → checkout → activate subscription (end-to-end with live keys)
 - [ ] Subscription status tracking and renewal management
 - [ ] Tap webhook handler for async charge updates
+
+## Logo Fix
+- [x] Investigate and fix broken logo across all pages (nav, sidebar, sign-in, footer)
+- [x] Ensure logo renders correctly at all sizes (re-uploaded to CDN, replaced all 5 references)
+
+## Admin CRM Subscription Management
+- [x] Subscription plans CRUD in Admin CRM (view, edit, create, deactivate plans)
+- [x] Active subscriptions overview (list all org subscriptions with status)
+- [x] Manual upgrade/downgrade subscriptions for orgs
+- [x] Payment history view in Admin CRM
+- [x] Subscription stats dashboard (active, trial, canceled, revenue)al count)
+
+## Feature Gating
+- [x] Create shared feature gating utility (shared/featureGating.ts)
+- [x] Create useEntitlements React hook (client/src/hooks/useEntitlements.ts)
+- [x] Create FeatureGate + TierBadge components (client/src/components/FeatureGate.tsx)
+- [x] Add getMyEntitlements tRPC endpoint
+- [x] Gate full analytics behind Pro+ plan (Analytics.tsx)
+- [x] Gate content authoring behind Pro+ plan (LessonEditor.tsx)
+- [x] Add lesson limit banner to LessonLibrary (shows usage + upgrade CTA)
+- [ ] Gate analytics dashboard to Pro+ tiers
+- [ ] Gate content authoring studio to Pro+ tiers
+- [ ] Gate AI recommendations to Pro+ tiers
+- [ ] Gate SCORM/xAPI export to Pro+ and Enterprise
+- [ ] Show upgrade prompts when users hit gated features
+- [ ] Feature gating tests
+
+## ElevenLabs Voice Integration
+- [x] Add ElevenLabs API key as env secret (ELEVENLABS_API_KEY)
+- [x] Create server-side ElevenLabs TTS service module (server/elevenLabs.ts)
+- [x] Add text-to-speech endpoints (voice.synthesize + voice.synthesizeLesson)
+- [x] Add voice playback UI to lesson player (full lesson + per-block compact)
+- [x] Support 9 curated voices with settings (stability, clarity, style)
+- [x] VoicePlayer component with play/pause/seek/volume/regenerate
+- [x] Voice generation tests (5 tests passing)

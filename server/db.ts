@@ -709,3 +709,55 @@ export async function recordPackPurchase(userId: number, packId: number, payment
     purchasedAt: Date.now(),
   });
 }
+
+// ─── Admin Subscription Management ──────────────────────────────────
+export async function getAllPlansAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(subscriptionPlans).orderBy(subscriptionPlans.sortOrder);
+}
+
+export async function updatePlan(id: number, data: Partial<InsertSubscriptionPlan>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(subscriptionPlans).set(data).where(eq(subscriptionPlans.id, id));
+}
+
+export async function getAllSubscriptionsAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(subscriptions).orderBy(desc(subscriptions.createdAt));
+}
+
+export async function getAllPaymentsAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(payments).orderBy(desc(payments.createdAt));
+}
+
+export async function getSubscriptionStats() {
+  const db = await getDb();
+  if (!db) return { active: 0, trial: 0, canceled: 0, totalRevenue: 0 };
+  const activeResult = await db.select({ count: sql<number>`count(*)` }).from(subscriptions).where(eq(subscriptions.status, "active"));
+  const trialResult = await db.select({ count: sql<number>`count(*)` }).from(subscriptions).where(eq(subscriptions.status, "trial"));
+  const canceledResult = await db.select({ count: sql<number>`count(*)` }).from(subscriptions).where(eq(subscriptions.status, "canceled"));
+  const revenueResult = await db.select({ total: sql<number>`COALESCE(SUM(amount), 0)` }).from(payments).where(eq(payments.status, "succeeded"));
+  return {
+    active: activeResult[0]?.count ?? 0,
+    trial: trialResult[0]?.count ?? 0,
+    canceled: canceledResult[0]?.count ?? 0,
+    totalRevenue: revenueResult[0]?.total ?? 0,
+  };
+}
+
+export async function updateSubscriptionPlan(subId: number, newPlanId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(subscriptions).set({ planId: newPlanId }).where(eq(subscriptions.id, subId));
+}
+
+export async function updateSubscriptionQuantity(id: number, quantity: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(subscriptions).set({ quantity }).where(eq(subscriptions.id, id));
+}

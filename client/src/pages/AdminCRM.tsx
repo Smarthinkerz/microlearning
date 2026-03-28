@@ -15,6 +15,7 @@ import {
   Palette, Users, BookOpen, Building2, BarChart3, Loader2,
   Search, Pencil, Trash2, Plus, Eye, Save, RefreshCw,
   Type, Layout, Sun, Moon, Image as ImageIcon, Wrench,
+  CreditCard, DollarSign, TrendingUp, Crown, ToggleLeft,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
@@ -678,6 +679,361 @@ function OrganizationsTab() {
   );
 }
 
+// ─── Subscriptions Tab ─────────────────────────────────────────────
+function SubscriptionsTab() {
+  const { data: subStats } = trpc.crm.getSubscriptionStats.useQuery();
+  const { data: plans, isLoading: plansLoading } = trpc.crm.listPlans.useQuery();
+  const { data: subs, isLoading: subsLoading } = trpc.crm.listSubscriptions.useQuery();
+  const { data: paymentsData, isLoading: paymentsLoading } = trpc.crm.listPayments.useQuery();
+  const { data: orgs } = trpc.crm.listOrgs.useQuery();
+  const utils = trpc.useUtils();
+
+  const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [editingSub, setEditingSub] = useState<any>(null);
+  const [subTab, setSubTab] = useState<"overview" | "plans" | "subscriptions" | "payments">("overview");
+
+  const updatePlan = trpc.crm.updatePlan.useMutation({
+    onSuccess: () => {
+      toast.success("Plan updated");
+      utils.crm.listPlans.invalidate();
+      setEditingPlan(null);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const updateSub = trpc.crm.updateSubscription.useMutation({
+    onSuccess: () => {
+      toast.success("Subscription updated");
+      utils.crm.listSubscriptions.invalidate();
+      utils.crm.getSubscriptionStats.invalidate();
+      setEditingSub(null);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const orgMap = useMemo(() => {
+    const m: Record<number, string> = {};
+    (orgs || []).forEach((o: any) => { m[o.id] = o.name; });
+    return m;
+  }, [orgs]);
+
+  const planMap = useMemo(() => {
+    const m: Record<number, string> = {};
+    (plans || []).forEach((p: any) => { m[p.id] = p.name; });
+    return m;
+  }, [plans]);
+
+  const statusColor = (s: string) => {
+    switch (s) {
+      case "active": return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+      case "trial": return "bg-blue-500/10 text-blue-400 border-blue-500/30";
+      case "past_due": return "bg-amber-500/10 text-amber-400 border-amber-500/30";
+      case "canceled": return "bg-red-500/10 text-red-400 border-red-500/30";
+      case "expired": return "bg-gray-500/10 text-gray-400 border-gray-500/30";
+      default: return "";
+    }
+  };
+
+  const paymentStatusColor = (s: string) => {
+    switch (s) {
+      case "succeeded": return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+      case "pending": return "bg-amber-500/10 text-amber-400 border-amber-500/30";
+      case "failed": return "bg-red-500/10 text-red-400 border-red-500/30";
+      case "refunded": return "bg-purple-500/10 text-purple-400 border-purple-500/30";
+      default: return "";
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Sub-navigation */}
+      <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
+        {(["overview", "plans", "subscriptions", "payments"] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setSubTab(tab)}
+            className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all capitalize ${
+              subTab === tab ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Overview */}
+      {subTab === "overview" && subStats && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <TrendingUp className="h-5 w-5 text-emerald-400 mx-auto mb-1" />
+                <p className="text-2xl font-bold text-foreground">{subStats.active}</p>
+                <p className="text-xs text-muted-foreground">Active</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Crown className="h-5 w-5 text-blue-400 mx-auto mb-1" />
+                <p className="text-2xl font-bold text-foreground">{subStats.trial}</p>
+                <p className="text-xs text-muted-foreground">Trial</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <ToggleLeft className="h-5 w-5 text-red-400 mx-auto mb-1" />
+                <p className="text-2xl font-bold text-foreground">{subStats.canceled}</p>
+                <p className="text-xs text-muted-foreground">Canceled</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <DollarSign className="h-5 w-5 text-primary mx-auto mb-1" />
+                <p className="text-2xl font-bold text-foreground">${(subStats.totalRevenue / 100).toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Total Revenue</p>
+              </CardContent>
+            </Card>
+          </div>
+          <Card>
+            <CardHeader><CardTitle className="text-base">Quick Actions</CardTitle></CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => setSubTab("plans")}>
+                <CreditCard className="mr-2 h-4 w-4" /> Manage Plans
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setSubTab("subscriptions")}>
+                <Users className="mr-2 h-4 w-4" /> View Subscriptions
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setSubTab("payments")}>
+                <DollarSign className="mr-2 h-4 w-4" /> Payment History
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Plans Management */}
+      {subTab === "plans" && (
+        <div className="space-y-3">
+          {plansLoading ? (
+            <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+          ) : (
+            (plans || []).map((p: any) => (
+              <Card key={p.id} className={`transition-colors ${!p.isActive ? 'opacity-60' : 'hover:border-primary/30'}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">{p.name}</p>
+                        <Badge variant="outline" className="text-xs">{p.tier}</Badge>
+                        <Badge variant={p.isActive ? "default" : "secondary"} className="text-xs">{p.isActive ? "Active" : "Inactive"}</Badge>
+                      </div>
+                      <div className="flex items-center gap-4 mt-1">
+                        <span className="text-xs text-muted-foreground">Monthly: ${(p.priceMonthly / 100).toFixed(2)}</span>
+                        {p.priceYearly && <span className="text-xs text-muted-foreground">Yearly: ${(p.priceYearly / 100).toFixed(2)}</span>}
+                        <span className="text-xs text-muted-foreground">{p.isPerUser ? "Per User" : "Flat Rate"}</span>
+                        <span className="text-xs text-muted-foreground">Sort: {p.sortOrder}</span>
+                      </div>
+                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingPlan({ ...p })}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader><DialogTitle>Edit Plan: {p.name}</DialogTitle></DialogHeader>
+                        {editingPlan && editingPlan.id === p.id && (
+                          <div className="space-y-4 py-2">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label>Name</Label>
+                                <Input value={editingPlan.name} onChange={e => setEditingPlan({ ...editingPlan, name: e.target.value })} />
+                              </div>
+                              <div>
+                                <Label>Slug</Label>
+                                <Input value={editingPlan.slug} onChange={e => setEditingPlan({ ...editingPlan, slug: e.target.value })} />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label>Monthly Price (cents)</Label>
+                                <Input type="number" value={editingPlan.priceMonthly} onChange={e => setEditingPlan({ ...editingPlan, priceMonthly: Number(e.target.value) })} />
+                              </div>
+                              <div>
+                                <Label>Yearly Price (cents)</Label>
+                                <Input type="number" value={editingPlan.priceYearly || 0} onChange={e => setEditingPlan({ ...editingPlan, priceYearly: Number(e.target.value) })} />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label>Sort Order</Label>
+                                <Input type="number" value={editingPlan.sortOrder} onChange={e => setEditingPlan({ ...editingPlan, sortOrder: Number(e.target.value) })} />
+                              </div>
+                              <div className="flex items-center gap-4 pt-6">
+                                <div className="flex items-center gap-2">
+                                  <Label>Per User</Label>
+                                  <Switch checked={editingPlan.isPerUser} onCheckedChange={v => setEditingPlan({ ...editingPlan, isPerUser: v })} />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Label>Active</Label>
+                                  <Switch checked={editingPlan.isActive} onCheckedChange={v => setEditingPlan({ ...editingPlan, isActive: v })} />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <DialogFooter>
+                          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                          <Button onClick={() => updatePlan.mutate({
+                            id: editingPlan.id,
+                            name: editingPlan.name,
+                            slug: editingPlan.slug,
+                            priceMonthly: editingPlan.priceMonthly,
+                            priceYearly: editingPlan.priceYearly,
+                            isPerUser: editingPlan.isPerUser,
+                            isActive: editingPlan.isActive,
+                            sortOrder: editingPlan.sortOrder,
+                          })} disabled={updatePlan.isPending}>
+                            {updatePlan.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Save
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Subscriptions List */}
+      {subTab === "subscriptions" && (
+        <div className="space-y-3">
+          {subsLoading ? (
+            <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+          ) : (subs || []).length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">No subscriptions yet.</div>
+          ) : (
+            (subs || []).map((s: any) => (
+              <Card key={s.id} className="hover:border-primary/30 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">{orgMap[s.orgId] || `Org #${s.orgId}`}</p>
+                        <Badge variant="outline" className={`text-xs ${statusColor(s.status)}`}>{s.status}</Badge>
+                        <Badge variant="outline" className="text-xs">{planMap[s.planId] || `Plan #${s.planId}`}</Badge>
+                      </div>
+                      <div className="flex items-center gap-4 mt-1">
+                        <span className="text-xs text-muted-foreground">Seats: {s.quantity || 1}</span>
+                        <span className="text-xs text-muted-foreground">Period: {new Date(s.currentPeriodStart).toLocaleDateString()} - {new Date(s.currentPeriodEnd).toLocaleDateString()}</span>
+                        {s.trialEndsAt && <span className="text-xs text-muted-foreground">Trial ends: {new Date(s.trialEndsAt).toLocaleDateString()}</span>}
+                      </div>
+                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingSub({ ...s })}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader><DialogTitle>Edit Subscription</DialogTitle></DialogHeader>
+                        {editingSub && editingSub.id === s.id && (
+                          <div className="space-y-4 py-2">
+                            <div>
+                              <Label>Organization</Label>
+                              <p className="text-sm text-muted-foreground">{orgMap[editingSub.orgId] || `Org #${editingSub.orgId}`}</p>
+                            </div>
+                            <div>
+                              <Label>Status</Label>
+                              <Select value={editingSub.status} onValueChange={v => setEditingSub({ ...editingSub, status: v })}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="active">Active</SelectItem>
+                                  <SelectItem value="trial">Trial</SelectItem>
+                                  <SelectItem value="past_due">Past Due</SelectItem>
+                                  <SelectItem value="canceled">Canceled</SelectItem>
+                                  <SelectItem value="expired">Expired</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>Plan</Label>
+                              <Select value={String(editingSub.planId)} onValueChange={v => setEditingSub({ ...editingSub, planId: Number(v) })}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  {(plans || []).map((p: any) => (
+                                    <SelectItem key={p.id} value={String(p.id)}>{p.name} (${(p.priceMonthly / 100).toFixed(2)}/mo)</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>Seats</Label>
+                              <Input type="number" min={1} value={editingSub.quantity || 1} onChange={e => setEditingSub({ ...editingSub, quantity: Number(e.target.value) })} />
+                            </div>
+                          </div>
+                        )}
+                        <DialogFooter>
+                          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                          <Button onClick={() => updateSub.mutate({
+                            id: editingSub.id,
+                            status: editingSub.status,
+                            planId: editingSub.planId,
+                            quantity: editingSub.quantity,
+                          })} disabled={updateSub.isPending}>
+                            {updateSub.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Save
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Payments History */}
+      {subTab === "payments" && (
+        <div className="space-y-3">
+          {paymentsLoading ? (
+            <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+          ) : (paymentsData || []).length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">No payments recorded yet.</div>
+          ) : (
+            (paymentsData || []).map((p: any) => (
+              <Card key={p.id} className="hover:border-primary/30 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">{orgMap[p.orgId] || `Org #${p.orgId}`}</p>
+                        <Badge variant="outline" className={`text-xs ${paymentStatusColor(p.status)}`}>{p.status}</Badge>
+                        <span className="text-sm font-semibold text-foreground">${(p.amount / 100).toFixed(2)} {p.currency}</span>
+                      </div>
+                      <div className="flex items-center gap-4 mt-1">
+                        <span className="text-xs text-muted-foreground">{p.description || "No description"}</span>
+                        <span className="text-xs text-muted-foreground">Method: {p.paymentMethod || "N/A"}</span>
+                        {p.paidAt && <span className="text-xs text-muted-foreground">Paid: {new Date(p.paidAt).toLocaleDateString()}</span>}
+                        <span className="text-xs text-muted-foreground">Created: {new Date(p.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main CRM Page ──────────────────────────────────────────────────
 export default function AdminCRM() {
   const { user, loading } = useAuth({ redirectOnUnauthenticated: true });
@@ -769,7 +1125,7 @@ export default function AdminCRM() {
 
       {/* Tabs */}
       <Tabs defaultValue="branding" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="branding" className="flex items-center gap-1.5">
             <Palette className="h-3.5 w-3.5" /> Branding
           </TabsTrigger>
@@ -780,7 +1136,10 @@ export default function AdminCRM() {
             <BookOpen className="h-3.5 w-3.5" /> Lessons
           </TabsTrigger>
           <TabsTrigger value="orgs" className="flex items-center gap-1.5">
-            <Building2 className="h-3.5 w-3.5" /> Organizations
+            <Building2 className="h-3.5 w-3.5" /> Orgs
+          </TabsTrigger>
+          <TabsTrigger value="subscriptions" className="flex items-center gap-1.5">
+            <CreditCard className="h-3.5 w-3.5" /> Subs
           </TabsTrigger>
         </TabsList>
 
@@ -795,6 +1154,9 @@ export default function AdminCRM() {
         </TabsContent>
         <TabsContent value="orgs" className="mt-6">
           <OrganizationsTab />
+        </TabsContent>
+        <TabsContent value="subscriptions" className="mt-6">
+          <SubscriptionsTab />
         </TabsContent>
       </Tabs>
       </main>

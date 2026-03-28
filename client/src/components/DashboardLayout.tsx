@@ -102,7 +102,7 @@ export default function DashboardLayout({
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2 mb-4">
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-20 w-auto object-contain" />
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_26b18f8b.png" alt="Smarthinkerz LearnShift" className="h-20 w-auto object-contain" />
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-center text-foreground">
               Sign in to continue
@@ -217,7 +217,7 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed && (
                 <div className="flex items-center gap-2 min-w-0">
-                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-16 w-auto object-contain" />
+                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_26b18f8b.png" alt="Smarthinkerz LearnShift" className="h-16 w-auto object-contain" />
                 </div>
               )}
             </div>
