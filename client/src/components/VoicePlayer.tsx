@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
-import { Volume2, VolumeX, Play, Pause, Loader2, Settings2, Mic, Lock } from "lucide-react";
+import { Volume2, VolumeX, Play, Pause, Loader2, Settings2, Mic, Lock, Zap, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { Link } from "wouter";
@@ -29,6 +29,7 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
   const [selectedVoice, setSelectedVoice] = useState("EXAVITQu4vr4xnSDxMaL"); // Sarah
   const [stability, setStability] = useState(0.5);
   const [similarityBoost, setSimilarityBoost] = useState(0.75);
+  const [wasCached, setWasCached] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const { data: voiceConfig } = trpc.voice.isConfigured.useQuery();
@@ -39,7 +40,12 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
   const synthesize = trpc.voice.synthesize.useMutation({
     onSuccess: (data) => {
       setAudioUrl(data.url);
-      toast.success("Audio generated successfully");
+      setWasCached(!!data.cached);
+      if (data.cached) {
+        toast.success("Loaded from cache (instant)");
+      } else {
+        toast.success("Audio generated and cached");
+      }
     },
     onError: (err) => toast.error(err.message),
   });
@@ -47,7 +53,12 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
   const synthesizeLesson = trpc.voice.synthesizeLesson.useMutation({
     onSuccess: (data) => {
       setAudioUrl(data.url);
-      toast.success(`Lesson narration generated (${data.charCount} characters)`);
+      setWasCached(!!data.cached);
+      if (data.cached) {
+        toast.success("Loaded from cache (instant)");
+      } else {
+        toast.success(`Lesson narration generated and cached (${data.charCount} chars)`);
+      }
     },
     onError: (err) => toast.error(err.message),
   });
@@ -77,13 +88,14 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
     }
   }, [volume, isMuted]);
 
-  const handleGenerate = () => {
+  const handleGenerate = (skipCache = false) => {
     if (lessonId) {
       synthesizeLesson.mutate({
         lessonId,
         voiceId: selectedVoice,
         stability,
         similarityBoost,
+        skipCache,
       });
     } else if (text) {
       synthesize.mutate({
@@ -91,8 +103,18 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
         voiceId: selectedVoice,
         stability,
         similarityBoost,
+        skipCache,
       });
     }
+  };
+
+  const handleRegenerate = () => {
+    setAudioUrl(null);
+    setProgress(0);
+    setDuration(0);
+    setIsPlaying(false);
+    setWasCached(false);
+    handleGenerate(true); // skipCache = true to force fresh generation
   };
 
   const togglePlay = () => {
@@ -156,6 +178,7 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
     );
   }
 
+  // ─── Compact mode ───────────────────────────────────────────────────
   if (compact) {
     return (
       <div className="flex items-center gap-2">
@@ -163,7 +186,7 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
           <Button
             size="sm"
             variant="outline"
-            onClick={handleGenerate}
+            onClick={() => handleGenerate()}
             disabled={isGenerating || (!text && !lessonId)}
             className="h-8"
           >
@@ -191,18 +214,30 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
             <span className="text-[10px] text-muted-foreground tabular-nums">
               {formatTime(progress)}/{formatTime(duration)}
             </span>
+            {wasCached && (
+              <span title="Loaded from cache">
+                <Zap className="h-3 w-3 text-amber-400" />
+              </span>
+            )}
           </>
         )}
       </div>
     );
   }
 
+  // ─── Full mode ──────────────────────────────────────────────────────
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Mic className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium text-foreground">Voice Narration</span>
+          {wasCached && (
+            <span className="flex items-center gap-1 text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+              <Zap className="h-2.5 w-2.5" />
+              Cached
+            </span>
+          )}
         </div>
         <Popover>
           <PopoverTrigger asChild>
@@ -258,7 +293,7 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
 
       {!audioUrl ? (
         <Button
-          onClick={handleGenerate}
+          onClick={() => handleGenerate()}
           disabled={isGenerating || (!text && !lessonId)}
           className="w-full"
           size="sm"
@@ -314,9 +349,11 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 text-xs"
-              onClick={() => { setAudioUrl(null); setProgress(0); setDuration(0); setIsPlaying(false); }}
+              className="h-7 text-xs gap-1"
+              onClick={handleRegenerate}
+              disabled={isGenerating}
             >
+              <RefreshCw className="h-3 w-3" />
               Regenerate
             </Button>
           </div>

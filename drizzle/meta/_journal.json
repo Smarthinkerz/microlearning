@@ -29,6 +29,13 @@
       "when": 1774675567942,
       "tag": "0003_mean_champions",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1774707924212,
+      "tag": "0004_cheerful_mister_sinister",
+      "breakpoints": true
     }
   ]
 }

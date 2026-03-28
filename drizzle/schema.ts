@@ -401,3 +401,24 @@ export type InsertPayment = typeof payments.$inferInsert;
 export type LessonPack = typeof lessonPacks.$inferSelect;
 export type InsertLessonPack = typeof lessonPacks.$inferInsert;
 export type UserPackPurchase = typeof userPackPurchases.$inferSelect;
+
+// ─── Voice Audio Cache ──────────────────────────────────────────────
+export const voiceAudioCache = mysqlTable("voice_audio_cache", {
+  id: int("id").autoincrement().primaryKey(),
+  textHash: varchar("textHash", { length: 64 }).notNull(),
+  voiceId: varchar("voiceId", { length: 128 }).notNull(),
+  stability: varchar("stability", { length: 8 }).notNull().default("0.50"),
+  similarityBoost: varchar("similarityBoost", { length: 8 }).notNull().default("0.75"),
+  style: varchar("style", { length: 8 }).notNull().default("0.00"),
+  lessonId: int("lessonId"),
+  audioUrl: text("audioUrl").notNull(),
+  fileKey: varchar("fileKey", { length: 512 }).notNull(),
+  sizeBytes: int("sizeBytes").notNull().default(0),
+  charCount: int("charCount").notNull().default(0),
+  hitCount: int("hitCount").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastAccessedAt: timestamp("lastAccessedAt").defaultNow().notNull(),
+});
+
+export type VoiceAudioCache = typeof voiceAudioCache.$inferSelect;
+export type InsertVoiceAudioCache = typeof voiceAudioCache.$inferInsert;

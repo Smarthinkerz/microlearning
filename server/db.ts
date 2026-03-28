@@ -761,3 +761,153 @@ export async function updateSubscriptionQuantity(id: number, quantity: number) {
   if (!db) return;
   await db.update(subscriptions).set({ quantity }).where(eq(subscriptions.id, id));
 }
+
+// ─── Voice Audio Cache ──────────────────────────────────────────────
+import { voiceAudioCache } from "../drizzle/schema";
+import crypto from "crypto";
+
+/**
+ * Generate a deterministic hash for cache lookup.
+ * Combines text + voiceId + voice settings into a single SHA-256 hash.
+ */
+export function computeVoiceCacheKey(
+  text: string,
+  voiceId: string,
+  stability: number,
+  similarityBoost: number,
+  style: number = 0
+): string {
+  const payload = `${text}|${voiceId}|${stability.toFixed(2)}|${similarityBoost.toFixed(2)}|${style.toFixed(2)}`;
+  return crypto.createHash("sha256").update(payload).digest("hex");
+}
+
+/**
+ * Look up a cached audio entry by text hash.
+ * Returns the cached entry if found, null otherwise.
+ * Also increments hitCount and updates lastAccessedAt on hit.
+ */
+export async function getVoiceCacheEntry(textHash: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(voiceAudioCache)
+    .where(eq(voiceAudioCache.textHash, textHash))
+    .limit(1);
+  if (rows.length === 0) return null;
+  const entry = rows[0];
+  // Bump hit count and last accessed (fire-and-forget)
+  db.update(voiceAudioCache)
+    .set({
+      hitCount: entry.hitCount + 1,
+      lastAccessedAt: new Date(),
+    })
+    .where(eq(voiceAudioCache.id, entry.id))
+    .catch(() => {});
+  return entry;
+}
+
+/**
+ * Look up a cached audio entry by lessonId + voiceId + settings.
+ */
+export async function getVoiceCacheByLesson(
+  lessonId: number,
+  voiceId: string,
+  stability: number,
+  similarityBoost: number
+) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(voiceAudioCache)
+    .where(
+      and(
+        eq(voiceAudioCache.lessonId, lessonId),
+        eq(voiceAudioCache.voiceId, voiceId),
+        eq(voiceAudioCache.stability, stability.toFixed(2)),
+        eq(voiceAudioCache.similarityBoost, similarityBoost.toFixed(2))
+      )
+    )
+    .limit(1);
+  if (rows.length === 0) return null;
+  const entry = rows[0];
+  db.update(voiceAudioCache)
+    .set({
+      hitCount: entry.hitCount + 1,
+      lastAccessedAt: new Date(),
+    })
+    .where(eq(voiceAudioCache.id, entry.id))
+    .catch(() => {});
+  return entry;
+}
+
+/**
+ * Insert a new voice audio cache entry.
+ */
+export async function insertVoiceCacheEntry(data: {
+  textHash: string;
+  voiceId: string;
+  stability: number;
+  similarityBoost: number;
+  style?: number;
+  lessonId?: number;
+  audioUrl: string;
+  fileKey: string;
+  sizeBytes: number;
+  charCount: number;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.insert(voiceAudioCache).values({
+    textHash: data.textHash,
+    voiceId: data.voiceId,
+    stability: data.stability.toFixed(2),
+    similarityBoost: data.similarityBoost.toFixed(2),
+    style: (data.style ?? 0).toFixed(2),
+    lessonId: data.lessonId ?? null,
+    audioUrl: data.audioUrl,
+    fileKey: data.fileKey,
+    sizeBytes: data.sizeBytes,
+    charCount: data.charCount,
+  });
+  return result.insertId;
+}
+
+/**
+ * Get cache stats for admin dashboard.
+ */
+export async function getVoiceCacheStats() {
+  const db = await getDb();
+  if (!db) return { totalEntries: 0, totalHits: 0, totalSizeBytes: 0 };
+  const rows = await db
+    .select({
+      totalEntries: sql<number>`COUNT(*)`,
+      totalHits: sql<number>`COALESCE(SUM(${voiceAudioCache.hitCount}), 0)`,
+      totalSizeBytes: sql<number>`COALESCE(SUM(${voiceAudioCache.sizeBytes}), 0)`,
+    })
+    .from(voiceAudioCache);
+  return rows[0] ?? { totalEntries: 0, totalHits: 0, totalSizeBytes: 0 };
+}
+
+/**
+ * Delete a specific cache entry (for regeneration).
+ */
+export async function deleteVoiceCacheEntry(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(voiceAudioCache).where(eq(voiceAudioCache.id, id));
+}
+
+/**
+ * Get all cache entries (for admin view), most recent first.
+ */
+export async function getAllVoiceCacheEntries(limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(voiceAudioCache)
+    .orderBy(sql`${voiceAudioCache.createdAt} DESC`)
+    .limit(limit);
+}

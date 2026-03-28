@@ -1307,18 +1307,33 @@ const voiceRouter = router({
     stability: z.number().min(0).max(1).optional(),
     similarityBoost: z.number().min(0).max(1).optional(),
     style: z.number().min(0).max(1).optional(),
+    skipCache: z.boolean().optional(),
   })).mutation(async ({ input }) => {
-    const { textToSpeech, isElevenLabsConfigured } = await import("./elevenLabs");
+    const { textToSpeech, isElevenLabsConfigured, VOICES } = await import("./elevenLabs");
     if (!isElevenLabsConfigured()) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Voice service not configured" });
     }
 
+    const voiceId = input.voiceId || VOICES.sarah;
+    const stability = input.stability ?? 0.5;
+    const similarityBoost = input.similarityBoost ?? 0.75;
+    const style = input.style ?? 0;
+
+    // Check cache first (unless skipCache is true for regeneration)
+    if (!input.skipCache) {
+      const textHash = db.computeVoiceCacheKey(input.text, voiceId, stability, similarityBoost, style);
+      const cached = await db.getVoiceCacheEntry(textHash);
+      if (cached) {
+        return { url: cached.audioUrl, fileKey: cached.fileKey, sizeBytes: cached.sizeBytes, cached: true };
+      }
+    }
+
     const audioBuffer = await textToSpeech({
       text: input.text,
-      voiceId: input.voiceId,
-      stability: input.stability,
-      similarityBoost: input.similarityBoost,
-      style: input.style,
+      voiceId,
+      stability,
+      similarityBoost,
+      style,
     });
 
     // Upload to S3
@@ -1328,7 +1343,21 @@ const voiceRouter = router({
     const fileKey = `voice-audio/${timestamp}-${randomSuffix}.mp3`;
     const { url } = await storagePut(fileKey, audioBuffer, "audio/mpeg");
 
-    return { url, fileKey, sizeBytes: audioBuffer.length };
+    // Store in cache
+    const textHash = db.computeVoiceCacheKey(input.text, voiceId, stability, similarityBoost, style);
+    await db.insertVoiceCacheEntry({
+      textHash,
+      voiceId,
+      stability,
+      similarityBoost,
+      style,
+      audioUrl: url,
+      fileKey,
+      sizeBytes: audioBuffer.length,
+      charCount: input.text.length,
+    });
+
+    return { url, fileKey, sizeBytes: audioBuffer.length, cached: false };
   }),
 
   synthesizeLesson: protectedProcedure.input(z.object({
@@ -1336,10 +1365,29 @@ const voiceRouter = router({
     voiceId: z.string().optional(),
     stability: z.number().min(0).max(1).optional(),
     similarityBoost: z.number().min(0).max(1).optional(),
+    skipCache: z.boolean().optional(),
   })).mutation(async ({ input }) => {
-    const { textToSpeech, isElevenLabsConfigured } = await import("./elevenLabs");
+    const { textToSpeech, isElevenLabsConfigured, VOICES } = await import("./elevenLabs");
     if (!isElevenLabsConfigured()) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Voice service not configured" });
+    }
+
+    const voiceId = input.voiceId || VOICES.sarah;
+    const stability = input.stability ?? 0.5;
+    const similarityBoost = input.similarityBoost ?? 0.75;
+
+    // Check lesson-level cache first
+    if (!input.skipCache) {
+      const cached = await db.getVoiceCacheByLesson(input.lessonId, voiceId, stability, similarityBoost);
+      if (cached) {
+        return {
+          url: cached.audioUrl,
+          fileKey: cached.fileKey,
+          sizeBytes: cached.sizeBytes,
+          charCount: cached.charCount,
+          cached: true,
+        };
+      }
     }
 
     const lesson = await db.getLessonById(input.lessonId);
@@ -1372,9 +1420,9 @@ const voiceRouter = router({
 
     const audioBuffer = await textToSpeech({
       text: truncatedText,
-      voiceId: input.voiceId,
-      stability: input.stability,
-      similarityBoost: input.similarityBoost,
+      voiceId,
+      stability,
+      similarityBoost,
     });
 
     const { storagePut } = await import("./storage");
@@ -1382,7 +1430,41 @@ const voiceRouter = router({
     const fileKey = `voice-audio/lesson-${input.lessonId}-${randomSuffix}.mp3`;
     const { url } = await storagePut(fileKey, audioBuffer, "audio/mpeg");
 
-    return { url, fileKey, sizeBytes: audioBuffer.length, charCount: truncatedText.length };
+    // Store in cache
+    const textHash = db.computeVoiceCacheKey(truncatedText, voiceId, stability, similarityBoost);
+    await db.insertVoiceCacheEntry({
+      textHash,
+      voiceId,
+      stability,
+      similarityBoost,
+      lessonId: input.lessonId,
+      audioUrl: url,
+      fileKey,
+      sizeBytes: audioBuffer.length,
+      charCount: truncatedText.length,
+    });
+
+    return { url, fileKey, sizeBytes: audioBuffer.length, charCount: truncatedText.length, cached: false };
+  }),
+
+  // Cache stats for admin
+  cacheStats: adminProcedure.query(async () => {
+    return db.getVoiceCacheStats();
+  }),
+
+  // List cached entries for admin
+  cacheEntries: adminProcedure.input(z.object({
+    limit: z.number().min(1).max(500).optional(),
+  }).optional()).query(async ({ input }) => {
+    return db.getAllVoiceCacheEntries(input?.limit ?? 100);
+  }),
+
+  // Clear a specific cache entry (for regeneration)
+  clearCacheEntry: adminProcedure.input(z.object({
+    id: z.number(),
+  })).mutation(async ({ input }) => {
+    await db.deleteVoiceCacheEntry(input.id);
+    return { success: true };
   }),
 });
 

@@ -243,3 +243,13 @@
 - [x] Update existing DB plans with voiceNarration flag
 - [x] Update autoSeed with voiceNarration in all plan features
 - [x] Update tests with voiceNarration assertions (all 89 tests passing)
+
+## Voice Audio Caching
+- [x] Add voice_audio_cache table to schema (textHash, voiceId, stability, similarityBoost, style, lessonId, audioUrl, fileKey, sizeBytes, charCount, hitCount, timestamps)
+- [x] Create DB helpers: computeVoiceCacheKey, getVoiceCacheEntry, getVoiceCacheByLesson, insertVoiceCacheEntry, getVoiceCacheStats, deleteVoiceCacheEntry, getAllVoiceCacheEntries
+- [x] Update voice.synthesize to check cache before calling ElevenLabs (SHA-256 hash of text+voice+settings)
+- [x] Update voice.synthesizeLesson to check cache by lessonId+voice+settings
+- [x] Add admin endpoints: cacheStats, cacheEntries, clearCacheEntry
+- [x] Update VoicePlayer UI: Zap icon + "Cached" badge for cache hits, "Regenerate" button bypasses cache (skipCache=true)
+- [x] Cache invalidation via skipCache param and admin clearCacheEntry
+- [x] 14 voice-cache tests passing (hash determinism, admin endpoints, RBAC, skipCache input validation)
