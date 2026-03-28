@@ -269,3 +269,6 @@
 - [x] Admin users bypass subscription check
 - [x] Write tests for server-side enforcement (4 new tests: free-tier blocked, admin allowed)
 - [x] All 18 voice-cache tests passing
+
+## Logo Size Fix
+- [x] Increase logo size in all navigation areas: Home nav (h-28), Home footer (h-20), Dashboard sign-in (h-28), Dashboard sidebar (h-24), Pricing nav (h-24), Pricing footer (h-16)

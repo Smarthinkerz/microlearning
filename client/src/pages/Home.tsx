@@ -89,9 +89,9 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="container flex items-center justify-between h-16">
+        <div className="container flex items-center justify-between h-28">
           <div className="flex items-center gap-2">
-            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_26b18f8b.png" alt="Smarthinkerz LearnShift" className="h-16 w-auto object-contain" />
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo-cropped_dae6dbdb.png" alt="Smarthinkerz LearnShift" className="h-28 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
@@ -152,7 +152,7 @@ export default function Home() {
       </nav>
 
       {/* Hero with Background Video */}
-      <section className="relative pt-20 min-h-[100vh] flex items-center overflow-hidden">
+      <section className="relative pt-32 min-h-[100vh] flex items-center overflow-hidden">
         {/* Background Video */}
         <div className="absolute inset-0 z-0">
           <video
@@ -372,7 +372,7 @@ export default function Home() {
       <footer className="py-8 border-t border-border/30">
         <div className="container flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_26b18f8b.png" alt="Smarthinkerz LearnShift" className="h-14 w-auto object-contain" />
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo-cropped_dae6dbdb.png" alt="Smarthinkerz LearnShift" className="h-20 w-auto object-contain" />
           </div>
           <p className="text-sm text-muted-foreground">
             Adaptive micro-learning for shift workers.

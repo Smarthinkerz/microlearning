@@ -16,7 +16,7 @@ import {
   Headphones, Star, ChevronLeft, Mic
 } from "lucide-react";
 
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_26b18f8b.png";
+const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo-cropped_dae6dbdb.png";
 
 type PlanFeatures = {
   maxLessons: number;
@@ -136,9 +136,9 @@ export default function Pricing() {
     <div className="min-h-screen bg-background">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container flex h-20 items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="Smarthinkerz LearnShift" className="h-12 w-auto" />
+            <img src={LOGO_URL} alt="Smarthinkerz LearnShift" className="h-24 w-auto" />
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/library">
@@ -621,7 +621,7 @@ export default function Pricing() {
       <footer className="border-t border-border/50 py-8">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={LOGO_URL} alt="Smarthinkerz LearnShift" className="h-8 w-auto" />
+            <img src={LOGO_URL} alt="Smarthinkerz LearnShift" className="h-16 w-auto" />
           </div>
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Smarthinkerz LearnShift. All rights reserved.
