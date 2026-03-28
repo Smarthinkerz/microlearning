@@ -160,3 +160,12 @@
 ## Bug Fixes
 - [x] Fix: Lessons created via Content Studio/Editor don't appear after saving (auto-assign org, query by author when no orgId)
 - [x] Fix: No way to navigate from dashboard back to home/front page (added Home Page link in user dropdown, removed auto-redirect on Home)
+
+## Logo Replacement
+- [x] Upload Smarthinkerz LearnShift logo to CDN
+- [x] Replace graduation cap icon with logo in sidebar/DashboardLayout (sign-in page + sidebar header)
+- [x] Replace logo in Home.tsx landing page nav and footer
+- [x] AdminCRM uses dynamic branding (already supports custom logo URL)
+- [x] Updated service worker brand name and IndexedDB name
+- [x] Removed all GraduationCap icon references from codebase
+- [x] All 46 tests passing

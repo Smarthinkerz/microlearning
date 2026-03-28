@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BookOpen, Clock, Search, Filter, Wand2, Loader2, Sparkles, Library,
-  GraduationCap, Shield, Heart, Users, Briefcase, Wrench, ChevronRight,
+  Shield, Heart, Users, Briefcase, Wrench, ChevronRight,
   Database, Star, Zap, CheckCircle2,
 } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -406,7 +406,7 @@ export default function LessonLibrary() {
           ) : (
             <div className="space-y-8">
               {Object.entries(groupedByCategory).map(([category, catLessons]) => {
-                const Icon = CATEGORY_ICONS[category] || GraduationCap;
+                const Icon = CATEGORY_ICONS[category] || BookOpen;
                 return (
                   <div key={category}>
                     <div className="flex items-center gap-2 mb-3">

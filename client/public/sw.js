@@ -1,4 +1,4 @@
-const CACHE_NAME = 'microlearning-coach-v1';
+const CACHE_NAME = 'smarthinkerz-learnshift-v1';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [
@@ -126,7 +126,7 @@ async function syncOfflineProgress() {
 
 function openDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('MicroLearningCoach', 1);
+    const request = indexedDB.open('SmarthinkezLearnShift', 1);
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
       if (!db.objectStoreNames.contains('offlineProgress')) {
@@ -152,7 +152,7 @@ function getAllFromStore(store) {
 // Push notification handler
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
-  const title = data.title || 'MicroLearning Coach';
+  const title = data.title || 'Smarthinkerz LearnShift';
   const options = {
     body: data.body || 'You have a new notification',
     icon: '/favicon.ico',

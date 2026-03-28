@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
 import {
-  GraduationCap,
+
   Clock,
   WifiOff,
   BarChart3,
@@ -91,8 +91,7 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-7 w-7 text-primary" />
-            <span className="text-xl font-bold gradient-text">Smarthinkerz LearnShift</span>
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-10 object-contain" />
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
@@ -349,8 +348,7 @@ export default function Home() {
       <footer className="py-8 border-t border-border/30">
         <div className="container flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-primary" />
-            <span className="font-semibold gradient-text">Smarthinkerz LearnShift</span>
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-8 object-contain" />
           </div>
           <p className="text-sm text-muted-foreground">
             Adaptive micro-learning for shift workers.

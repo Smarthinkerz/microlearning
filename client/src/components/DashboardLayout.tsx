@@ -33,7 +33,7 @@ import {
   BarChart3,
   Bell,
   Settings,
-  GraduationCap,
+
   Shield,
   Zap,
   ClipboardList,
@@ -102,8 +102,7 @@ export default function DashboardLayout({
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2 mb-4">
-              <GraduationCap className="h-10 w-10 text-primary" />
-              <span className="text-2xl font-bold gradient-text">LearnShift</span>
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-12 object-contain" />
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-center text-foreground">
               Sign in to continue
@@ -218,10 +217,7 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed && (
                 <div className="flex items-center gap-2 min-w-0">
-                  <GraduationCap className="h-5 w-5 text-primary shrink-0" />
-                  <span className="font-semibold tracking-tight truncate text-foreground">
-                    LearnShift
-                  </span>
+                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_aa44364b.png" alt="Smarthinkerz LearnShift" className="h-8 object-contain" />
                 </div>
               )}
             </div>
