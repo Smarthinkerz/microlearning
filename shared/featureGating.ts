@@ -25,6 +25,7 @@ export type PlanFeatures = {
   pushNotifications: boolean;
   emailSupport: boolean;
   prioritySupport: boolean;
+  voiceNarration: boolean;
 };
 
 // Default features for users with no subscription (free tier equivalent)
@@ -48,6 +49,7 @@ export const FREE_TIER_FEATURES: PlanFeatures = {
   pushNotifications: true,
   emailSupport: false,
   prioritySupport: false,
+  voiceNarration: false,
 };
 
 export type FeatureKey = keyof PlanFeatures;
@@ -102,6 +104,7 @@ export function getUpgradeMessage(feature: FeatureKey): string {
     offlineAccess: "Offline access requires a Starter plan or higher.",
     emailSupport: "Email support is available on Starter plans and above.",
     prioritySupport: "Priority support is available on Pro and Enterprise plans.",
+    voiceNarration: "AI voice narration is available on Pro, Premium, and Enterprise plans.",
   };
   return messages[feature] || "This feature requires a higher subscription tier.";
 }
@@ -129,6 +132,7 @@ export function getMinimumTier(feature: FeatureKey): string {
     dedicatedManager: "Enterprise",
     emailSupport: "Starter",
     prioritySupport: "Pro",
+    voiceNarration: "Pro",
   };
   return tiers[feature] || "Pro";
 }

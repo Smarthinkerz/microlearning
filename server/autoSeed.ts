@@ -87,6 +87,7 @@ export async function autoSeedPlans() {
           scormXapiExport: false, rbac: false, sso: false, hrisIntegration: false,
           whiteLabel: false, customOnboarding: false, sla: false, dedicatedManager: false,
           gamification: false, pushNotifications: true, emailSupport: true, prioritySupport: false,
+          voiceNarration: false,
         },
       },
       {
@@ -103,6 +104,7 @@ export async function autoSeedPlans() {
           scormXapiExport: true, rbac: true, sso: false, hrisIntegration: false,
           whiteLabel: false, customOnboarding: false, sla: false, dedicatedManager: false,
           gamification: true, pushNotifications: true, emailSupport: true, prioritySupport: true,
+          voiceNarration: true,
         },
       },
       {
@@ -119,6 +121,7 @@ export async function autoSeedPlans() {
           scormXapiExport: true, rbac: true, sso: true, hrisIntegration: true,
           whiteLabel: true, customOnboarding: true, sla: true, dedicatedManager: true,
           gamification: true, pushNotifications: true, emailSupport: true, prioritySupport: true,
+          voiceNarration: true,
         },
       },
       {
@@ -134,6 +137,7 @@ export async function autoSeedPlans() {
           scormXapiExport: false, rbac: false, sso: false, hrisIntegration: false,
           whiteLabel: false, customOnboarding: false, sla: false, dedicatedManager: false,
           gamification: true, pushNotifications: true, emailSupport: false, prioritySupport: false,
+          voiceNarration: false,
         },
       },
       {
@@ -150,6 +154,7 @@ export async function autoSeedPlans() {
           scormXapiExport: false, rbac: false, sso: false, hrisIntegration: false,
           whiteLabel: false, customOnboarding: false, sla: false, dedicatedManager: false,
           gamification: true, pushNotifications: true, emailSupport: true, prioritySupport: false,
+          voiceNarration: true,
         },
       },
     ];

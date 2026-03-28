@@ -119,6 +119,7 @@ describe("Feature Gating", () => {
     expect(FREE_TIER_FEATURES.fullAnalytics).toBe(false);
     expect(FREE_TIER_FEATURES.contentAuthoring).toBe(false);
     expect(FREE_TIER_FEATURES.gamification).toBe(true);
+    expect(FREE_TIER_FEATURES.voiceNarration).toBe(false);
   });
 
   it("hasFeature returns correct values for free tier", async () => {
@@ -133,6 +134,7 @@ describe("Feature Gating", () => {
     const { hasFeature } = await import("../shared/featureGating");
     expect(hasFeature(null, "basicTracking")).toBe(true);
     expect(hasFeature(null, "fullAnalytics")).toBe(false);
+    expect(hasFeature(null, "voiceNarration")).toBe(false);
   });
 
   it("getFeatureLimit returns correct limits", async () => {
@@ -155,6 +157,7 @@ describe("Feature Gating", () => {
     expect(getUpgradeMessage("fullAnalytics")).toContain("Pro");
     expect(getUpgradeMessage("sso")).toContain("Enterprise");
     expect(getUpgradeMessage("offlineAccess")).toContain("Starter");
+    expect(getUpgradeMessage("voiceNarration")).toContain("Pro");
   });
 
   it("getMinimumTier returns correct tiers", async () => {
@@ -163,6 +166,7 @@ describe("Feature Gating", () => {
     expect(getMinimumTier("fullAnalytics")).toBe("Pro");
     expect(getMinimumTier("sso")).toBe("Enterprise");
     expect(getMinimumTier("offlineAccess")).toBe("Starter");
+    expect(getMinimumTier("voiceNarration")).toBe("Pro");
   });
 
   it("getMyEntitlements returns free tier for user without subscription", async () => {

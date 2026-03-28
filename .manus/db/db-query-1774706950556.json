@@ -1,0 +1,30 @@
+{
+  "query": "SELECT tier, JSON_EXTRACT(features, '$.voiceNarration') as voiceNarration FROM subscription_plans;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 5VLbyFp4XQz9R3Z.38e798e5c3b1 --database hiMSRR6jLFgWQvJW7KXFLZ --execute SELECT tier, JSON_EXTRACT(features, '$.voiceNarration') as voiceNarration FROM subscription_plans;",
+  "rows": [
+    {
+      "tier": "starter",
+      "voiceNarration": "false"
+    },
+    {
+      "tier": "pro",
+      "voiceNarration": "true"
+    },
+    {
+      "tier": "enterprise",
+      "voiceNarration": "true"
+    },
+    {
+      "tier": "consumer_free",
+      "voiceNarration": "false"
+    },
+    {
+      "tier": "consumer_premium",
+      "voiceNarration": "true"
+    }
+  ],
+  "messages": [],
+  "stdout": "tier\tvoiceNarration\nstarter\tfalse\npro\ttrue\nenterprise\ttrue\nconsumer_free\tfalse\nconsumer_premium\ttrue\n",
+  "stderr": "",
+  "execution_time_ms": 1522
+}

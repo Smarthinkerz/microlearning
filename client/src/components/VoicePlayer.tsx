@@ -5,8 +5,10 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
-import { Volume2, VolumeX, Play, Pause, Loader2, Settings2, Mic } from "lucide-react";
+import { Volume2, VolumeX, Play, Pause, Loader2, Settings2, Mic, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { useEntitlements } from "@/hooks/useEntitlements";
+import { Link } from "wouter";
 
 interface VoicePlayerProps {
   /** Text to synthesize */
@@ -116,7 +118,43 @@ export function VoicePlayer({ text, lessonId, compact }: VoicePlayerProps) {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
+  const { can, upgradeMessage } = useEntitlements();
+  const hasVoiceAccess = can("voiceNarration");
+
   if (!voiceConfig?.configured) return null;
+
+  // Show upgrade prompt for users without voice access
+  if (!hasVoiceAccess) {
+    if (compact) {
+      return (
+        <div className="flex items-center gap-2">
+          <Link href="/pricing">
+            <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 text-amber-400 border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-500/10">
+              <Lock className="h-3 w-3" />
+              Voice (Pro+)
+            </Button>
+          </Link>
+        </div>
+      );
+    }
+    return (
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Lock className="h-4 w-4 text-amber-400" />
+          <span className="text-sm font-medium text-foreground">Voice Narration</span>
+          <span className="ml-auto text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">Pro+</span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {upgradeMessage("voiceNarration")}
+        </p>
+        <Link href="/pricing">
+          <Button size="sm" variant="outline" className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+            Upgrade to Unlock Voice
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   if (compact) {
     return (

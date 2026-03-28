@@ -13,7 +13,7 @@ import { useState } from "react";
 import {
   Check, X, Building2, Users, Zap, Crown, Sparkles,
   ArrowRight, Shield, BookOpen, BarChart3, Globe,
-  Headphones, Star, ChevronLeft
+  Headphones, Star, ChevronLeft, Mic
 } from "lucide-react";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo_26b18f8b.png";
@@ -38,6 +38,7 @@ type PlanFeatures = {
   pushNotifications: boolean;
   emailSupport: boolean;
   prioritySupport: boolean;
+  voiceNarration: boolean;
 };
 
 const featureLabels: { key: keyof PlanFeatures; label: string; category: string }[] = [
@@ -60,6 +61,7 @@ const featureLabels: { key: keyof PlanFeatures; label: string; category: string 
   { key: "pushNotifications", label: "Push Notifications", category: "Engagement" },
   { key: "emailSupport", label: "Email Support", category: "Support" },
   { key: "prioritySupport", label: "Priority Support", category: "Support" },
+  { key: "voiceNarration", label: "AI Voice Narration", category: "AI" },
 ];
 
 const tierIcons: Record<string, React.ReactNode> = {
@@ -321,6 +323,17 @@ export default function Pricing() {
                                 <span>SLA guarantee</span>
                               </li>
                             )}
+                            {features?.voiceNarration ? (
+                              <li className="flex items-center gap-2 text-sm">
+                                <Mic className="h-4 w-4 text-purple-400 shrink-0" />
+                                <span className="text-purple-300">AI Voice Narration</span>
+                              </li>
+                            ) : (
+                              <li className="flex items-center gap-2 text-sm text-muted-foreground/50">
+                                <X className="h-4 w-4 shrink-0" />
+                                <span>AI Voice Narration</span>
+                              </li>
+                            )}
                             <li className="flex items-center gap-2 text-sm">
                               <Check className="h-4 w-4 text-emerald-400 shrink-0" />
                               <span>
@@ -428,6 +441,17 @@ export default function Pricing() {
                             <li className="flex items-center gap-2 text-sm">
                               <Check className="h-4 w-4 text-emerald-400 shrink-0" />
                               <span>Email support</span>
+                            </li>
+                          )}
+                          {features?.voiceNarration ? (
+                            <li className="flex items-center gap-2 text-sm">
+                              <Mic className="h-4 w-4 text-purple-400 shrink-0" />
+                              <span className="text-purple-300">AI Voice Narration</span>
+                            </li>
+                          ) : (
+                            <li className="flex items-center gap-2 text-sm text-muted-foreground/50">
+                              <X className="h-4 w-4 shrink-0" />
+                              <span>AI Voice Narration</span>
                             </li>
                           )}
                         </ul>

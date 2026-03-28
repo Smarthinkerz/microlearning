@@ -1,0 +1,9 @@
+{
+  "query": "\nUPDATE subscription_plans \nSET features = JSON_SET(features, '$.voiceNarration', true) \nWHERE tier IN ('pro', 'enterprise', 'consumer_premium');\n\nUPDATE subscription_plans \nSET features = JSON_SET(features, '$.voiceNarration', false) \nWHERE tier IN ('starter', 'consumer_free');\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 5VLbyFp4XQz9R3Z.38e798e5c3b1 --database hiMSRR6jLFgWQvJW7KXFLZ --execute \nUPDATE subscription_plans \nSET features = JSON_SET(features, '$.voiceNarration', true) \nWHERE tier IN ('pro', 'enterprise', 'consumer_premium');\n\nUPDATE subscription_plans \nSET features = JSON_SET(features, '$.voiceNarration', false) \nWHERE tier IN ('starter', 'consumer_free');\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1797
+}

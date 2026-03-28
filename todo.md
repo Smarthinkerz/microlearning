@@ -182,8 +182,8 @@
 - [x] Pricing link in nav bar (both auth and unauth states)
 - [x] View Pricing CTA on home page
 - [x] Auto-seed plans on server startup
-- [ ] Feature gating based on subscription tier
-- [ ] Tier management in Admin CRM
+- [x] Feature gating based on subscription tier
+- [x] Tier management in Admin CRM
 
 ## Payment Integration (Tap Gateway)
 - [x] Tap payment gateway service module (server/tapPayment.ts)
@@ -232,3 +232,14 @@
 - [x] Support 9 curated voices with settings (stability, clarity, style)
 - [x] VoicePlayer component with play/pause/seek/volume/regenerate
 - [x] Voice generation tests (5 tests passing)
+
+## Voice Tier Restriction
+- [x] Add voiceNarration feature flag to shared featureGating (false for Free/Starter, true for Pro/Premium/Enterprise)
+- [x] Gate VoicePlayer component behind voiceNarration entitlement
+- [x] Add voice narration as a feature line in employer pricing cards (purple Mic icon for included, X for not)
+- [x] Add voice narration as a feature line in consumer pricing cards
+- [x] Add AI Voice Narration row to feature comparison table
+- [x] Show upgrade prompt when Free/Starter users try to use voice (compact + full modes)
+- [x] Update existing DB plans with voiceNarration flag
+- [x] Update autoSeed with voiceNarration in all plan features
+- [x] Update tests with voiceNarration assertions (all 89 tests passing)
