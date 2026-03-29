@@ -112,9 +112,26 @@ export function useOfflineStorage() {
   };
 }
 
-// Register service worker
+// Register service worker (production only)
 export function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
+    // In development, unregister any existing SW to prevent caching issues
+    if (import.meta.env.DEV) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+      });
+      // Also clear all caches
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          for (const name of names) {
+            caches.delete(name);
+          }
+        });
+      }
+      return;
+    }
     window.addEventListener("load", () => {
       navigator.serviceWorker
         .register("/sw.js")
