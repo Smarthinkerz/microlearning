@@ -1,5 +1,6 @@
 import { SEED_LESSONS } from "./seedLessons";
 import * as db from "./db";
+import { generateExpandedLibrary } from "./contentLibraryExpansion";
 
 /**
  * Auto-seeds the lesson library on server startup if fewer than 30 published lessons exist.
@@ -15,7 +16,7 @@ export async function autoSeedLessons() {
     }
 
     const count = await db.getPublishedLessonsCount();
-    if (count >= 30) {
+    if (count >= 100) {
       console.log(`[AutoSeed] Library already has ${count} lessons, skipping.`);
       return;
     }
@@ -55,7 +56,35 @@ export async function autoSeedLessons() {
     }));
 
     await db.bulkCreateLessons(lessonsToInsert);
-    console.log(`[AutoSeed] Seeded ${lessonsToInsert.length} lessons into the library.`);
+    console.log(`[AutoSeed] Seeded ${lessonsToInsert.length} base lessons into the library.`);
+
+    // Seed expanded library (500+ industry-specific lessons)
+    try {
+      const expandedLessons = generateExpandedLibrary();
+      const expandedToInsert = expandedLessons.map(sl => ({
+        orgId,
+        title: sl.title,
+        description: sl.description,
+        content: sl.content,
+        contentType: sl.contentType as any,
+        durationMinutes: sl.durationMinutes,
+        difficulty: sl.difficulty as any,
+        category: sl.category,
+        tags: sl.tags,
+        language: sl.language,
+        authorId: 1,
+        status: "published" as const,
+        publishedAt: new Date(),
+      }));
+      // Insert in batches of 50 to avoid overwhelming the DB
+      for (let i = 0; i < expandedToInsert.length; i += 50) {
+        const batch = expandedToInsert.slice(i, i + 50);
+        await db.bulkCreateLessons(batch);
+      }
+      console.log(`[AutoSeed] Seeded ${expandedToInsert.length} expanded industry lessons.`);
+    } catch (err) {
+      console.error("[AutoSeed] Failed to seed expanded library:", err);
+    }
 
     // Seed subscription plans
     await autoSeedPlans();

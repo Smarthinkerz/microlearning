@@ -7,6 +7,13 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { SEED_LESSONS } from "./seedLessons";
+import { offlineSyncRouter } from "./routers/offlineSync";
+import { pushRouter } from "./routers/pushNotification";
+import { aiRecommendationRouter } from "./routers/aiRecommendation";
+import { securityRouter } from "./routers/security";
+import { hrisRouter } from "./routers/hris";
+import { analyticsInsightsRouter } from "./routers/analyticsInsights";
+import { marketplaceRouter } from "./routers/marketplace";
 
 // ─── Role middleware ─────────────────────────────────────────────────
 const employerAdminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -1530,6 +1537,13 @@ export const appRouter = router({
   crm: crmRouter,
   subscription: subscriptionRouter,
   voice: voiceRouter,
+  offlineSync: offlineSyncRouter,
+  push: pushRouter,
+  aiRec: aiRecommendationRouter,
+  security: securityRouter,
+  hris: hrisRouter,
+  analyticsInsights: analyticsInsightsRouter,
+  marketplace: marketplaceRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -296,6 +296,18 @@ export const webhookConfigs = mysqlTable("webhook_configs", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+// ─── Push Subscriptions (Web Push VAPID) ───────────────────────────────
+export const pushSubscriptions = mysqlTable("push_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: varchar("auth", { length: 255 }).notNull(),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastUsedAt: timestamp("lastUsedAt").defaultNow().notNull(),
+});
+
 // ─── Content Types ───────────────────────────────────────────────────
 export type LessonContentBlock = {
   id: string;

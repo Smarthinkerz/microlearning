@@ -17,6 +17,7 @@ import {
   payments, InsertPayment,
   lessonPacks, InsertLessonPack,
   userPackPurchases,
+  pushSubscriptions,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -342,6 +343,24 @@ export async function updateAttempt(id: number, data: Partial<InsertLessonAttemp
   const db = await getDb();
   if (!db) return;
   await db.update(lessonAttempts).set(data).where(eq(lessonAttempts.id, id));
+}
+
+export async function getAttemptByAssignmentAndUser(assignmentId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(lessonAttempts)
+    .where(and(eq(lessonAttempts.assignmentId, assignmentId), eq(lessonAttempts.userId, userId)))
+    .orderBy(desc(lessonAttempts.createdAt))
+    .limit(1);
+  return rows[0];
+}
+
+export async function updateAssignmentStatus(id: number, status: string, completedAt?: number) {
+  const db = await getDb();
+  if (!db) return;
+  const data: Record<string, unknown> = { status };
+  if (completedAt) data.completedAt = completedAt;
+  await db.update(lessonAssignments).set(data).where(eq(lessonAssignments.id, id));
 }
 
 // ─── Certificates ────────────────────────────────────────────────────
@@ -910,4 +929,72 @@ export async function getAllVoiceCacheEntries(limit = 100) {
     .from(voiceAudioCache)
     .orderBy(sql`${voiceAudioCache.createdAt} DESC`)
     .limit(limit);
+}
+
+// ─── Push Subscriptions ─────────────────────────────────────────────
+export async function savePushSubscription(userId: number, endpoint: string, p256dh: string, auth: string, userAgent?: string) {
+  const db = await getDb();
+  if (!db) return null;
+  // Upsert: remove existing subscription with same endpoint, then insert
+  await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+  const result = await db.insert(pushSubscriptions).values({ userId, endpoint, p256dh, auth, userAgent });
+  return { id: result[0].insertId };
+}
+
+export async function getPushSubscriptions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+  return rows.map(r => ({
+    endpoint: r.endpoint,
+    keys: { p256dh: r.p256dh, auth: r.auth },
+  }));
+}
+
+export async function removePushSubscription(endpoint: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+}
+
+export async function getUserNotificationPrefs(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({ notificationPreferences: users.notificationPreferences }).from(users).where(eq(users.id, userId)).limit(1);
+  return rows[0]?.notificationPreferences || null;
+}
+
+export async function getUsersWithUpcomingShifts(beforeTimestamp: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const now = Date.now();
+  const rows = await db
+    .select({ id: users.id, name: users.name, orgId: users.orgId })
+    .from(users)
+    .innerJoin(shifts, eq(shifts.userId, users.id))
+    .where(and(gte(shifts.startTime, now), lte(shifts.startTime, beforeTimestamp)))
+    .groupBy(users.id);
+  return rows;
+}
+
+// ─── AI Recommendation Helpers ──────────────────────────────────────
+export async function getOrgCompletionPatterns(orgId: number, excludeUserId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({ userId: lessonAttempts.userId, lessonId: lessonAttempts.lessonId })
+    .from(lessonAttempts)
+    .where(
+      and(
+        eq(lessonAttempts.orgId, orgId),
+        eq(lessonAttempts.status, "completed"),
+        sql`${lessonAttempts.userId} != ${excludeUserId}`
+      )
+    );
+}
+
+export async function getAuditLogsByUser(userId: number, limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(auditLogs).where(eq(auditLogs.userId, userId)).orderBy(desc(auditLogs.createdAt)).limit(limit);
 }
