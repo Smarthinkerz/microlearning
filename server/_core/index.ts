@@ -9,6 +9,8 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { autoSeedLessons, autoSeedPlans } from "../autoSeed";
 import { generalLimiter, trpcRateLimiter } from "../middleware/rateLimiter";
+import { tapWebhookRouter } from "../webhooks/tapWebhook";
+import helmet from "helmet";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -42,10 +44,35 @@ async function startServer() {
   // Global rate limiting on all API routes
   app.use("/api", generalLimiter);
 
+  // Security headers via Helmet
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
+        connectSrc: ["'self'", "https://api.manus.im", "https://api.elevenlabs.io", "https://api.tap.company", "wss:", "ws:"],
+        mediaSrc: ["'self'", "https:", "blob:"],
+        frameSrc: ["'self'", "https://tap.company", "https://checkout.tap.company"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // Allow cross-origin resources (CDN images, fonts)
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }));
+
   // Health check endpoint (bypasses rate limiting via skip)
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: Date.now() });
   });
+
+  // Tap payment webhook (before tRPC, needs raw body access)
+  app.use("/api/webhooks", tapWebhookRouter);
 
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);

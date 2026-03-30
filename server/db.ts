@@ -18,6 +18,9 @@ import {
   lessonPacks, InsertLessonPack,
   userPackPurchases,
   pushSubscriptions,
+  adminIpAllowlist, InsertAdminIpAllowlistEntry,
+  consents, InsertConsent,
+  breachEvents, InsertBreachEvent,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -998,3 +1001,173 @@ export async function getAuditLogsByUser(userId: number, limit = 100) {
   if (!db) return [];
   return db.select().from(auditLogs).where(eq(auditLogs.userId, userId)).orderBy(desc(auditLogs.createdAt)).limit(limit);
 }
+
+// ─── Admin IP Allowlist ─────────────────────────────────────────────
+export async function getActiveAllowlistEntries() {
+  const database = await getDb();
+  return database!
+    .select()
+    .from(adminIpAllowlist)
+    .where(eq(adminIpAllowlist.isActive, true));
+}
+
+export async function getAllAllowlistEntries() {
+  const database = await getDb();
+  return database!
+    .select()
+    .from(adminIpAllowlist)
+    .orderBy(desc(adminIpAllowlist.createdAt));
+}
+
+export async function addAllowlistEntry(data: InsertAdminIpAllowlistEntry) {
+  const database = await getDb();
+  const result = await database!.insert(adminIpAllowlist).values(data);
+  return result;
+}
+
+export async function removeAllowlistEntry(id: number) {
+  const database = await getDb();
+  return database!
+    .update(adminIpAllowlist)
+    .set({ isActive: false })
+    .where(eq(adminIpAllowlist.id, id));
+}
+
+export async function deleteAllowlistEntry(id: number) {
+  const database = await getDb();
+  return database!
+    .delete(adminIpAllowlist)
+    .where(eq(adminIpAllowlist.id, id));
+}
+
+// ─── GDPR Consent Records ──────────────────────────────────────────
+export async function getUserConsents(userId: number) {
+  const database = await getDb();
+  return database!
+    .select()
+    .from(consents)
+    .where(eq(consents.userId, userId))
+    .orderBy(desc(consents.updatedAt));
+}
+
+export async function upsertConsent(data: InsertConsent) {
+  const database = await getDb();
+  // Check if consent already exists for this user + type
+  const existing = await database!
+    .select()
+    .from(consents)
+    .where(
+      and(
+        eq(consents.userId, data.userId),
+        eq(consents.consentType, data.consentType)
+      )
+    );
+
+  if (existing.length > 0) {
+    await database!
+      .update(consents)
+      .set({
+        granted: data.granted,
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
+        version: data.version,
+        grantedAt: data.granted ? Date.now() : existing[0].grantedAt,
+        withdrawnAt: data.granted ? null : Date.now(),
+      })
+      .where(eq(consents.id, existing[0].id));
+    return { ...existing[0], ...data };
+  } else {
+    const result = await database!.insert(consents).values({
+      ...data,
+      grantedAt: data.granted ? Date.now() : null,
+    });
+    return result;
+  }
+}
+
+export async function withdrawConsent(userId: number, consentType: string) {
+  const database = await getDb();
+  return database!
+    .update(consents)
+    .set({
+      granted: false,
+      withdrawnAt: Date.now(),
+    })
+    .where(
+      and(
+        eq(consents.userId, userId),
+        eq(consents.consentType, consentType as any)
+      )
+    );
+}
+
+export async function getConsentsByType(consentType: string) {
+  const database = await getDb();
+  return database!
+    .select()
+    .from(consents)
+    .where(eq(consents.consentType, consentType as any));
+}
+
+// ─── Breach Events ─────────────────────────────────────────────────
+export async function createBreachEvent(data: InsertBreachEvent) {
+  const database = await getDb();
+  const result = await database!.insert(breachEvents).values(data);
+  return result;
+}
+
+export async function getBreachEvents(limit: number = 50) {
+  const database = await getDb();
+  return database!
+    .select()
+    .from(breachEvents)
+    .orderBy(desc(breachEvents.createdAt))
+    .limit(limit);
+}
+
+export async function getBreachEventById(id: number) {
+  const database = await getDb();
+  const results = await database!
+    .select()
+    .from(breachEvents)
+    .where(eq(breachEvents.id, id));
+  return results[0] || null;
+}
+
+export async function updateBreachEventStatus(
+  id: number,
+  status: "detected" | "investigating" | "contained" | "resolved" | "false_positive",
+  resolvedAt?: number
+) {
+  const database = await getDb();
+  const updateData: Record<string, unknown> = { status };
+  if (resolvedAt) {
+    updateData.resolvedAt = resolvedAt;
+  }
+  return database!
+    .update(breachEvents)
+    .set(updateData as any)
+    .where(eq(breachEvents.id, id));
+}
+
+export async function markBreachNotified(id: number) {
+  const database = await getDb();
+  return database!
+    .update(breachEvents)
+    .set({ notifiedAt: Date.now() } as any)
+    .where(eq(breachEvents.id, id));
+}
+
+export async function getUnnotifiedBreachEvents() {
+  const database = await getDb();
+  return database!
+    .select()
+    .from(breachEvents)
+    .where(
+      and(
+        sql`${breachEvents.notifiedAt} IS NULL`,
+        sql`${breachEvents.status} != 'false_positive'`
+      )
+    );
+}
+

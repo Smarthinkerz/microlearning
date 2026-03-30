@@ -14,6 +14,9 @@ import { securityRouter } from "./routers/security";
 import { hrisRouter } from "./routers/hris";
 import { analyticsInsightsRouter } from "./routers/analyticsInsights";
 import { marketplaceRouter } from "./routers/marketplace";
+import { ipAllowlistRouter } from "./routers/ipAllowlist";
+import { consentRouter } from "./routers/consent";
+import { breachRouter } from "./routers/breach";
 
 // ─── Role middleware ─────────────────────────────────────────────────
 const employerAdminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -1544,6 +1547,9 @@ export const appRouter = router({
   hris: hrisRouter,
   analyticsInsights: analyticsInsightsRouter,
   marketplace: marketplaceRouter,
+  ipAllowlist: ipAllowlistRouter,
+  consent: consentRouter,
+  breach: breachRouter,
 });
 
 export type AppRouter = typeof appRouter;

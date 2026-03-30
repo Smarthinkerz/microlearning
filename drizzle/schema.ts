@@ -434,3 +434,76 @@ export const voiceAudioCache = mysqlTable("voice_audio_cache", {
 
 export type VoiceAudioCache = typeof voiceAudioCache.$inferSelect;
 export type InsertVoiceAudioCache = typeof voiceAudioCache.$inferInsert;
+
+// ─── Admin IP Allowlist ─────────────────────────────────────────────
+export const adminIpAllowlist = mysqlTable("admin_ip_allowlist", {
+  id: int("id").autoincrement().primaryKey(),
+  ipAddress: varchar("ipAddress", { length: 45 }).notNull(), // IPv4 or IPv6
+  label: varchar("label", { length: 255 }), // e.g. "Office HQ", "VPN Exit"
+  addedBy: int("addedBy"), // userId who added this entry
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt"), // optional expiry for temporary access
+});
+
+export type AdminIpAllowlistEntry = typeof adminIpAllowlist.$inferSelect;
+export type InsertAdminIpAllowlistEntry = typeof adminIpAllowlist.$inferInsert;
+
+// ─── GDPR Consent Records ──────────────────────────────────────────
+export const consents = mysqlTable("consents", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  consentType: mysqlEnum("consentType", [
+    "terms_of_service",
+    "privacy_policy",
+    "marketing_emails",
+    "analytics_tracking",
+    "data_processing",
+    "third_party_sharing",
+  ]).notNull(),
+  granted: boolean("granted").default(false).notNull(),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  version: varchar("version", { length: 32 }).default("1.0"), // policy version consented to
+  grantedAt: bigint("grantedAt", { mode: "number" }),
+  withdrawnAt: bigint("withdrawnAt", { mode: "number" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Consent = typeof consents.$inferSelect;
+export type InsertConsent = typeof consents.$inferInsert;
+
+// ─── Breach Events ─────────────────────────────────────────────────
+export const breachEvents = mysqlTable("breach_events", {
+  id: int("id").autoincrement().primaryKey(),
+  eventType: mysqlEnum("eventType", [
+    "brute_force",
+    "bulk_data_access",
+    "unauthorized_admin_access",
+    "data_exfiltration",
+    "anomalous_pattern",
+    "manual_report",
+  ]).notNull(),
+  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).notNull(),
+  description: text("description").notNull(),
+  affectedUserCount: int("affectedUserCount").default(0),
+  affectedResourceType: varchar("affectedResourceType", { length: 128 }),
+  sourceIp: varchar("sourceIp", { length: 45 }),
+  detectedBy: mysqlEnum("detectedBy", ["automated", "manual"]).default("automated").notNull(),
+  status: mysqlEnum("status", [
+    "detected",
+    "investigating",
+    "contained",
+    "resolved",
+    "false_positive",
+  ]).default("detected").notNull(),
+  notifiedAt: bigint("notifiedAt", { mode: "number" }),
+  resolvedAt: bigint("resolvedAt", { mode: "number" }),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BreachEvent = typeof breachEvents.$inferSelect;
+export type InsertBreachEvent = typeof breachEvents.$inferInsert;

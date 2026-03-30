@@ -43,6 +43,13 @@
       "when": 1774883720628,
       "tag": "0005_silly_blue_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1774909450232,
+      "tag": "0006_dashing_piledriver",
+      "breakpoints": true
     }
   ]
 }
