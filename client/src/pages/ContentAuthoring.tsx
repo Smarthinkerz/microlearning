@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PenTool, Plus, Search, Clock, Edit, Trash2, Eye, Send } from "lucide-react";
+import { FeatureGate } from "@/components/FeatureGate";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -103,6 +104,7 @@ export default function ContentAuthoring() {
   };
 
   return (
+    <FeatureGate feature="contentAuthoring">
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -136,5 +138,6 @@ export default function ContentAuthoring() {
         </TabsContent>
       </Tabs>
     </div>
+    </FeatureGate>
   );
 }

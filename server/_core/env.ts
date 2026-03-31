@@ -13,4 +13,7 @@ export const ENV = {
   tapWebhookSecret: process.env.TAP_WEBHOOK_SECRET ?? "",
   // ElevenLabs Voice
   elevenLabsApiKey: process.env.ELEVENLABS_API_KEY ?? "",
+  // Resend Email
+  resendApiKey: process.env.RESEND_API_KEY ?? "",
+  resendFromEmail: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
 };

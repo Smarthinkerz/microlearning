@@ -13,6 +13,7 @@
 
 import * as db from "../db";
 import { notifyOwner } from "../_core/notification";
+import { sendBreachNotificationEmail, sendGDPRBreachAlert } from "./emailService";
 
 // ─── Types ──────────────────────────────────────────────────────────
 export interface AnomalyEvent {
@@ -229,15 +230,41 @@ export async function processAnomalyEvent(event: AnomalyEvent): Promise<number |
       } as any,
     });
 
-    // For high/critical severity, immediately notify owner
+    // For high/critical severity, immediately notify via email + owner notification
     if (event.severity === "high" || event.severity === "critical") {
-      await notifyOwner({
-        title: `🚨 Security Alert: ${formatEventType(event.type)}`,
-        content: buildNotificationContent(event),
-      });
+      // Get admin emails for notification
+      const adminEmails = await getAdminEmails();
 
-      // Mark as notified
+      // Send breach email via Resend (falls back to notifyOwner internally)
       if (breachId) {
+        await sendBreachNotificationEmail(adminEmails, {
+          breachId,
+          severity: event.severity,
+          eventType: formatEventType(event.type),
+          description: event.description,
+          affectedUserCount: event.affectedUserCount,
+          detectedAt: new Date(),
+          recommendedActions: getRecommendedActions(event.type),
+        });
+
+        // For critical breaches, also send GDPR alert
+        if (event.severity === "critical" && event.affectedUserCount > 0) {
+          await sendGDPRBreachAlert(adminEmails, {
+            breachId,
+            description: event.description,
+            affectedUserCount: event.affectedUserCount,
+            detectedAt: new Date(),
+            dataTypesAffected: inferAffectedDataTypes(event.type),
+            slaDeadline: new Date(Date.now() + 72 * 60 * 60 * 1000),
+          });
+        }
+
+        // Also send via notifyOwner as a backup channel
+        await notifyOwner({
+          title: `🚨 Security Alert: ${formatEventType(event.type)}`,
+          content: buildNotificationContent(event),
+        });
+
         await db.markBreachNotified(breachId);
       }
     }
@@ -263,6 +290,32 @@ export async function processUnnotifiedBreaches(): Promise<number> {
 
       // Notify if approaching 72-hour SLA or if severity is high/critical
       if (ageHours >= 24 || breach.severity === "high" || breach.severity === "critical") {
+        const adminEmails = await getAdminEmails();
+
+        // Send email notification for overdue breaches
+        await sendBreachNotificationEmail(adminEmails, {
+          breachId: breach.id,
+          severity: breach.severity as any,
+          eventType: breach.eventType ?? "unknown",
+          description: breach.description ?? "No description",
+          affectedUserCount: breach.affectedUserCount ?? 0,
+          detectedAt: new Date(breach.createdAt ?? 0),
+          recommendedActions: ["Review breach details in the Security Dashboard", "Assess impact and determine if GDPR notification is required"],
+        });
+
+        // GDPR SLA alert for breaches approaching 72h deadline
+        if (ageHours >= 48) {
+          await sendGDPRBreachAlert(adminEmails, {
+            breachId: breach.id,
+            description: breach.description ?? "No description",
+            affectedUserCount: breach.affectedUserCount ?? 0,
+            detectedAt: new Date(breach.createdAt ?? 0),
+            dataTypesAffected: ["user_data"],
+            slaDeadline: new Date(Number(breach.createdAt ?? 0) + 72 * 60 * 60 * 1000),
+          });
+        }
+
+        // Also notify via owner channel
         await notifyOwner({
           title: `🔔 Breach Event Requires Attention (ID: ${breach.id})`,
           content: `Severity: ${breach.severity}\nType: ${breach.eventType}\nDescription: ${breach.description}\nDetected: ${new Date(breach.createdAt ?? 0).toISOString()}\nAge: ${Math.round(ageHours)}h (72h SLA)\n\nPlease review and take action in the admin dashboard.`,
@@ -358,6 +411,74 @@ function buildNotificationContent(event: AnomalyEvent): string {
   lines.push("", "Please review this event in the admin security dashboard immediately.");
 
   return lines.join("\n");
+}
+
+// ─── Admin Email Helper ─────────────────────────────────────────────
+
+async function getAdminEmails(): Promise<string[]> {
+  try {
+    const db_ = (await import("../db"));
+    const allUsers = await db_.getAllUsers();
+    return allUsers
+      .filter((u: any) => u.role === "admin" && u.email)
+      .map((u: any) => u.email as string);
+  } catch {
+    return [];
+  }
+}
+
+function getRecommendedActions(type: AnomalyType): string[] {
+  const actions: Record<AnomalyType, string[]> = {
+    failed_login_spike: [
+      "Review failed login attempts and identify targeted accounts",
+      "Consider temporarily blocking the source IP addresses",
+      "Enable MFA for affected accounts if not already active",
+    ],
+    bulk_data_access: [
+      "Audit the data access logs for the affected user",
+      "Verify the access was authorized and within normal scope",
+      "Consider revoking access tokens if unauthorized",
+    ],
+    api_abuse: [
+      "Review API access logs for the source IP",
+      "Apply rate limiting or block the abusive IP",
+      "Check for compromised API keys",
+    ],
+    privilege_escalation: [
+      "Immediately review the user's permissions and recent activity",
+      "Revoke elevated access if unauthorized",
+      "Conduct a full access audit for the affected account",
+    ],
+    data_export_anomaly: [
+      "Review the exported data scope and destination",
+      "Verify the export was authorized by the data owner",
+      "Assess GDPR implications if personal data was exported",
+    ],
+    suspicious_pattern: [
+      "Investigate the flagged activity pattern",
+      "Cross-reference with known threat indicators",
+      "Escalate to security team if pattern persists",
+    ],
+    manual_report: [
+      "Follow the incident response plan",
+      "Document all findings and actions taken",
+      "Notify affected parties as required by policy",
+    ],
+  };
+  return actions[type] ?? ["Review the event in the Security Dashboard"];
+}
+
+function inferAffectedDataTypes(type: AnomalyType): string[] {
+  const dataTypes: Record<AnomalyType, string[]> = {
+    failed_login_spike: ["authentication_credentials", "user_accounts"],
+    bulk_data_access: ["personal_data", "employee_records"],
+    api_abuse: ["api_data", "system_access"],
+    privilege_escalation: ["access_controls", "admin_data"],
+    data_export_anomaly: ["personal_data", "training_records", "assessment_data"],
+    suspicious_pattern: ["user_data"],
+    manual_report: ["user_data"],
+  };
+  return dataTypes[type] ?? ["user_data"];
 }
 
 // Start periodic cleanup

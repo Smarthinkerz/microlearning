@@ -384,3 +384,22 @@
 - [x] Upgrade prompts shown when users hit gated features (existing FeatureGate component)
 - [x] Consent & Privacy page added to sidebar nav with route /consent
 - [x] Feature gating tests (235 tests passing across 11 files)
+
+## Sprint: SendGrid Email & Upgrade CTA
+
+### Resend Email Integration
+- [x] Create Resend email service module (server/services/emailService.ts)
+- [x] Request RESEND_API_KEY (validated, from-email defaults to onboarding@resend.dev)
+- [x] Build email templates: breach notification, GDPR breach alert, general system alert
+- [x] Wire breach notification pipeline to send emails to admin users
+- [x] Add email delivery tracking (messageId returned from Resend)
+- [x] Fallback to notifyOwner() when Resend is unavailable
+
+### Upgrade CTA Component
+- [x] Design prominent UpgradeCTA component with animated gradient, feature benefits, and plan comparison
+- [x] Create reusable UpgradeCTA with tier-specific messaging (Pro vs Enterprise) + compact variant
+- [x] FeatureGate component now uses UpgradeCTA as default fallback for all gated pages
+- [x] Place UpgradeCTA on Analytics Insights gated page (via FeatureGate fullAnalytics)
+- [x] Place UpgradeCTA on Content Authoring gated page (ContentAuthoring.tsx + LessonEditor.tsx)
+- [x] Place UpgradeCTA on SCORM/xAPI Export gated page (via FeatureGate scormXapiExport)
+- [x] Write tests for email service and upgrade CTA components (268 tests passing across 13 files)
