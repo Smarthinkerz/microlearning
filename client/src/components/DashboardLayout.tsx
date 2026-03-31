@@ -43,6 +43,7 @@ import {
   Library,
   Home,
   Fingerprint,
+  Activity,
 } from "lucide-react";
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -73,6 +74,7 @@ const allMenuItems: MenuItem[] = [
   { icon: Shield, label: "Compliance", path: "/compliance", roles: ["employer_admin", "super_admin"] },
   { icon: ShieldCheck, label: "Security", path: "/security", roles: ["employer_admin", "super_admin"], badge: "New" },
   { icon: Fingerprint, label: "Consent & Privacy", path: "/consent" },
+  { icon: Activity, label: "System Status", path: "/status", roles: ["employer_admin", "super_admin"] },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 

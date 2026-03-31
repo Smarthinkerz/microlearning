@@ -403,3 +403,38 @@
 - [x] Place UpgradeCTA on Content Authoring gated page (ContentAuthoring.tsx + LessonEditor.tsx)
 - [x] Place UpgradeCTA on SCORM/xAPI Export gated page (via FeatureGate scormXapiExport)
 - [x] Write tests for email service and upgrade CTA components (268 tests passing across 13 files)
+
+## Sprint: Onboarding, CSV Export & Status Page
+
+### Onboarding Wizard
+- [x] Create OnboardingWizard page component with 4-step animated flow
+- [x] Step 1: Welcome + name, role selection (shift worker vs manager), timezone
+- [x] Step 2: Shift schedule setup (preset types, time inputs, work days, break duration)
+- [x] Step 3: Industry/interest selection (11 industries, up to 3) with lesson recommendations
+- [x] Step 4: First lesson assignment from personalized recommendations
+- [x] Backend: onboarding router with profile, shift, interests, and completion endpoints
+- [x] Auto-redirect new users to onboarding on first login (route available at /onboarding)
+- [x] Add onboarding route to App.tsx (/onboarding)
+
+### Admin CSV Export
+- [x] Backend: 3 export endpoints (exportUsers, exportConsents, exportPayments) returning CSV
+- [x] CSV includes: user info, shifts, consent status per type, payment transactions, certificates, attempts
+- [x] Admin-only tRPC procedures with configurable column selection
+- [x] Frontend: ExportTab in Admin CRM (7th tab) with 3 export buttons (Users, Consents, Payments) + configurable data toggles
+
+### Real-Time Status Page
+- [x] Create SystemStatus page component at /status route (within DashboardLayout)
+- [x] API health checks: database connectivity, application server health
+- [x] Third-party service checks: Resend email, ElevenLabs TTS, Tap payments, LLM API
+- [x] Real-time polling with auto-refresh (30s interval) + countdown timer
+- [x] Visual status indicators: green/amber/red badges with response times
+- [x] Overall status banner (all operational / degraded / partial outage)
+- [x] System metrics: uptime, request count, error rate, avg response time
+- [x] Per-service individual refresh buttons
+- [x] Admin-only access (employer_admin, super_admin) via sidebar nav
+
+### Tests
+- [x] Tests for onboarding wizard backend
+- [x] Tests for CSV export generation (50 tests: CSV helpers, data structure, output validation)
+- [x] Tests for status page health checks (status logic, metrics, uptime formatting, latency classification)
+- [x] All 318 tests passing across 14 test files

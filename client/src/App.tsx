@@ -26,6 +26,8 @@ import AdminCRM from "./pages/AdminCRM";
 import Pricing from "./pages/Pricing";
 import SecurityDashboard from "./pages/SecurityDashboard";
 import ConsentSettings from "./pages/ConsentSettings";
+import OnboardingWizard from "./pages/OnboardingWizard";
+import SystemStatus from "./pages/SystemStatus";
 
 function DashboardRoutes() {
   return (
@@ -48,6 +50,7 @@ function DashboardRoutes() {
         <Route path="/compliance" component={Compliance} />
         <Route path="/security" component={SecurityDashboard} />
         <Route path="/consent" component={ConsentSettings} />
+        <Route path="/status" component={SystemStatus} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/notifications" component={Notifications} />
         <Route component={NotFound} />
@@ -66,6 +69,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/admin-crm" component={AdminCRMRoute} />
       <Route path="/pricing" component={Pricing} />
+      <Route path="/onboarding" component={OnboardingWizard} />
       <Route path="/404" component={NotFound} />
       <Route>
         <DashboardRoutes />

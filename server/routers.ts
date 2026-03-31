@@ -18,6 +18,9 @@ import { marketplaceRouter } from "./routers/marketplace";
 import { ipAllowlistRouter } from "./routers/ipAllowlist";
 import { consentRouter } from "./routers/consent";
 import { breachRouter } from "./routers/breach";
+import { onboardingRouter } from "./routers/onboarding";
+import { adminExportRouter } from "./routers/adminExport";
+import { statusPageRouter } from "./routers/statusPage";
 
 // ─── Role middleware ─────────────────────────────────────────────────
 const employerAdminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -1557,6 +1560,9 @@ export const appRouter = router({
   ipAllowlist: ipAllowlistRouter,
   consent: consentRouter,
   breach: breachRouter,
+  onboarding: onboardingRouter,
+  adminExport: adminExportRouter,
+  statusPage: statusPageRouter,
 });
 
 export type AppRouter = typeof appRouter;

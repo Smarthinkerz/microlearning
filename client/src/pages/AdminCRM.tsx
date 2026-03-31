@@ -17,6 +17,7 @@ import {
   Type, Layout, Sun, Moon, Image as ImageIcon, Wrench,
   CreditCard, DollarSign, TrendingUp, Crown, ToggleLeft,
   Volume2, Zap, HardDrive, Clock, Hash, Trash2 as Trash2Icon,
+  Download, FileSpreadsheet, CheckCircle2,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
@@ -1189,6 +1190,203 @@ function VoiceCacheTab() {
   );
 }
 
+// ─── Export Tab ─────────────────────────────────────────────────────
+function ExportTab() {
+  const [exportingUsers, setExportingUsers] = useState(false);
+  const [exportingConsents, setExportingConsents] = useState(false);
+  const [exportingPayments, setExportingPayments] = useState(false);
+  const [lastExport, setLastExport] = useState<{ type: string; records: number; time: string } | null>(null);
+
+  // Options for user export
+  const [includeConsents, setIncludeConsents] = useState(true);
+  const [includePayments, setIncludePayments] = useState(true);
+  const [includeShifts, setIncludeShifts] = useState(false);
+  const [includeCertificates, setIncludeCertificates] = useState(false);
+  const [includeAttempts, setIncludeAttempts] = useState(false);
+
+  const exportUsers = trpc.adminExport.exportUsers.useMutation({
+    onSuccess: (data) => {
+      downloadCsv(data.csv, data.filename);
+      setLastExport({ type: "Users", records: data.totalUsers, time: new Date().toLocaleTimeString() });
+      toast.success(`Exported ${data.totalUsers} user records`);
+      setExportingUsers(false);
+    },
+    onError: (err) => { toast.error(err.message); setExportingUsers(false); },
+  });
+
+  const exportConsents = trpc.adminExport.exportConsents.useMutation({
+    onSuccess: (data) => {
+      downloadCsv(data.csv, data.filename);
+      setLastExport({ type: "Consents", records: data.totalRecords, time: new Date().toLocaleTimeString() });
+      toast.success(`Exported ${data.totalRecords} consent records`);
+      setExportingConsents(false);
+    },
+    onError: (err) => { toast.error(err.message); setExportingConsents(false); },
+  });
+
+  const exportPayments = trpc.adminExport.exportPayments.useMutation({
+    onSuccess: (data) => {
+      downloadCsv(data.csv, data.filename);
+      setLastExport({ type: "Payments", records: data.totalRecords, time: new Date().toLocaleTimeString() });
+      toast.success(`Exported ${data.totalRecords} payment records`);
+      setExportingPayments(false);
+    },
+    onError: (err) => { toast.error(err.message); setExportingPayments(false); },
+  });
+
+  function downloadCsv(csv: string, filename: string) {
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleExportUsers() {
+    setExportingUsers(true);
+    exportUsers.mutate({
+      includeConsents,
+      includePayments,
+      includeShifts,
+      includeCertificates,
+      includeAttempts,
+    });
+  }
+
+  function handleExportConsents() {
+    setExportingConsents(true);
+    exportConsents.mutate();
+  }
+
+  function handleExportPayments() {
+    setExportingPayments(true);
+    exportPayments.mutate();
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Last Export Info */}
+      {lastExport && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          <span className="text-sm text-emerald-300">
+            Last export: <strong>{lastExport.type}</strong> — {lastExport.records} records at {lastExport.time}
+          </span>
+        </div>
+      )}
+
+      {/* User Data Export */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" /> User Data Export
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Export all user records with optional related data. The CSV includes user profile fields (ID, name, email, role, timezone, etc.) plus any selected data categories.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+              <Switch checked={includeConsents} onCheckedChange={setIncludeConsents} />
+              <span className="text-sm">Consent Records</span>
+            </label>
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+              <Switch checked={includePayments} onCheckedChange={setIncludePayments} />
+              <span className="text-sm">Payment History</span>
+            </label>
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+              <Switch checked={includeShifts} onCheckedChange={setIncludeShifts} />
+              <span className="text-sm">Shift Data</span>
+            </label>
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+              <Switch checked={includeCertificates} onCheckedChange={setIncludeCertificates} />
+              <span className="text-sm">Certificates</span>
+            </label>
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+              <Switch checked={includeAttempts} onCheckedChange={setIncludeAttempts} />
+              <span className="text-sm">Lesson Attempts</span>
+            </label>
+          </div>
+          <Button
+            onClick={handleExportUsers}
+            disabled={exportingUsers}
+            className="gap-2"
+          >
+            {exportingUsers ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+            Export Users CSV
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Consent Records Export */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" /> GDPR Consent Records
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Export a dedicated consent audit log for GDPR compliance. Each row contains a user and their consent status for each of the 5 consent types (essential cookies, analytics tracking, marketing communications, data sharing, AI personalization).
+          </p>
+          <Button
+            onClick={handleExportConsents}
+            disabled={exportingConsents}
+            variant="outline"
+            className="gap-2"
+          >
+            {exportingConsents ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export Consents CSV
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Payment History Export */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-amber-400" /> Payment History
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Export all payment transactions including payment ID, organization, plan, amount, currency, status, payment method, external charge ID, and timestamps.
+          </p>
+          <Button
+            onClick={handleExportPayments}
+            disabled={exportingPayments}
+            variant="outline"
+            className="gap-2"
+          >
+            {exportingPayments ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export Payments CSV
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Export Format Info */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <FileSpreadsheet className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Export Format</p>
+              <p className="text-xs text-muted-foreground">
+                All exports are UTF-8 encoded CSV files compatible with Excel, Google Sheets, and other spreadsheet applications. Fields containing commas or quotes are properly escaped. Timestamps are in ISO 8601 format (UTC).
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Main CRM Page ──────────────────────────────────────────────────
 export default function AdminCRM() {
   const { user, loading } = useAuth({ redirectOnUnauthenticated: true });
@@ -1280,7 +1478,7 @@ export default function AdminCRM() {
 
       {/* Tabs */}
       <Tabs defaultValue="branding" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="branding" className="flex items-center gap-1.5">
             <Palette className="h-3.5 w-3.5" /> Branding
           </TabsTrigger>
@@ -1298,6 +1496,9 @@ export default function AdminCRM() {
           </TabsTrigger>
           <TabsTrigger value="voicecache" className="flex items-center gap-1.5">
             <Volume2 className="h-3.5 w-3.5" /> Voice
+          </TabsTrigger>
+          <TabsTrigger value="export" className="flex items-center gap-1.5">
+            <Download className="h-3.5 w-3.5" /> Export
           </TabsTrigger>
         </TabsList>
 
@@ -1318,6 +1519,9 @@ export default function AdminCRM() {
         </TabsContent>
         <TabsContent value="voicecache" className="mt-6">
           <VoiceCacheTab />
+        </TabsContent>
+        <TabsContent value="export" className="mt-6">
+          <ExportTab />
         </TabsContent>
       </Tabs>
       </main>
