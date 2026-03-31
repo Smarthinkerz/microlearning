@@ -5,6 +5,7 @@
  */
 import { z } from "zod";
 import { protectedProcedure, adminProcedure, router } from "../_core/trpc";
+import { enforceFeatureAccess } from "../middleware/tierGating";
 import {
   generateInsights,
   generateAlerts,
@@ -17,6 +18,8 @@ export const analyticsInsightsRouter = router({
    * Get actionable insights for the organization.
    */
   getInsights: adminProcedure.query(async ({ ctx }) => {
+    // Pro+ feature gating: full analytics
+    await enforceFeatureAccess(ctx.user, "fullAnalytics");
     const orgId = (ctx.user as any).orgId;
     if (!orgId) return [];
     return generateInsights(orgId);
@@ -43,6 +46,8 @@ export const analyticsInsightsRouter = router({
    * Get industry benchmark comparisons.
    */
   getBenchmarks: adminProcedure.query(async ({ ctx }) => {
+    // Pro+ feature gating: full analytics
+    await enforceFeatureAccess(ctx.user, "fullAnalytics");
     const orgId = (ctx.user as any).orgId;
     if (!orgId) return [];
     return getIndustryBenchmarks(orgId);
@@ -52,6 +57,8 @@ export const analyticsInsightsRouter = router({
    * Get cohort analysis by department/team.
    */
   getCohorts: adminProcedure.query(async ({ ctx }) => {
+    // Pro+ feature gating: full analytics
+    await enforceFeatureAccess(ctx.user, "fullAnalytics");
     const orgId = (ctx.user as any).orgId;
     if (!orgId) return [];
     return getCohortAnalysis(orgId);

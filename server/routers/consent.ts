@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
+import { router, protectedProcedure, publicProcedure, adminProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import * as db from "../db";
 
@@ -15,6 +15,17 @@ const CONSENT_TYPES = [
 const consentTypeSchema = z.enum(CONSENT_TYPES);
 
 export const consentRouter = router({
+  /** Admin: Get aggregated consent statistics across all users */
+  adminStats: adminProcedure.query(async () => {
+    const stats: Record<string, { total: number; granted: number; rate: number }> = {};
+    for (const type of CONSENT_TYPES) {
+      const records = await db.getConsentsByType(type);
+      const total = records.length;
+      const granted = records.filter((r: any) => r.granted).length;
+      stats[type] = { total, granted, rate: total > 0 ? Math.round((granted / total) * 100) : 0 };
+    }
+    return { types: CONSENT_TYPES, stats };
+  }),
   /** Get all consent records for the current user */
   getMyConsents: protectedProcedure.query(async ({ ctx }) => {
     const records = await db.getUserConsents(ctx.user.id);

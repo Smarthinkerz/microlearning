@@ -6,6 +6,7 @@
  */
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
+import { enforceFeatureAccess } from "../middleware/tierGating";
 import {
   generateRecommendations,
   generateAIExplanation,
@@ -25,6 +26,9 @@ export const aiRecommendationRouter = router({
       preferredCategories: z.array(z.string()).optional(),
     }).optional())
     .query(async ({ ctx, input }) => {
+      // Pro+ feature gating: adaptive recommendations
+      await enforceFeatureAccess(ctx.user, "adaptiveRecommendations");
+
       const context: RecommendationContext = {
         userId: ctx.user.id,
         orgId: ctx.user.orgId || undefined,
@@ -59,6 +63,9 @@ export const aiRecommendationRouter = router({
       lessonId: z.number(),
     }))
     .query(async ({ ctx, input }) => {
+      // Pro+ feature gating: adaptive recommendations
+      await enforceFeatureAccess(ctx.user, "adaptiveRecommendations");
+
       // Generate a fresh recommendation for this lesson
       const context: RecommendationContext = {
         userId: ctx.user.id,

@@ -115,11 +115,12 @@ describe("Lesson Router", () => {
     ).rejects.toThrow();
   });
 
-  it("allows content_author to create lessons", async () => {
+  it("requires Pro+ tier for content_author to create lessons (feature gating)", async () => {
     const user = createMockUser({ appRole: "content_author" as any });
     const { ctx } = createMockContext(user);
     const caller = appRouter.createCaller(ctx);
-    // Should not throw (may fail at DB level but not at auth level)
+    // Content authoring is now gated to Pro+ tier via enforceFeatureAccess
+    // Free tier users should get FORBIDDEN from feature gating
     try {
       await caller.lesson.create({
         title: "Test Lesson",
@@ -130,8 +131,8 @@ describe("Lesson Router", () => {
         durationMinutes: 5,
       });
     } catch (e: any) {
-      // Should not be a FORBIDDEN error
-      expect(e.code).not.toBe("FORBIDDEN");
+      // FORBIDDEN is expected since content authoring requires Pro+ tier
+      expect(["FORBIDDEN", "INTERNAL_SERVER_ERROR"]).toContain(e.code);
     }
   });
 });

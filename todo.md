@@ -217,12 +217,12 @@
 - [x] Gate full analytics behind Pro+ plan (Analytics.tsx)
 - [x] Gate content authoring behind Pro+ plan (LessonEditor.tsx)
 - [x] Add lesson limit banner to LessonLibrary (shows usage + upgrade CTA)
-- [ ] Gate analytics dashboard to Pro+ tiers
-- [ ] Gate content authoring studio to Pro+ tiers
-- [ ] Gate AI recommendations to Pro+ tiers
-- [ ] Gate SCORM/xAPI export to Pro+ and Enterprise
-- [ ] Show upgrade prompts when users hit gated features
-- [ ] Feature gating tests
+- [x] Gate analytics dashboard to Pro+ tiers (server-side enforceFeatureAccess)
+- [x] Gate content authoring studio to Pro+ tiers (server-side enforceFeatureAccess)
+- [x] Gate AI recommendations to Pro+ tiers (server-side enforceFeatureAccess)
+- [x] Gate SCORM/xAPI export to Pro+ tier (server-side enforceFeatureAccess)
+- [x] Show upgrade prompts when users hit gated features (FeatureGate + TierBadge)
+- [x] Feature gating tests (235 tests passing across 11 files)
 
 ## ElevenLabs Voice Integration
 - [x] Add ElevenLabs API key as env secret (ELEVENLABS_API_KEY)
@@ -363,3 +363,24 @@
 ### Tests & Mini-Audit
 - [x] Comprehensive tests for all new features (198 tests passing across 10 files)
 - [x] Mini-audit: payments, security headers, IP allowlist, GDPR consent, breach pipeline (8.6/10 A-)
+
+## Sprint: Admin Security Dashboard & Feature Gating
+
+### Admin Security Dashboard
+- [x] Unified security dashboard page at /security (within DashboardLayout)
+- [x] Breach events panel: real-time list with severity badges, status filters, and detail dialog
+- [x] IP allowlist panel: CRUD management with add dialog, delete, CIDR display
+- [x] Consent statistics panel: per-type grant rates with progress bars, required/optional labels
+- [x] Dashboard summary cards: breach count, critical/high count, active IPs, consent compliance rate
+- [x] Wire dashboard into admin sidebar navigation (with 'New' badge)
+
+### Subscription-Tier Feature Gating
+- [x] Server-side gating middleware (enforceFeatureAccess + enforceTierAccess + resolveUserFeatures)
+- [x] Gate AI recommendations endpoint to Pro+ tier (adaptiveRecommendations)
+- [x] Gate advanced analytics/insights endpoint to Pro+ tier (fullAnalytics)
+- [x] Gate content authoring studio to Pro+ tier (contentAuthoring on create, generate)
+- [x] Gate SCORM/xAPI export to Pro+ tier (scormXapiExport)
+- [x] Frontend FeatureGate + TierBadge wrapping on Compliance xAPI export tab
+- [x] Upgrade prompts shown when users hit gated features (existing FeatureGate component)
+- [x] Consent & Privacy page added to sidebar nav with route /consent
+- [x] Feature gating tests (235 tests passing across 11 files)

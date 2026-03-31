@@ -8,6 +8,7 @@ import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { SEED_LESSONS } from "./seedLessons";
 import { offlineSyncRouter } from "./routers/offlineSync";
+import { enforceFeatureAccess } from "./middleware/tierGating";
 import { pushRouter } from "./routers/pushNotification";
 import { aiRecommendationRouter } from "./routers/aiRecommendation";
 import { securityRouter } from "./routers/security";
@@ -261,6 +262,8 @@ const lessonRouter = router({
     tags: z.array(z.string()).optional(),
     language: z.string().optional(),
   })).mutation(async ({ input, ctx }) => {
+    // Pro+ feature gating: content authoring
+    await enforceFeatureAccess(ctx.user, "contentAuthoring");
     let orgId = input.orgId || (ctx.user as any).orgId;
     if (!orgId) {
       const orgs = await db.getAllOrganizations();
@@ -649,7 +652,9 @@ Return as JSON with this structure:
     durationMinutes: z.number().min(1).max(30).optional(),
     contentType: z.enum(["quiz", "scenario", "article", "mixed"]).optional(),
     language: z.string().optional(),
-  })).mutation(async ({ input }) => {
+  })).mutation(async ({ input, ctx }) => {
+    // Pro+ feature gating: content authoring
+    await enforceFeatureAccess(ctx.user, "contentAuthoring");
     const prompt = `Generate a micro-learning lesson for shift workers.
 Topic: ${input.topic}
 Industry: ${input.industry || "general"}
@@ -738,7 +743,9 @@ const complianceRouter = router({
   exportXapi: employerAdminProcedure.input(z.object({
     lessonId: z.number(),
     userId: z.number().optional(),
-  })).query(async ({ input }) => {
+  })).query(async ({ input, ctx }) => {
+    // Pro+ feature gating: SCORM/xAPI export
+    await enforceFeatureAccess(ctx.user, "scormXapiExport");
     const lesson = await db.getLessonById(input.lessonId);
     if (!lesson) throw new TRPCError({ code: "NOT_FOUND" });
 

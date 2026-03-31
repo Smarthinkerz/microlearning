@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Shield, Download, FileText, Clock, Activity } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { FeatureGate, TierBadge } from "@/components/FeatureGate";
 
 export default function Compliance() {
   const { user } = useAuth();
@@ -63,81 +64,89 @@ export default function Compliance() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Compliance & Reporting</h1>
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+          Compliance & Reporting
+          <TierBadge feature="scormXapiExport" />
+        </h1>
         <p className="text-muted-foreground">SCORM/xAPI export and audit trail for enterprise compliance.</p>
       </div>
 
       <Tabs defaultValue="xapi">
         <TabsList>
-          <TabsTrigger value="xapi">xAPI Export</TabsTrigger>
+          <TabsTrigger value="xapi" className="flex items-center gap-1.5">
+            xAPI Export
+            <TierBadge feature="scormXapiExport" />
+          </TabsTrigger>
           <TabsTrigger value="audit">Audit Log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="xapi" className="mt-4 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" /> xAPI Statement Export
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Export xAPI-compliant learning statements for integration with your enterprise LMS.
-                Select a lesson to generate xAPI statements for all learner attempts.
-              </p>
-              <div className="flex gap-3">
-                <Select value={selectedLesson} onValueChange={setSelectedLesson}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select a lesson to export" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(lessons || []).map((l: any) => (
-                      <SelectItem key={l.id} value={l.id.toString()}>{l.title}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={handleExportXapi} disabled={!selectedLesson || xapiLoading}>
-                  <Download className="mr-2 h-4 w-4" /> Export JSON
-                </Button>
-              </div>
-              {xapiData && (
-                <div className="p-3 rounded-lg bg-secondary/50 text-sm">
-                  <p className="text-foreground font-medium">{xapiData.lesson?.title}</p>
-                  <p className="text-muted-foreground">{xapiData.statements?.length || 0} xAPI statements found</p>
+          <FeatureGate feature="scormXapiExport">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-primary" /> xAPI Statement Export
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Export xAPI-compliant learning statements for integration with your enterprise LMS.
+                  Select a lesson to generate xAPI statements for all learner attempts.
+                </p>
+                <div className="flex gap-3">
+                  <Select value={selectedLesson} onValueChange={setSelectedLesson}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select a lesson to export" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(lessons || []).map((l: any) => (
+                        <SelectItem key={l.id} value={l.id.toString()}>{l.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleExportXapi} disabled={!selectedLesson || xapiLoading}>
+                    <Download className="mr-2 h-4 w-4" /> Export JSON
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                {xapiData && (
+                  <div className="p-3 rounded-lg bg-secondary/50 text-sm">
+                    <p className="text-foreground font-medium">{xapiData.lesson?.title}</p>
+                    <p className="text-muted-foreground">{xapiData.statements?.length || 0} xAPI statements found</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">SCORM Compatibility</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Lessons are structured to be SCORM 2004 compatible. The xAPI export includes
-                all required fields for LMS integration including actor, verb, object, result,
-                and timestamp. Import the exported JSON into your SCORM-compliant LMS.
-              </p>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-secondary/30">
-                  <p className="text-xs font-medium text-foreground">Supported Standards</p>
-                  <div className="flex gap-2 mt-2">
-                    <Badge variant="outline" className="text-[10px]">xAPI 1.0.3</Badge>
-                    <Badge variant="outline" className="text-[10px]">SCORM 2004</Badge>
-                    <Badge variant="outline" className="text-[10px]">cmi5</Badge>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">SCORM Compatibility</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Lessons are structured to be SCORM 2004 compatible. The xAPI export includes
+                  all required fields for LMS integration including actor, verb, object, result,
+                  and timestamp. Import the exported JSON into your SCORM-compliant LMS.
+                </p>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-secondary/30">
+                    <p className="text-xs font-medium text-foreground">Supported Standards</p>
+                    <div className="flex gap-2 mt-2">
+                      <Badge variant="outline" className="text-[10px]">xAPI 1.0.3</Badge>
+                      <Badge variant="outline" className="text-[10px]">SCORM 2004</Badge>
+                      <Badge variant="outline" className="text-[10px]">cmi5</Badge>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-secondary/30">
+                    <p className="text-xs font-medium text-foreground">Export Formats</p>
+                    <div className="flex gap-2 mt-2">
+                      <Badge variant="outline" className="text-[10px]">JSON</Badge>
+                      <Badge variant="outline" className="text-[10px]">CSV</Badge>
+                    </div>
                   </div>
                 </div>
-                <div className="p-3 rounded-lg bg-secondary/30">
-                  <p className="text-xs font-medium text-foreground">Export Formats</p>
-                  <div className="flex gap-2 mt-2">
-                    <Badge variant="outline" className="text-[10px]">JSON</Badge>
-                    <Badge variant="outline" className="text-[10px]">CSV</Badge>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </FeatureGate>
         </TabsContent>
 
         <TabsContent value="audit" className="mt-4 space-y-4">

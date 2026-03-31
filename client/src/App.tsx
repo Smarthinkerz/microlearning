@@ -24,6 +24,8 @@ import Notifications from "./pages/Notifications";
 import LessonLibrary from "./pages/LessonLibrary";
 import AdminCRM from "./pages/AdminCRM";
 import Pricing from "./pages/Pricing";
+import SecurityDashboard from "./pages/SecurityDashboard";
+import ConsentSettings from "./pages/ConsentSettings";
 
 function DashboardRoutes() {
   return (
@@ -44,6 +46,8 @@ function DashboardRoutes() {
         <Route path="/assign" component={AssignLessons} />
         <Route path="/analytics" component={Analytics} />
         <Route path="/compliance" component={Compliance} />
+        <Route path="/security" component={SecurityDashboard} />
+        <Route path="/consent" component={ConsentSettings} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/notifications" component={Notifications} />
         <Route component={NotFound} />

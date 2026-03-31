@@ -35,12 +35,14 @@ import {
   Settings,
 
   Shield,
+  ShieldCheck,
   Zap,
   ClipboardList,
   Award,
   FileText,
   Library,
   Home,
+  Fingerprint,
 } from "lucide-react";
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -69,6 +71,8 @@ const allMenuItems: MenuItem[] = [
   { icon: Zap, label: "Assign Lessons", path: "/assign", roles: ["employer_admin", "super_admin"] },
   { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["employer_admin", "super_admin"] },
   { icon: Shield, label: "Compliance", path: "/compliance", roles: ["employer_admin", "super_admin"] },
+  { icon: ShieldCheck, label: "Security", path: "/security", roles: ["employer_admin", "super_admin"], badge: "New" },
+  { icon: Fingerprint, label: "Consent & Privacy", path: "/consent" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
