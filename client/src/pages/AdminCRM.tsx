@@ -17,8 +17,13 @@ import {
   Type, Layout, Sun, Moon, Image as ImageIcon, Wrench,
   CreditCard, DollarSign, TrendingUp, Crown, ToggleLeft,
   Volume2, Zap, HardDrive, Clock, Hash, Trash2 as Trash2Icon,
-  Download, FileSpreadsheet, CheckCircle2,
+  Download, FileSpreadsheet, CheckCircle2, Star, MessageSquare, AlertCircle,
 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
@@ -1191,11 +1196,89 @@ function VoiceCacheTab() {
 }
 
 // ─── Export Tab ─────────────────────────────────────────────────────
+// ─── Export Confirmation Modal ──────────────────────────────────────
+function ExportConfirmModal({
+  open,
+  onOpenChange,
+  exportType,
+  description,
+  recordCount,
+  selectedOptions,
+  onConfirm,
+  loading,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  exportType: string;
+  description: string;
+  recordCount: number | null;
+  selectedOptions?: string[];
+  onConfirm: () => void;
+  loading: boolean;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-primary" />
+            Confirm {exportType} Export
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3">
+              <p>{description}</p>
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Export Type</span>
+                  <span className="font-medium text-foreground">{exportType}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Estimated Records</span>
+                  <span className="font-medium text-foreground">
+                    {recordCount !== null ? recordCount.toLocaleString() : "Calculating..."}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Format</span>
+                  <span className="font-medium text-foreground">CSV (UTF-8)</span>
+                </div>
+                {selectedOptions && selectedOptions.length > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Includes</span>
+                    <span className="font-medium text-foreground text-right max-w-[200px]">
+                      {selectedOptions.join(", ")}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The file will be downloaded to your device. This may take a moment for large datasets.
+              </p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} disabled={loading} className="gap-2">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {loading ? "Exporting..." : "Export Now"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 function ExportTab() {
   const [exportingUsers, setExportingUsers] = useState(false);
   const [exportingConsents, setExportingConsents] = useState(false);
   const [exportingPayments, setExportingPayments] = useState(false);
+  const [exportingFeedback, setExportingFeedback] = useState(false);
   const [lastExport, setLastExport] = useState<{ type: string; records: number; time: string } | null>(null);
+
+  // Confirmation modal state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingExport, setPendingExport] = useState<"users" | "consents" | "payments" | "feedback" | null>(null);
 
   // Options for user export
   const [includeConsents, setIncludeConsents] = useState(true);
@@ -1204,14 +1287,19 @@ function ExportTab() {
   const [includeCertificates, setIncludeCertificates] = useState(false);
   const [includeAttempts, setIncludeAttempts] = useState(false);
 
+  // Fetch export counts for confirmation modal
+  const { data: exportCounts } = trpc.adminExport.getExportCounts.useQuery();
+
   const exportUsers = trpc.adminExport.exportUsers.useMutation({
     onSuccess: (data) => {
       downloadCsv(data.csv, data.filename);
       setLastExport({ type: "Users", records: data.totalUsers, time: new Date().toLocaleTimeString() });
       toast.success(`Exported ${data.totalUsers} user records`);
       setExportingUsers(false);
+      setConfirmOpen(false);
+      setPendingExport(null);
     },
-    onError: (err) => { toast.error(err.message); setExportingUsers(false); },
+    onError: (err) => { toast.error(err.message); setExportingUsers(false); setConfirmOpen(false); setPendingExport(null); },
   });
 
   const exportConsents = trpc.adminExport.exportConsents.useMutation({
@@ -1220,8 +1308,10 @@ function ExportTab() {
       setLastExport({ type: "Consents", records: data.totalRecords, time: new Date().toLocaleTimeString() });
       toast.success(`Exported ${data.totalRecords} consent records`);
       setExportingConsents(false);
+      setConfirmOpen(false);
+      setPendingExport(null);
     },
-    onError: (err) => { toast.error(err.message); setExportingConsents(false); },
+    onError: (err) => { toast.error(err.message); setExportingConsents(false); setConfirmOpen(false); setPendingExport(null); },
   });
 
   const exportPayments = trpc.adminExport.exportPayments.useMutation({
@@ -1230,8 +1320,22 @@ function ExportTab() {
       setLastExport({ type: "Payments", records: data.totalRecords, time: new Date().toLocaleTimeString() });
       toast.success(`Exported ${data.totalRecords} payment records`);
       setExportingPayments(false);
+      setConfirmOpen(false);
+      setPendingExport(null);
     },
-    onError: (err) => { toast.error(err.message); setExportingPayments(false); },
+    onError: (err) => { toast.error(err.message); setExportingPayments(false); setConfirmOpen(false); setPendingExport(null); },
+  });
+
+  const exportFeedback = trpc.adminExport.exportFeedback.useMutation({
+    onSuccess: (data) => {
+      downloadCsv(data.csv, data.filename);
+      setLastExport({ type: "Feedback", records: data.totalRecords, time: new Date().toLocaleTimeString() });
+      toast.success(`Exported ${data.totalRecords} feedback records`);
+      setExportingFeedback(false);
+      setConfirmOpen(false);
+      setPendingExport(null);
+    },
+    onError: (err) => { toast.error(err.message); setExportingFeedback(false); setConfirmOpen(false); setPendingExport(null); },
   });
 
   function downloadCsv(csv: string, filename: string) {
@@ -1246,29 +1350,81 @@ function ExportTab() {
     URL.revokeObjectURL(url);
   }
 
-  function handleExportUsers() {
-    setExportingUsers(true);
-    exportUsers.mutate({
-      includeConsents,
-      includePayments,
-      includeShifts,
-      includeCertificates,
-      includeAttempts,
-    });
+  // Open confirmation modal instead of exporting directly
+  function requestExport(type: "users" | "consents" | "payments" | "feedback") {
+    setPendingExport(type);
+    setConfirmOpen(true);
   }
 
-  function handleExportConsents() {
-    setExportingConsents(true);
-    exportConsents.mutate();
+  function handleConfirmExport() {
+    switch (pendingExport) {
+      case "users":
+        setExportingUsers(true);
+        exportUsers.mutate({ includeConsents, includePayments, includeShifts, includeCertificates, includeAttempts });
+        break;
+      case "consents":
+        setExportingConsents(true);
+        exportConsents.mutate();
+        break;
+      case "payments":
+        setExportingPayments(true);
+        exportPayments.mutate();
+        break;
+      case "feedback":
+        setExportingFeedback(true);
+        exportFeedback.mutate();
+        break;
+    }
   }
 
-  function handleExportPayments() {
-    setExportingPayments(true);
-    exportPayments.mutate();
-  }
+  // Confirmation modal config per export type
+  const modalConfig: Record<string, { type: string; description: string; count: number | null; options?: string[] }> = {
+    users: {
+      type: "User Data",
+      description: "This will export all user records with their selected related data as a CSV file.",
+      count: exportCounts?.users ?? null,
+      options: [
+        ...(includeConsents ? ["Consent Records"] : []),
+        ...(includePayments ? ["Payment History"] : []),
+        ...(includeShifts ? ["Shift Data"] : []),
+        ...(includeCertificates ? ["Certificates"] : []),
+        ...(includeAttempts ? ["Lesson Attempts"] : []),
+      ],
+    },
+    consents: {
+      type: "GDPR Consent Records",
+      description: "This will export all consent audit records for GDPR compliance.",
+      count: exportCounts?.consents ?? null,
+    },
+    payments: {
+      type: "Payment History",
+      description: "This will export all payment transactions including amounts, statuses, and timestamps.",
+      count: exportCounts?.payments ?? null,
+    },
+    feedback: {
+      type: "Feedback & Ratings",
+      description: "This will export all user feedback and lesson ratings including comments and difficulty assessments.",
+      count: exportCounts?.feedback ?? null,
+    },
+  };
+
+  const currentModal = pendingExport ? modalConfig[pendingExport] : null;
+  const isAnyExporting = exportingUsers || exportingConsents || exportingPayments || exportingFeedback;
 
   return (
     <div className="space-y-6">
+      {/* Confirmation Modal */}
+      <ExportConfirmModal
+        open={confirmOpen}
+        onOpenChange={(v) => { if (!isAnyExporting) { setConfirmOpen(v); if (!v) setPendingExport(null); } }}
+        exportType={currentModal?.type || ""}
+        description={currentModal?.description || ""}
+        recordCount={currentModal?.count ?? null}
+        selectedOptions={currentModal?.options}
+        onConfirm={handleConfirmExport}
+        loading={isAnyExporting}
+      />
+
       {/* Last Export Info */}
       {lastExport && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
@@ -1313,7 +1469,7 @@ function ExportTab() {
             </label>
           </div>
           <Button
-            onClick={handleExportUsers}
+            onClick={() => requestExport("users")}
             disabled={exportingUsers}
             className="gap-2"
           >
@@ -1332,10 +1488,10 @@ function ExportTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Export a dedicated consent audit log for GDPR compliance. Each row contains a user and their consent status for each of the 5 consent types (essential cookies, analytics tracking, marketing communications, data sharing, AI personalization).
+            Export a dedicated consent audit log for GDPR compliance. Each row contains a user and their consent status for each of the 5 consent types.
           </p>
           <Button
-            onClick={handleExportConsents}
+            onClick={() => requestExport("consents")}
             disabled={exportingConsents}
             variant="outline"
             className="gap-2"
@@ -1358,13 +1514,36 @@ function ExportTab() {
             Export all payment transactions including payment ID, organization, plan, amount, currency, status, payment method, external charge ID, and timestamps.
           </p>
           <Button
-            onClick={handleExportPayments}
+            onClick={() => requestExport("payments")}
             disabled={exportingPayments}
             variant="outline"
             className="gap-2"
           >
             {exportingPayments ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             Export Payments CSV
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Feedback & Ratings Export */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Star className="h-4 w-4 text-yellow-400" /> Feedback & Ratings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Export all user feedback and lesson ratings. Each row includes user details, lesson info, star rating (1-5), difficulty assessment, recommendation status, and written comments.
+          </p>
+          <Button
+            onClick={() => requestExport("feedback")}
+            disabled={exportingFeedback}
+            variant="outline"
+            className="gap-2"
+          >
+            {exportingFeedback ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+            Export Feedback CSV
           </Button>
         </CardContent>
       </Card>

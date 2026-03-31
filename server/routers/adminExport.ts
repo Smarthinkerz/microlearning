@@ -8,6 +8,10 @@ import {
   getOrgSubscription,
   getCertificatesByUser,
   getAttemptsByUser,
+  getAllFeedbackAdmin,
+  getFeedbackCount,
+  getAllPaymentsAdmin,
+  getAllPublishedLessons,
 } from "../db";
 
 // ─── CSV Helpers ────────────────────────────────────────────────────
@@ -158,7 +162,6 @@ export const adminExportRouter = router({
             const futureShifts = shifts.filter((s: any) => s.startTime > now);
             const nextShift = futureShifts.length > 0 ? futureShifts[0] : null;
 
-            // Find primary shift type
             const typeCounts = new Map<string, number>();
             for (const s of shifts) {
               const t = (s as any).shiftType || "unknown";
@@ -226,7 +229,6 @@ export const adminExportRouter = router({
       try {
         const consents = await getUserConsents(user.id);
         if (consents.length === 0) {
-          // Add a row showing no consents recorded
           for (const ct of CONSENT_TYPES) {
             rows.push(toCsvRow([user.id, user.name, user.email, ct, "not_set", ""]));
           }
@@ -261,8 +263,6 @@ export const adminExportRouter = router({
     ];
     const rows: string[] = [toCsvRow(headers)];
 
-    // Get all payments via admin function
-    const { getAllPaymentsAdmin } = await import("../db");
     const payments = await getAllPaymentsAdmin();
 
     for (const p of payments) {
@@ -284,6 +284,66 @@ export const adminExportRouter = router({
       csv: rows.join("\n"),
       filename: `learnshift_payments_export_${new Date().toISOString().split("T")[0]}.csv`,
       totalRecords: payments.length,
+    };
+  }),
+
+  // Export user feedback & ratings
+  exportFeedback: adminProcedure.mutation(async () => {
+    const headers = [
+      "feedback_id", "user_id", "user_name", "user_email",
+      "lesson_id", "lesson_title", "attempt_id",
+      "rating", "difficulty", "would_recommend",
+      "comment", "created_at",
+    ];
+    const rows: string[] = [toCsvRow(headers)];
+
+    const feedbackList = await getAllFeedbackAdmin();
+    const users = await getAllUsers();
+    const userMap = new Map(users.map(u => [u.id, u]));
+
+    let lessonMap = new Map<number, string>();
+    try {
+      const allLessons = await getAllPublishedLessons();
+      lessonMap = new Map(allLessons.map((l: any) => [l.id, l.title || ""]));
+    } catch { /* ignore */ }
+
+    for (const fb of feedbackList) {
+      const user = userMap.get(fb.userId);
+      rows.push(toCsvRow([
+        fb.id,
+        fb.userId,
+        user?.name || "",
+        user?.email || "",
+        fb.lessonId,
+        lessonMap.get(fb.lessonId) || "",
+        fb.attemptId || "",
+        fb.rating,
+        fb.difficulty || "",
+        fb.wouldRecommend !== null ? (fb.wouldRecommend ? "yes" : "no") : "",
+        fb.comment || "",
+        formatTimestamp(fb.createdAt instanceof Date ? fb.createdAt.getTime() : fb.createdAt as any),
+      ]));
+    }
+
+    return {
+      csv: rows.join("\n"),
+      filename: `learnshift_feedback_export_${new Date().toISOString().split("T")[0]}.csv`,
+      totalRecords: feedbackList.length,
+    };
+  }),
+
+  // Get export counts for confirmation modal
+  getExportCounts: adminProcedure.query(async () => {
+    const users = await getAllUsers();
+    const payments = await getAllPaymentsAdmin();
+    const feedbackCount = await getFeedbackCount();
+    const consentEstimate = users.length * CONSENT_TYPES.length;
+
+    return {
+      users: users.length,
+      consents: consentEstimate,
+      payments: payments.length,
+      feedback: feedbackCount,
     };
   }),
 });

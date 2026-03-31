@@ -507,3 +507,34 @@ export const breachEvents = mysqlTable("breach_events", {
 
 export type BreachEvent = typeof breachEvents.$inferSelect;
 export type InsertBreachEvent = typeof breachEvents.$inferInsert;
+
+// ─── Lesson Feedback & Ratings ──────────────────────────────────────
+export const lessonFeedback = mysqlTable("lesson_feedback", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  lessonId: int("lessonId").notNull(),
+  attemptId: int("attemptId"),
+  rating: int("rating").notNull(), // 1-5 stars
+  comment: text("comment"),
+  difficulty: mysqlEnum("difficulty", ["too_easy", "just_right", "too_hard"]),
+  wouldRecommend: boolean("wouldRecommend"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LessonFeedback = typeof lessonFeedback.$inferSelect;
+export type InsertLessonFeedback = typeof lessonFeedback.$inferInsert;
+
+// ─── Uptime History (Service Health Snapshots) ──────────────────────
+export const uptimeHistory = mysqlTable("uptime_history", {
+  id: int("id").autoincrement().primaryKey(),
+  serviceName: varchar("serviceName", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["operational", "degraded", "down", "unknown"]).notNull(),
+  latencyMs: int("latencyMs"),
+  message: text("message"),
+  checkedAt: bigint("checkedAt", { mode: "number" }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UptimeHistory = typeof uptimeHistory.$inferSelect;
+export type InsertUptimeHistory = typeof uptimeHistory.$inferInsert;

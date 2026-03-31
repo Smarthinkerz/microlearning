@@ -438,3 +438,25 @@
 - [x] Tests for CSV export generation (50 tests: CSV helpers, data structure, output validation)
 - [x] Tests for status page health checks (status logic, metrics, uptime formatting, latency classification)
 - [x] All 318 tests passing across 14 test files
+
+## Sprint: Export Enhancements & Status History
+
+### Feedback/Ratings CSV Export
+- [x] Backend: exportFeedback endpoint returning CSV with user ratings, comments, lesson info
+- [x] Add feedback export button to ExportTab in Admin CRM
+
+### 7-Day Uptime History Chart
+- [x] Backend: store service check results in uptime_history table
+- [x] Backend: getUptimeHistory endpoint returning 7-day data per service
+- [x] Frontend: historical uptime chart on SystemStatus page (per-service bars/timeline with tooltips)
+
+### Export Confirmation Modal
+- [x] Create ExportConfirmModal component with summary of export type and row count
+- [x] Wire modal into all 4 export buttons (Users, Consents, Payments, Feedback)
+- [x] Show estimated row count, data scope, format, and included options before executing export
+
+### Tests
+- [x] Tests for feedback CSV export (12 tests: CSV structure, data mapping, edge cases)
+- [x] Tests for uptime history logic (18 tests: bucket aggregation, percentage, time ranges)
+- [x] Tests for export counts and status display logic (14 tests)
+- [x] All 362 tests passing across 15 test files

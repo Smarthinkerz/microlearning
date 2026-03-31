@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, adminProcedure, publicProcedure } from "../_core/trpc";
-import { getDb } from "../db";
+import { getDb, insertUptimeSnapshot, getAllUptimeHistory, pruneOldUptimeHistory } from "../db";
 import { sql } from "drizzle-orm";
 
 // ─── Service Health Check Types ─────────────────────────────────────
@@ -18,6 +18,18 @@ interface SystemMetrics {
   errorRate24h: number;
   avgResponseTime: number;
 }
+
+// ─── Constants ──────────────────────────────────────────────────────
+const SERVICE_NAMES = [
+  "Application Server",
+  "Database (PostgreSQL)",
+  "Email Service (Resend)",
+  "Payment Gateway (Tap)",
+  "AI/LLM Service",
+  "Voice Service (ElevenLabs)",
+];
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 // ─── Health Check Functions ─────────────────────────────────────────
 
@@ -59,7 +71,6 @@ async function checkResendEmail(): Promise<ServiceStatus> {
         message: "API key not configured",
       };
     }
-    // Lightweight check: hit Resend API domains endpoint
     const res = await fetch("https://api.resend.com/domains", {
       method: "GET",
       headers: { Authorization: `Bearer ${apiKey}` },
@@ -157,7 +168,6 @@ async function checkLLMService(): Promise<ServiceStatus> {
         message: "API credentials not configured",
       };
     }
-    // Simple health check via models endpoint
     const res = await fetch(`${apiUrl}/v1/models`, {
       method: "GET",
       headers: { Authorization: `Bearer ${apiKey}` },
@@ -230,7 +240,6 @@ function getAppService(): ServiceStatus {
 }
 
 // ─── In-Memory Metrics Store ────────────────────────────────────────
-// Simple in-memory counters (reset on server restart)
 const metricsStore = {
   requestCount: 0,
   errorCount: 0,
@@ -242,6 +251,29 @@ export function recordRequest(durationMs: number, isError: boolean) {
   metricsStore.requestCount++;
   metricsStore.totalResponseTime += durationMs;
   if (isError) metricsStore.errorCount++;
+}
+
+// ─── Persist Uptime Snapshots ───────────────────────────────────────
+// Called after each full status check to store history
+async function persistServiceStatuses(services: ServiceStatus[]) {
+  const now = Date.now();
+  for (const svc of services) {
+    try {
+      await insertUptimeSnapshot({
+        serviceName: svc.name,
+        status: svc.status,
+        latencyMs: svc.latencyMs ?? undefined,
+        message: svc.message ?? undefined,
+        checkedAt: now,
+      });
+    } catch {
+      // Silently ignore persistence failures — don't break health checks
+    }
+  }
+  // Prune entries older than 8 days (keep buffer beyond 7-day window)
+  try {
+    await pruneOldUptimeHistory(now - 8 * 24 * 60 * 60 * 1000);
+  } catch { /* ignore */ }
 }
 
 // ─── Status Page Router ─────────────────────────────────────────────
@@ -259,7 +291,6 @@ export const statusPageRouter = router({
 
   // Full status check (admin only)
   fullStatus: adminProcedure.query(async () => {
-    // Run all health checks in parallel
     const [dbStatus, resendStatus, tapStatus, llmStatus, elevenLabsStatus] =
       await Promise.all([
         checkDatabase(),
@@ -309,6 +340,9 @@ export const statusPageRouter = router({
           : 0,
     };
 
+    // Persist snapshots asynchronously (don't block response)
+    persistServiceStatuses(services).catch(() => {});
+
     return {
       overallStatus,
       services,
@@ -321,21 +355,28 @@ export const statusPageRouter = router({
   checkService: adminProcedure
     .input(z.object({ service: z.string() }))
     .mutation(async ({ input }) => {
+      let result: ServiceStatus;
       switch (input.service) {
         case "database":
-          return checkDatabase();
+          result = await checkDatabase();
+          break;
         case "resend":
-          return checkResendEmail();
+          result = await checkResendEmail();
+          break;
         case "tap":
-          return checkTapPayments();
+          result = await checkTapPayments();
+          break;
         case "llm":
-          return checkLLMService();
+          result = await checkLLMService();
+          break;
         case "elevenlabs":
-          return checkElevenLabs();
+          result = await checkElevenLabs();
+          break;
         case "app":
-          return getAppService();
+          result = getAppService();
+          break;
         default:
-          return {
+          result = {
             name: input.service,
             status: "unknown" as const,
             latencyMs: null,
@@ -343,5 +384,108 @@ export const statusPageRouter = router({
             message: "Unknown service",
           };
       }
+      // Persist single service check
+      persistServiceStatuses([result]).catch(() => {});
+      return result;
     }),
+
+  // Get 7-day uptime history for all services
+  getUptimeHistory: adminProcedure.query(async () => {
+    const sinceTs = Date.now() - SEVEN_DAYS_MS;
+    const history = await getAllUptimeHistory(sinceTs);
+
+    // Group by service name, then bucket into 4-hour intervals
+    const BUCKET_SIZE_MS = 4 * 60 * 60 * 1000; // 4 hours = 42 buckets over 7 days
+    const bucketStart = Math.floor(sinceTs / BUCKET_SIZE_MS) * BUCKET_SIZE_MS;
+    const now = Date.now();
+
+    // Build service → bucket → aggregated status map
+    const serviceMap = new Map<string, Map<number, { statuses: string[]; latencies: number[] }>>();
+
+    for (const name of SERVICE_NAMES) {
+      serviceMap.set(name, new Map());
+    }
+
+    for (const entry of history) {
+      const svcBuckets = serviceMap.get(entry.serviceName);
+      if (!svcBuckets) continue;
+      const bucketKey = Math.floor(entry.checkedAt / BUCKET_SIZE_MS) * BUCKET_SIZE_MS;
+      if (!svcBuckets.has(bucketKey)) {
+        svcBuckets.set(bucketKey, { statuses: [], latencies: [] });
+      }
+      const bucket = svcBuckets.get(bucketKey)!;
+      bucket.statuses.push(entry.status);
+      if (entry.latencyMs !== null) {
+        bucket.latencies.push(entry.latencyMs);
+      }
+    }
+
+    // Generate time labels (bucket timestamps)
+    const timeLabels: number[] = [];
+    for (let t = bucketStart; t <= now; t += BUCKET_SIZE_MS) {
+      timeLabels.push(t);
+    }
+
+    // Build per-service timeline
+    const services: {
+      name: string;
+      timeline: {
+        timestamp: number;
+        status: "operational" | "degraded" | "down" | "unknown" | "no_data";
+        avgLatencyMs: number | null;
+        checkCount: number;
+      }[];
+      uptimePercent: number;
+    }[] = [];
+
+    for (const name of SERVICE_NAMES) {
+      const svcBuckets = serviceMap.get(name)!;
+      let totalBuckets = 0;
+      let operationalBuckets = 0;
+
+      const timeline = timeLabels.map((ts) => {
+        const bucket = svcBuckets.get(ts);
+        if (!bucket || bucket.statuses.length === 0) {
+          return {
+            timestamp: ts,
+            status: "no_data" as const,
+            avgLatencyMs: null,
+            checkCount: 0,
+          };
+        }
+
+        totalBuckets++;
+        // Determine bucket status: worst status wins
+        const hasDown = bucket.statuses.includes("down");
+        const hasDegraded = bucket.statuses.includes("degraded");
+        const bucketStatus = hasDown ? "down" : hasDegraded ? "degraded" : "operational";
+
+        if (bucketStatus === "operational") operationalBuckets++;
+
+        const avgLatency = bucket.latencies.length > 0
+          ? Math.round(bucket.latencies.reduce((a, b) => a + b, 0) / bucket.latencies.length)
+          : null;
+
+        return {
+          timestamp: ts,
+          status: bucketStatus as "operational" | "degraded" | "down",
+          avgLatencyMs: avgLatency,
+          checkCount: bucket.statuses.length,
+        };
+      });
+
+      const uptimePercent = totalBuckets > 0
+        ? Math.round((operationalBuckets / totalBuckets) * 10000) / 100
+        : 100; // No data = assume operational
+
+      services.push({ name, timeline, uptimePercent });
+    }
+
+    return {
+      services,
+      timeLabels,
+      bucketSizeMs: BUCKET_SIZE_MS,
+      sinceTs,
+    };
+  }),
 });

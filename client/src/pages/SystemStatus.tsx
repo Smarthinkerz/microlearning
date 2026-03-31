@@ -4,11 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Activity, RefreshCw, Loader2, CheckCircle2, AlertTriangle,
   XCircle, HelpCircle, Clock, Zap, Server, Database,
-  Mail, CreditCard, Brain, Mic,
+  Mail, CreditCard, Brain, Mic, BarChart3,
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface ServiceStatus {
@@ -24,6 +30,19 @@ interface SystemMetrics {
   totalRequests24h: number;
   errorRate24h: number;
   avgResponseTime: number;
+}
+
+interface UptimeBucket {
+  timestamp: number;
+  status: "operational" | "degraded" | "down" | "unknown" | "no_data";
+  avgLatencyMs: number | null;
+  checkCount: number;
+}
+
+interface ServiceUptimeData {
+  name: string;
+  timeline: UptimeBucket[];
+  uptimePercent: number;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -101,6 +120,43 @@ function formatTime(ts: number): string {
     minute: "2-digit",
     second: "2-digit",
   });
+}
+
+function formatDateShort(ts: number): string {
+  return new Date(ts).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatDateTimeFull(ts: number): string {
+  return new Date(ts).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function bucketColor(status: string): string {
+  switch (status) {
+    case "operational":
+      return "bg-emerald-500";
+    case "degraded":
+      return "bg-amber-500";
+    case "down":
+      return "bg-red-500";
+    case "no_data":
+      return "bg-muted-foreground/20";
+    default:
+      return "bg-muted-foreground/30";
+  }
+}
+
+function uptimePercentColor(pct: number): string {
+  if (pct >= 99.5) return "text-emerald-400";
+  if (pct >= 95) return "text-amber-400";
+  return "text-red-400";
 }
 
 // ─── Overall Status Banner ──────────────────────────────────────────
@@ -193,10 +249,61 @@ function ServiceCard({ service, onRefresh, refreshing }: {
   );
 }
 
+// ─── Uptime History Bar Chart ───────────────────────────────────────
+function UptimeHistoryChart({ service }: { service: ServiceUptimeData }) {
+  const timeline = service.timeline;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ServiceIcon name={service.name} />
+          <span className="text-sm font-medium text-foreground">{service.name}</span>
+        </div>
+        <span className={`text-sm font-semibold tabular-nums ${uptimePercentColor(service.uptimePercent)}`}>
+          {service.uptimePercent}%
+        </span>
+      </div>
+      <TooltipProvider delayDuration={100}>
+        <div className="flex gap-[2px] h-8 items-end">
+          {timeline.map((bucket, idx) => (
+            <Tooltip key={idx}>
+              <TooltipTrigger asChild>
+                <div
+                  className={`flex-1 rounded-sm cursor-pointer transition-opacity hover:opacity-80 ${bucketColor(bucket.status)}`}
+                  style={{ minWidth: 2, height: "100%" }}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs max-w-[200px]">
+                <p className="font-medium">{formatDateTimeFull(bucket.timestamp)}</p>
+                <p className="capitalize">Status: {bucket.status.replace("_", " ")}</p>
+                {bucket.avgLatencyMs !== null && (
+                  <p>Avg Latency: {bucket.avgLatencyMs}ms</p>
+                )}
+                <p>Checks: {bucket.checkCount}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
+      {/* Date labels */}
+      <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
+        <span>{timeline.length > 0 ? formatDateShort(timeline[0].timestamp) : ""}</span>
+        <span>{timeline.length > 0 ? formatDateShort(timeline[Math.floor(timeline.length / 2)].timestamp) : ""}</span>
+        <span>{timeline.length > 0 ? formatDateShort(timeline[timeline.length - 1].timestamp) : ""}</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Status Page ───────────────────────────────────────────────
 export default function SystemStatus() {
   const { data, isLoading, refetch, isFetching } = trpc.statusPage.fullStatus.useQuery(undefined, {
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchInterval: 30000,
+  });
+
+  const { data: uptimeData, isLoading: uptimeLoading } = trpc.statusPage.getUptimeHistory.useQuery(undefined, {
+    refetchInterval: 300000, // Refresh uptime history every 5 minutes
   });
 
   const [refreshingService, setRefreshingService] = useState<string | null>(null);
@@ -211,7 +318,6 @@ export default function SystemStatus() {
     },
   });
 
-  // Map service names to service keys for individual refresh
   const serviceKeyMap: Record<string, string> = useMemo(() => ({
     "Application Server": "app",
     "Database (PostgreSQL)": "database",
@@ -221,12 +327,12 @@ export default function SystemStatus() {
     "Voice Service (ElevenLabs)": "elevenlabs",
   }), []);
 
-  function handleRefreshService(serviceName: string) {
+  const handleRefreshService = useCallback((serviceName: string) => {
     const key = serviceKeyMap[serviceName];
     if (!key) return;
     setRefreshingService(serviceName);
     checkService.mutate({ service: key });
-  }
+  }, [serviceKeyMap, checkService]);
 
   // Auto-refresh countdown
   const [countdown, setCountdown] = useState(30);
@@ -237,7 +343,6 @@ export default function SystemStatus() {
     return () => clearInterval(interval);
   }, []);
 
-  // Reset countdown on refetch
   useEffect(() => {
     if (!isFetching) setCountdown(30);
   }, [isFetching]);
@@ -260,7 +365,6 @@ export default function SystemStatus() {
   const metrics = data?.metrics;
   const overallStatus = data?.overallStatus || "unknown";
 
-  // Categorize services
   const coreServices = services.filter((s: ServiceStatus) =>
     ["Application Server", "Database (PostgreSQL)"].includes(s.name)
   );
@@ -316,7 +420,7 @@ export default function SystemStatus() {
             <CardContent className="p-4 text-center">
               <Zap className="h-5 w-5 text-amber-400 mx-auto mb-1" />
               <p className="text-2xl font-bold text-foreground">{metrics.totalRequests24h.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Requests (Session)</p>
+              <p className="text-xs text-muted-foreground">Requests (24h)</p>
             </CardContent>
           </Card>
           <Card>
@@ -371,6 +475,60 @@ export default function SystemStatus() {
               refreshing={refreshingService === service.name}
             />
           ))}
+        </CardContent>
+      </Card>
+
+      {/* 7-Day Uptime History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-blue-400" /> 7-Day Uptime History
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {uptimeLoading ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : uptimeData && uptimeData.services.length > 0 ? (
+            <>
+              {uptimeData.services.map((svc: ServiceUptimeData) => (
+                <div key={svc.name}>
+                  <UptimeHistoryChart service={svc} />
+                  <Separator className="mt-4" />
+                </div>
+              ))}
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground pt-2">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm bg-emerald-500 inline-block" />
+                  Operational
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm bg-amber-500 inline-block" />
+                  Degraded
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm bg-red-500 inline-block" />
+                  Down
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm bg-muted-foreground/20 inline-block" />
+                  No Data
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-8">
+              <BarChart3 className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">
+                Uptime history will populate as the system collects health check data.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Data is recorded every time a status check runs (every 30 seconds).
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

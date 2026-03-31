@@ -21,6 +21,8 @@ import {
   adminIpAllowlist, InsertAdminIpAllowlistEntry,
   consents, InsertConsent,
   breachEvents, InsertBreachEvent,
+  lessonFeedback, InsertLessonFeedback,
+  uptimeHistory, InsertUptimeHistory,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1171,3 +1173,72 @@ export async function getUnnotifiedBreachEvents() {
     );
 }
 
+
+
+// ─── Lesson Feedback Helpers ────────────────────────────────────────
+export async function createFeedback(data: InsertLessonFeedback) {
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.insert(lessonFeedback).values(data);
+  return result.insertId;
+}
+
+export async function getFeedbackByLesson(lessonId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(lessonFeedback).where(eq(lessonFeedback.lessonId, lessonId)).orderBy(desc(lessonFeedback.createdAt));
+}
+
+export async function getFeedbackByUser(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(lessonFeedback).where(eq(lessonFeedback.userId, userId)).orderBy(desc(lessonFeedback.createdAt));
+}
+
+export async function getAllFeedbackAdmin(limit = 5000) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(lessonFeedback).orderBy(desc(lessonFeedback.createdAt)).limit(limit);
+}
+
+export async function getFeedbackCount() {
+  const db = await getDb();
+  if (!db) return 0;
+  const [row] = await db.select({ count: sql<number>`COUNT(*)` }).from(lessonFeedback);
+  return row?.count || 0;
+}
+
+// ─── Uptime History Helpers ─────────────────────────────────────────
+export async function insertUptimeSnapshot(data: InsertUptimeHistory) {
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.insert(uptimeHistory).values(data);
+  return result.insertId;
+}
+
+export async function getUptimeHistoryByService(serviceName: string, sinceTs: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(uptimeHistory)
+    .where(and(
+      eq(uptimeHistory.serviceName, serviceName),
+      gte(uptimeHistory.checkedAt, sinceTs),
+    ))
+    .orderBy(uptimeHistory.checkedAt);
+}
+
+export async function getAllUptimeHistory(sinceTs: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(uptimeHistory)
+    .where(gte(uptimeHistory.checkedAt, sinceTs))
+    .orderBy(uptimeHistory.checkedAt);
+}
+
+export async function pruneOldUptimeHistory(olderThanTs: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(uptimeHistory).where(
+    sql`${uptimeHistory.checkedAt} < ${olderThanTs}`
+  );
+}
