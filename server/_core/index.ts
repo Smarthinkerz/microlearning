@@ -59,11 +59,12 @@ async function startServer() {
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
-        frameAncestors: ["'self'"],
+        frameAncestors: ["'self'", "https://*.manus.computer", "https://*.manus.space"],
       },
     },
     crossOriginEmbedderPolicy: false, // Allow cross-origin resources (CDN images, fonts)
     crossOriginResourcePolicy: { policy: "cross-origin" },
+    xFrameOptions: false, // Disabled — frame-ancestors in CSP handles this
   }));
 
   // Health check endpoint (bypasses rate limiting via skip)
