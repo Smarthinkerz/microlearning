@@ -1009,8 +1009,39 @@ const crmRouter = router({
 });
 // ─── Subscription & Pricing Router ─────────────────────────────────────────
 const subscriptionRouter = router({
-  getPlans: publicProcedure.query(async () => {
-    return db.getAllPlans();
+  getPlans: publicProcedure.query(async ({ ctx }) => {
+    const plans = await db.getAllPlans();
+    
+    // Super admin users get all Pro features unlocked
+    if (ctx.user?.appRole === 'super_admin') {
+      return plans.map(plan => {
+        if (plan.tier === 'starter' || plan.tier === 'pro') {
+          return {
+            ...plan,
+            features: {
+              ...plan.features,
+              // Unlock all Pro features for super_admin
+              scormXapiExport: true,
+              rbac: true,
+              sso: true,
+              hrisIntegration: true,
+              whiteLabel: true,
+              customOnboarding: true,
+              sla: true,
+              dedicatedManager: true,
+              fullAnalytics: true,
+              adaptiveRecommendations: true,
+              contentAuthoring: true,
+              cohortManagement: true,
+              maxLessons: -1,
+            }
+          };
+        }
+        return plan;
+      });
+    }
+    
+    return plans;
   }),
 
   getPlan: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
@@ -1024,6 +1055,38 @@ const subscriptionRouter = router({
 
   getMyEntitlements: protectedProcedure.query(async ({ ctx }) => {
     const { FREE_TIER_FEATURES } = await import("../shared/featureGating");
+    
+    // Super admin users get all Pro/Enterprise features
+    if (ctx.user.appRole === 'super_admin') {
+      return {
+        tier: "enterprise",
+        planName: "Enterprise (Admin)",
+        features: {
+          maxLessons: -1,
+          offlineAccess: true,
+          basicTracking: true,
+          fullAnalytics: true,
+          adaptiveRecommendations: true,
+          contentAuthoring: true,
+          cohortManagement: true,
+          scormXapiExport: true,
+          rbac: true,
+          sso: true,
+          hrisIntegration: true,
+          whiteLabel: true,
+          customOnboarding: true,
+          sla: true,
+          dedicatedManager: true,
+          gamification: true,
+          pushNotifications: true,
+          emailSupport: true,
+          prioritySupport: true,
+          voiceNarration: true,
+        },
+        subscriptionStatus: null,
+      };
+    }
+    
     if (!ctx.user.orgId) {
       return { tier: "free", planName: "Free", features: FREE_TIER_FEATURES, subscriptionStatus: null };
     }

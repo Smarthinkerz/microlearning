@@ -23,12 +23,13 @@ function isPortAvailable(port: number): Promise<boolean> {
 }
 
 async function findAvailablePort(startPort: number = 3000): Promise<number> {
-  for (let port = startPort; port < startPort + 20; port++) {
-    if (await isPortAvailable(port)) {
-      return port;
-    }
+  // For Manus deployment, must use fixed port 3000
+  // Do not fall back to other ports
+  if (await isPortAvailable(startPort)) {
+    return startPort;
   }
-  throw new Error(`No available port found starting from ${startPort}`);
+  // If 3000 is busy, fail loudly so we know there's an issue
+  throw new Error(`Port ${startPort} is not available. Kill any existing processes and retry.`);
 }
 
 async function startServer() {
@@ -101,8 +102,8 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${port}/`);
     // Auto-seed the lesson library on startup
     autoSeedLessons().catch(err => console.error("[AutoSeed] Error:", err));
     autoSeedPlans().catch(err => console.error("[AutoSeed Plans] Error:", err));

@@ -463,3 +463,13 @@
 - [x] Tests for uptime history logic (18 tests: bucket aggregation, percentage, time ranges)
 - [x] Tests for export counts and status display logic (14 tests)
 - [x] All 362 tests passing across 15 test files
+
+
+## Super Admin Feature Access
+- [x] Grant super_admin users access to all Pro/Enterprise features
+- [x] Update getPlans endpoint to unlock Pro features for super_admin
+- [x] Update getMyEntitlements to return Enterprise tier for super_admin
+- [x] Super_admin can now access: SCORM/xAPI export, Audit Log, xAPI Export, Compliance features
+- [x] Tests for super_admin feature access (6 tests passing)
+- [x] Fixed server binding to 0.0.0.0 for Manus preview access
+- [x] Fixed port selection logic to use fixed port 3000 (required for Manus deployment)
