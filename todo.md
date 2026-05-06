@@ -473,3 +473,30 @@
 - [x] Tests for super_admin feature access (6 tests passing)
 - [x] Fixed server binding to 0.0.0.0 for Manus preview access
 - [x] Fixed port selection logic to use fixed port 3000 (required for Manus deployment)
+
+
+## Super Admin Team & User Management
+- [ ] Team member invitation system (invite by email, assign roles)
+- [ ] Team member role management (employer_admin, content_author, learner)
+- [ ] User approval/disapproval workflow (pending → approved/disapproved)
+- [ ] User blocking and removal functionality
+- [ ] User status tracking (active, blocked, pending, removed)
+- [ ] Audit logging for all user management actions
+- [ ] Team management UI in Admin CRM
+
+## Revenue Tracking & OpenAI Cost Deductions
+- [ ] Track payment transactions with timestamps and amounts
+- [ ] Calculate OpenAI API costs per lesson generation
+- [ ] Deduct OpenAI costs from revenue (percentage-based allocation)
+- [ ] Revenue dashboard showing: gross revenue, OpenAI costs, net revenue
+- [ ] Per-user revenue tracking and contribution analysis
+- [ ] Monthly/yearly revenue reports
+- [ ] Revenue analytics UI in Admin CRM
+
+## App Customization & Front Page Management
+- [ ] App settings panel for super_admin (colors, fonts, branding)
+- [ ] Front page content editor (hero text, CTA, sections)
+- [ ] Logo and favicon management
+- [ ] Email template customization
+- [ ] Landing page preview before publishing
+- [ ] Customization UI in Admin CRM

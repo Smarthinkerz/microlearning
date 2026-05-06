@@ -43,6 +43,12 @@ export const users = mysqlTable("users", {
     quietHoursStart?: string;
     quietHoursEnd?: string;
   }>(),
+  // User approval and status management
+  approvalStatus: mysqlEnum("approvalStatus", ["pending", "approved", "disapproved", "blocked", "removed"]).default("pending").notNull(),
+  approvedAt: timestamp("approvedAt"),
+  approvedBy: int("approvedBy"),
+  disapprovalReason: text("disapprovalReason"),
+  blockReason: text("blockReason"),
   lastActiveAt: timestamp("lastActiveAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

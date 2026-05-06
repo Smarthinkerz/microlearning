@@ -1242,3 +1242,4 @@ export async function pruneOldUptimeHistory(olderThanTs: number) {
     sql`${uptimeHistory.checkedAt} < ${olderThanTs}`
   );
 }
+

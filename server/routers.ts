@@ -21,6 +21,7 @@ import { breachRouter } from "./routers/breach";
 import { onboardingRouter } from "./routers/onboarding";
 import { adminExportRouter } from "./routers/adminExport";
 import { statusPageRouter } from "./routers/statusPage";
+import { teamManagementRouter } from "./routers/teamManagement";
 
 // ─── Role middleware ─────────────────────────────────────────────────
 const employerAdminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -1631,6 +1632,7 @@ export const appRouter = router({
   onboarding: onboardingRouter,
   adminExport: adminExportRouter,
   statusPage: statusPageRouter,
+  teamManagement: teamManagementRouter,
 });
 
 export type AppRouter = typeof appRouter;
