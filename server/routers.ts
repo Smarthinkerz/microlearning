@@ -1079,18 +1079,10 @@ const subscriptionRouter = router({
   // Tap Payment Gateway: Create a checkout session
   createCheckout: protectedProcedure.input(z.object({
     planSlug: z.string(),
+    cycle: z.enum(["monthly", "yearly"]).optional(),
     quantity: z.number().min(1).default(1),
-    origin: z.string(), // Frontend origin for redirect URL
+    origin: z.string(),
   })).mutation(async ({ ctx, input }) => {
-    const { isTapConfigured, buildSubscriptionCharge, createCharge } = await import("./tapPayment");
-    
-    if (!isTapConfigured()) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message: "Payment gateway is not yet configured. Please contact support.",
-      });
-    }
-    
     const plan = await db.getPlanBySlug(input.planSlug);
     if (!plan) throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
     
@@ -1100,79 +1092,92 @@ const subscriptionRouter = router({
       orgId = orgs[0]?.id || 1;
     }
     
-    const amount = (plan.priceMonthly / 100) * input.quantity; // Convert cents to dollars
+    const customerName = ctx.user.name || "Customer";
+    const customerEmail = ctx.user.email || "customer@example.com";
+    const customerPhone = "+1234567890"; // Default phone for Smarthinkerz
     
-    const chargeRequest = buildSubscriptionCharge({
-      planName: plan.name,
-      amount,
-      customerEmail: ctx.user.email || "customer@example.com",
-      customerName: ctx.user.name || "Customer",
-      orgId,
-      planId: plan.id,
-      redirectUrl: `${input.origin}/pricing?payment=callback`,
-      webhookUrl: `${input.origin}/api/webhooks/tap`,
-    });
+    const formData = new URLSearchParams();
+    formData.append("plan", input.planSlug);
+    if (input.cycle) formData.append("cycle", input.cycle);
+    formData.append("name", customerName);
+    formData.append("email", customerEmail);
+    formData.append("phone", customerPhone);
     
-    const charge = await createCharge(chargeRequest);
-    
-    // Record pending payment
-    await db.createPayment({
-      orgId,
-      amount: Math.round(amount * 100),
-      currency: plan.currency || "USD",
-      status: "pending",
-      paymentMethod: "tap",
-      externalChargeId: charge.id,
-      description: `${plan.name} Plan - ${input.quantity} seat(s)`,
-      metadata: { planSlug: input.planSlug, quantity: input.quantity },
-    });
-    
-    return {
-      success: true,
-      chargeId: charge.id,
-      redirectUrl: charge.transaction?.url || charge.redirect?.url,
-    };
+    try {
+      const response = await fetch("https://smarthinkerz.replit.app/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData.toString(),
+        redirect: "manual",
+      });
+      
+      if (response.status === 303 || response.status === 302) {
+        const checkoutUrl = response.headers.get("Location");
+        if (!checkoutUrl) throw new Error("No checkout URL in redirect");
+        
+        const amount = (plan.priceMonthly / 100) * input.quantity;
+        await db.createPayment({
+          orgId,
+          amount: Math.round(amount * 100),
+          currency: plan.currency || "USD",
+          status: "pending",
+          paymentMethod: "tap",
+          externalChargeId: `smarthinkerz_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          description: `${plan.name} Plan - ${input.quantity} seat(s)`,
+          metadata: { planSlug: input.planSlug, quantity: input.quantity, cycle: input.cycle || "monthly" },
+        });
+        
+        return { success: true, redirectUrl: checkoutUrl };
+      }
+      
+      if (response.status === 400) {
+        const error = await response.json();
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error.error || "Invalid checkout parameters",
+        });
+      }
+      
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Smarthinkerz returned status ${response.status}`,
+      });
+    } catch (err) {
+      if (err instanceof TRPCError) throw err;
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Checkout failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+      });
+    }
   }),
 
   // Verify a Tap charge after redirect
   verifyPayment: protectedProcedure.input(z.object({
-    chargeId: z.string(),
+    orderId: z.string(),
   })).mutation(async ({ ctx, input }) => {
-    const { isTapConfigured, getCharge } = await import("./tapPayment");
-    
-    if (!isTapConfigured()) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message: "Payment gateway is not configured.",
-      });
-    }
-    
-    const charge = await getCharge(input.chargeId);
-    const payment = await db.getPaymentByExternalChargeId(input.chargeId);
-    
+    const payment = await db.getPaymentByExternalChargeId(input.orderId);
     if (!payment) {
       throw new TRPCError({ code: "NOT_FOUND", message: "Payment record not found" });
     }
     
-    if (charge.status === "CAPTURED") {
-      // Payment successful
-      await db.updatePaymentStatus(payment.id, "succeeded", Date.now());
-      
-      // Activate subscription
+    if (payment.status === "succeeded") {
       const orgId = payment.orgId;
       const sub = await db.getOrgSubscription(orgId);
-      if (sub) {
+      if (sub && sub.status !== "active") {
         await db.updateSubscriptionStatus(sub.id, "active");
-        await db.updateSubscriptionExternalIds(sub.id, charge.id, charge.customer?.id);
       }
-      
       return { success: true, status: "captured", message: "Payment successful! Subscription activated." };
-    } else if (charge.status === "DECLINED" || charge.status === "CANCELLED") {
-      await db.updatePaymentStatus(payment.id, "failed");
-      return { success: false, status: charge.status.toLowerCase(), message: "Payment was declined or cancelled." };
-    } else {
-      return { success: false, status: charge.status.toLowerCase(), message: `Payment status: ${charge.status}` };
     }
+    
+    if (payment.status === "pending") {
+      return { success: false, status: "pending", message: "Payment is being processed. Please wait a moment." };
+    }
+    
+    if (payment.status === "failed") {
+      return { success: false, status: "failed", message: "Payment was declined. Please try again." };
+    }
+    
+    return { success: false, status: payment.status, message: `Payment status: ${payment.status}` };
   }),
 
   // Check if Tap is configured (for frontend to show/hide payment buttons)

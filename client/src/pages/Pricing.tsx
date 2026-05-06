@@ -112,9 +112,11 @@ export default function Pricing() {
   const { user, isAuthenticated } = useAuth();
   const [annual, setAnnual] = useState(false);
   const { data: plans, isLoading } = trpc.subscription.getPlans.useQuery();
-  const subscribeMutation = trpc.subscription.subscribe.useMutation({
+  const checkoutMutation = trpc.subscription.createCheckout.useMutation({
     onSuccess: (data) => {
-      toast.success(data.message);
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      }
     },
     onError: (err) => {
       toast.error(err.message);
@@ -129,7 +131,13 @@ export default function Pricing() {
       toast.info("Please sign in to subscribe");
       return;
     }
-    subscribeMutation.mutate({ planSlug: slug, quantity: 1 });
+    const cycle = annual ? "yearly" : "monthly";
+    checkoutMutation.mutate({
+      planSlug: slug,
+      cycle,
+      quantity: 1,
+      origin: window.location.origin,
+    });
   };
 
   return (
@@ -348,7 +356,7 @@ export default function Pricing() {
                             variant={isPro ? "default" : "outline"}
                             size="lg"
                             onClick={() => handleSubscribe(plan.slug)}
-                            disabled={subscribeMutation.isPending}
+                            disabled={checkoutMutation.isPending}
                           >
                             {plan.tier === "enterprise" ? "Contact Sales" : "Start 14-Day Trial"}
                             <ArrowRight className="h-4 w-4 ml-2" />
@@ -462,7 +470,7 @@ export default function Pricing() {
                           variant={isPremium ? "default" : "outline"}
                           size="lg"
                           onClick={() => handleSubscribe(plan.slug)}
-                          disabled={subscribeMutation.isPending}
+                          disabled={checkoutMutation.isPending}
                         >
                           {plan.priceMonthly === 0 ? "Get Started Free" : "Start Premium"}
                           <ArrowRight className="h-4 w-4 ml-2" />

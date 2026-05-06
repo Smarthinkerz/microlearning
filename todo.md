@@ -193,10 +193,13 @@
 - [x] isPaymentConfigured public endpoint (frontend checks if Tap is ready)
 - [x] DB helpers: updateSubscriptionExternalIds, getSubscriptionById, getPaymentByExternalChargeId
 - [x] Subscription tests (22 tests) + Tap module tests (5 tests) — all 68 tests passing
-- [ ] Connect Tap API keys when provided by user
-- [ ] Payment flow: select tier → checkout → activate subscription (end-to-end with live keys)
-- [ ] Subscription status tracking and renewal management
-- [ ] Tap webhook handler for async charge updates
+- [x] **Smarthinkerz proxy integration (replaces direct Tap API)**
+- [x] createCheckout now POSTs to smarthinkerz.replit.app/api/checkout
+- [x] Pricing page updated with cycle (monthly/yearly) selection
+- [x] verifyPayment handles order_id from Smarthinkerz redirects
+- [x] Smarthinkerz checkout tests (29 tests) for all plan types, cycles, customer data, error handling
+- [ ] End-to-end payment flow testing with live Smarthinkerz endpoint
+- [ ] Tap webhook handler for async charge updates (Smarthinkerz handles on their side)
 
 ## Logo Fix
 - [x] Investigate and fix broken logo across all pages (nav, sidebar, sign-in, footer)
