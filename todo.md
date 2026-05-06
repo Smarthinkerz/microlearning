@@ -476,13 +476,13 @@
 
 
 ## Super Admin Team & User Management
-- [ ] Team member invitation system (invite by email, assign roles)
-- [ ] Team member role management (employer_admin, content_author, learner)
-- [ ] User approval/disapproval workflow (pending → approved/disapproved)
-- [ ] User blocking and removal functionality
-- [ ] User status tracking (active, blocked, pending, removed)
-- [ ] Audit logging for all user management actions
-- [ ] Team management UI in Admin CRM
+- [x] Team member invitation system (invite by email, assign roles)
+- [x] Team member role management (employer_admin, content_author, learner)
+- [x] User approval/disapproval workflow (pending → approved/disapproved)
+- [x] User blocking and removal functionality
+- [x] User status tracking (active, blocked, pending, removed)
+- [x] Audit logging for all user management actions (20 tests passing)
+- [ ] Team management UI in Admin CRM (in progress)
 
 ## Revenue Tracking & OpenAI Cost Deductions
 - [ ] Track payment transactions with timestamps and amounts

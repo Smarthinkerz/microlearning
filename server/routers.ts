@@ -22,6 +22,7 @@ import { onboardingRouter } from "./routers/onboarding";
 import { adminExportRouter } from "./routers/adminExport";
 import { statusPageRouter } from "./routers/statusPage";
 import { teamManagementRouter } from "./routers/teamManagement";
+import { revenueTrackingRouter } from "./routers/revenueTracking";
 
 // ─── Role middleware ─────────────────────────────────────────────────
 const employerAdminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -1633,6 +1634,7 @@ export const appRouter = router({
   adminExport: adminExportRouter,
   statusPage: statusPageRouter,
   teamManagement: teamManagementRouter,
+  revenue: revenueTrackingRouter,
 });
 
 export type AppRouter = typeof appRouter;
