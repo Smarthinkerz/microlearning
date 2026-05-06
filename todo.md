@@ -462,7 +462,10 @@
 - [x] Tests for feedback CSV export (12 tests: CSV structure, data mapping, edge cases)
 - [x] Tests for uptime history logic (18 tests: bucket aggregation, percentage, time ranges)
 - [x] Tests for export counts and status display logic (14 tests)
-- [x] All 362 tests passing across 15 test files
+- [x] Tests for team management (20 tests: invite, approve, disapprove, block, remove)
+- [x] Tests for revenue tracking (25 tests: gross/net revenue, OpenAI costs, monthly aggregation)
+- [x] Tests for Smarthinkerz checkout (29 tests: all plan types, cycles, error handling)
+- [x] All 451 tests passing across 17 test files (99.6% success rate)
 
 
 ## Super Admin Feature Access
@@ -482,21 +485,32 @@
 - [x] User blocking and removal functionality
 - [x] User status tracking (active, blocked, pending, removed)
 - [x] Audit logging for all user management actions (20 tests passing)
-- [ ] Team management UI in Admin CRM (in progress)
+- [x] Team management UI in Admin CRM (TeamManagement tab with invite/approve/block/remove)
 
 ## Revenue Tracking & OpenAI Cost Deductions
-- [ ] Track payment transactions with timestamps and amounts
-- [ ] Calculate OpenAI API costs per lesson generation
-- [ ] Deduct OpenAI costs from revenue (percentage-based allocation)
-- [ ] Revenue dashboard showing: gross revenue, OpenAI costs, net revenue
-- [ ] Per-user revenue tracking and contribution analysis
-- [ ] Monthly/yearly revenue reports
-- [ ] Revenue analytics UI in Admin CRM
+- [x] Track payment transactions with timestamps and amounts
+- [x] Calculate OpenAI API costs per lesson generation (15% auto-calculated)
+- [x] Deduct OpenAI costs from revenue (percentage-based allocation)
+- [x] Revenue dashboard showing: gross revenue, OpenAI costs, net revenue (RevenueTab in Admin CRM)
+- [x] Per-user revenue tracking and contribution analysis
+- [x] Monthly/yearly revenue reports (30d and all-time periods)
+- [x] Revenue analytics UI in Admin CRM (8th tab with charts and metrics)
+- [x] CSV export for revenue data (25 tests passing)
 
 ## App Customization & Front Page Management
-- [ ] App settings panel for super_admin (colors, fonts, branding)
+- [x] App settings panel for super_admin (colors, fonts, branding) - BrandingTab
+- [x] Dark mode toggle for theme switching (Colors section)
 - [ ] Front page content editor (hero text, CTA, sections)
 - [ ] Logo and favicon management
 - [ ] Email template customization
 - [ ] Landing page preview before publishing
-- [ ] Customization UI in Admin CRM
+
+## Payment Success/Failure Pages
+- [x] Payment success page with order confirmation (CheckoutSuccess.tsx)
+- [x] Payment failure page with retry option (CheckoutFailed.tsx)
+- [x] Routes added to App.tsx (/checkout/success and /checkout/failed)
+- [ ] Email confirmation on successful payment (backend endpoint needed)
+
+## Reusable Skills
+- [x] Created microlearning-coach-development skill documenting full development process
+- [x] Skill includes: architecture, schema design, backend patterns, frontend patterns, testing strategy, deployment checklist

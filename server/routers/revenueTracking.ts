@@ -274,3 +274,53 @@ export const revenueTrackingRouter = router({
       };
     }),
 });
+
+
+// Export revenue data as CSV
+export const exportRevenueRouter = router({
+  exportRevenue: adminProcedure
+    .input(z.object({ period: z.enum(["30d", "alltime"]), orgId: z.number() }))
+    .mutation(async ({ input }: { input: any }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database connection failed");
+
+      const now = Date.now();
+      const startDate = input.period === "30d" ? now - 30 * 24 * 60 * 60 * 1000 : 0;
+
+      const orgPayments = await db
+        .select()
+        .from(payments)
+        .where(
+          and(
+            eq(payments.orgId, input.orgId),
+            eq(payments.status, "succeeded"),
+            gte(payments.paidAt, startDate)
+          )
+        );
+
+      const rows = orgPayments.map((p) => ({
+        "Payment ID": p.id,
+        "Subscription ID": p.subscriptionId || "N/A",
+        "Amount USD": (p.amount / 100).toFixed(2),
+        "Status": p.status,
+        "Created At": new Date(p.paidAt || Date.now()).toISOString(),
+      }));
+
+      if (rows.length === 0) {
+        return {
+          csv: "Payment ID,Subscription ID,Amount USD,Status,Created At",
+          filename: `revenue-${input.period}-${Date.now()}.csv`,
+        };
+      }
+
+      const csv = [
+        Object.keys(rows[0]).join(","),
+        ...rows.map((r) => Object.values(r).join(",")),
+      ].join("\n");
+
+      return {
+        csv,
+        filename: `revenue-${input.period}-${Date.now()}.csv`,
+      };
+    }),
+});

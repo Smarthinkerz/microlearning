@@ -28,6 +28,8 @@ import SecurityDashboard from "./pages/SecurityDashboard";
 import ConsentSettings from "./pages/ConsentSettings";
 import OnboardingWizard from "./pages/OnboardingWizard";
 import SystemStatus from "./pages/SystemStatus";
+import { CheckoutSuccess } from "./pages/CheckoutSuccess";
+import { CheckoutFailed } from "./pages/CheckoutFailed";
 
 function DashboardRoutes() {
   return (
@@ -70,6 +72,8 @@ function Router() {
       <Route path="/admin-crm" component={AdminCRMRoute} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/onboarding" component={OnboardingWizard} />
+      <Route path="/checkout/success" component={CheckoutSuccess} />
+      <Route path="/checkout/failed" component={CheckoutFailed} />
       <Route path="/404" component={NotFound} />
       <Route>
         <DashboardRoutes />

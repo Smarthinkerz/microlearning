@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { RevenueTab } from "./RevenueTab";
 
 // ─── Branding Tab ───────────────────────────────────────────────────
 function BrandingTab() {
@@ -136,21 +137,14 @@ function BrandingTab() {
               </div>
             </div>
             <div>
-              <Label>Theme</Label>
-              <div className="flex items-center gap-3 mt-2">
-                <button
-                  onClick={() => update("theme", "dark")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${form.theme === "dark" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
-                >
-                  <Moon className="h-4 w-4" /> Dark
-                </button>
-                <button
-                  onClick={() => update("theme", "light")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${form.theme === "light" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
-                >
-                  <Sun className="h-4 w-4" /> Light
-                </button>
-              </div>
+              <Label className="flex items-center gap-2">Default Theme
+                <div className="flex items-center gap-2 ml-auto">
+                  <Sun className="h-4 w-4" />
+                  <Switch checked={form.theme === "dark"} onCheckedChange={v => update("theme", v ? "dark" : "light")} />
+                  <Moon className="h-4 w-4" />
+                </div>
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">Users can toggle between light and dark modes</p>
             </div>
           </div>
           <div>
@@ -1657,7 +1651,7 @@ export default function AdminCRM() {
 
       {/* Tabs */}
       <Tabs defaultValue="branding" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="branding" className="flex items-center gap-1.5">
             <Palette className="h-3.5 w-3.5" /> Branding
           </TabsTrigger>
@@ -1678,6 +1672,9 @@ export default function AdminCRM() {
           </TabsTrigger>
           <TabsTrigger value="export" className="flex items-center gap-1.5">
             <Download className="h-3.5 w-3.5" /> Export
+          </TabsTrigger>
+          <TabsTrigger value="revenue" className="flex items-center gap-1.5">
+            <DollarSign className="h-3.5 w-3.5" /> Revenue
           </TabsTrigger>
         </TabsList>
 
@@ -1701,6 +1698,9 @@ export default function AdminCRM() {
         </TabsContent>
         <TabsContent value="export" className="mt-6">
           <ExportTab />
+        </TabsContent>
+        <TabsContent value="revenue" className="mt-6">
+          <RevenueTab />
         </TabsContent>
       </Tabs>
       </main>
