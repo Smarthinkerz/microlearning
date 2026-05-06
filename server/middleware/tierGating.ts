@@ -11,13 +11,44 @@ import * as db from "../db";
 
 /**
  * Resolve the current user's plan features from their org subscription.
+ * Super admin users get all features unlocked.
  * Returns FREE_TIER_FEATURES if no active subscription found.
  */
-export async function resolveUserFeatures(user: { id: number; orgId: number | null; role: string }): Promise<{
+export async function resolveUserFeatures(user: { id: number; orgId: number | null; role?: string; appRole?: string }): Promise<{
   features: PlanFeatures;
   tier: string;
   planName: string;
 }> {
+  // Super admin users get all features
+  if (user.appRole === "super_admin") {
+    return {
+      features: {
+        maxLessons: -1,
+        offlineAccess: true,
+        basicTracking: true,
+        fullAnalytics: true,
+        adaptiveRecommendations: true,
+        contentAuthoring: true,
+        cohortManagement: true,
+        scormXapiExport: true,
+        rbac: true,
+        sso: true,
+        hrisIntegration: true,
+        whiteLabel: true,
+        customOnboarding: true,
+        sla: true,
+        dedicatedManager: true,
+        gamification: true,
+        pushNotifications: true,
+        emailSupport: true,
+        prioritySupport: true,
+        voiceNarration: true,
+      },
+      tier: "enterprise",
+      planName: "Enterprise (Admin)",
+    };
+  }
+
   if (!user.orgId) {
     return { features: FREE_TIER_FEATURES, tier: "free", planName: "Free" };
   }
@@ -41,15 +72,15 @@ export async function resolveUserFeatures(user: { id: number; orgId: number | nu
 
 /**
  * Enforce that the user has a specific feature enabled in their plan.
- * Admin users always bypass the check.
+ * Admin and super_admin users always bypass the check.
  * Throws FORBIDDEN with a clear upgrade message if the feature is not available.
  */
 export async function enforceFeatureAccess(
-  user: { id: number; orgId: number | null; role: string },
+  user: { id: number; orgId: number | null; role?: string; appRole?: string },
   feature: FeatureKey
 ): Promise<void> {
-  // Admin users bypass all feature gating
-  if (user.role === "admin") return;
+  // Admin and super_admin users bypass all feature gating
+  if (user.role === "admin" || user.appRole === "super_admin") return;
 
   const { features } = await resolveUserFeatures(user);
 
@@ -77,11 +108,11 @@ const TIER_HIERARCHY: Record<string, number> = {
 };
 
 export async function enforceTierAccess(
-  user: { id: number; orgId: number | null; role: string },
+  user: { id: number; orgId: number | null; role?: string; appRole?: string },
   minimumTier: string
 ): Promise<void> {
-  // Admin users bypass all tier checks
-  if (user.role === "admin") return;
+  // Admin and super_admin users bypass all tier checks
+  if (user.role === "admin" || user.appRole === "super_admin") return;
 
   const { tier } = await resolveUserFeatures(user);
   const userLevel = TIER_HIERARCHY[tier] ?? 0;
