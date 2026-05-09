@@ -202,6 +202,52 @@ function BrandingTab() {
         </CardContent>
       </Card>
 
+      {/* Front Page Content Editor */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Layout className="h-4 w-4 text-primary" /> Front Page Content
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>CTA Button Text</Label>
+            <Input value={form.ctaButtonText || "Start Free Trial"} onChange={e => update("ctaButtonText", e.target.value)} placeholder="Start Free Trial" />
+          </div>
+          <div>
+            <Label>CTA Button URL</Label>
+            <Input value={form.ctaButtonUrl || "/pricing"} onChange={e => update("ctaButtonUrl", e.target.value)} placeholder="/pricing" />
+          </div>
+          <Separator />
+          <div>
+            <Label>Feature 1 Title</Label>
+            <Input value={form.feature1Title || ""} onChange={e => update("feature1Title", e.target.value)} placeholder="Feature title" />
+          </div>
+          <div>
+            <Label>Feature 1 Description</Label>
+            <textarea value={form.feature1Desc || ""} onChange={e => update("feature1Desc", e.target.value)} className="w-full h-16 mt-1 rounded-md border border-border bg-muted p-3 text-sm resize-y" placeholder="Feature description" />
+          </div>
+          <Separator />
+          <div>
+            <Label>Feature 2 Title</Label>
+            <Input value={form.feature2Title || ""} onChange={e => update("feature2Title", e.target.value)} placeholder="Feature title" />
+          </div>
+          <div>
+            <Label>Feature 2 Description</Label>
+            <textarea value={form.feature2Desc || ""} onChange={e => update("feature2Desc", e.target.value)} className="w-full h-16 mt-1 rounded-md border border-border bg-muted p-3 text-sm resize-y" placeholder="Feature description" />
+          </div>
+          <Separator />
+          <div>
+            <Label>Feature 3 Title</Label>
+            <Input value={form.feature3Title || ""} onChange={e => update("feature3Title", e.target.value)} placeholder="Feature title" />
+          </div>
+          <div>
+            <Label>Feature 3 Description</Label>
+            <textarea value={form.feature3Desc || ""} onChange={e => update("feature3Desc", e.target.value)} className="w-full h-16 mt-1 rounded-md border border-border bg-muted p-3 text-sm resize-y" placeholder="Feature description" />
+          </div>
+        </CardContent>
+      </Card>
+
       <Button onClick={handleSave} className="w-full" disabled={updateBranding.isPending}>
         {updateBranding.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
         Save Branding Changes

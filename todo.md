@@ -514,3 +514,24 @@
 ## Reusable Skills
 - [x] Created microlearning-coach-development skill documenting full development process
 - [x] Skill includes: architecture, schema design, backend patterns, frontend patterns, testing strategy, deployment checklist
+
+
+## Email Confirmation Workflow
+- [ ] Backend endpoint to send payment confirmation emails via Resend
+- [ ] Email template with order details, subscription info, and next steps
+- [ ] Trigger email on CheckoutSuccess page load
+- [ ] Error handling and retry logic for failed emails
+
+## Front Page Content Editor
+- [ ] Dynamic hero section editor (title, subtitle, CTA text, background image)
+- [ ] Feature blocks editor (add/remove/reorder feature cards)
+- [ ] CTA button customization (text, color, link)
+- [ ] Preview before publishing changes
+- [ ] Persist customizations to database
+
+## Audit Log Viewer
+- [ ] Audit log table in Admin CRM with all user actions
+- [ ] Filters: date range, user, action type, resource
+- [ ] Sorting: timestamp, user, action
+- [ ] CSV export of audit logs
+- [ ] Real-time updates for new actions
