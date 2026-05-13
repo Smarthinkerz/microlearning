@@ -78,6 +78,13 @@
       "when": 1778657727425,
       "tag": "0010_misty_baron_strucker",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1778659828843,
+      "tag": "0011_goofy_the_stranger",
+      "breakpoints": true
     }
   ]
 }

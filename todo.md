@@ -667,3 +667,38 @@
 - [ ] Implement background sync
 - [ ] Push notification integration
 - [ ] iOS and Android builds
+
+
+### Phase 3: Mobile App (React Native) with Expo
+- [x] Initialize Expo project with TypeScript
+- [x] Set up tRPC client for React Native
+- [x] Implement AsyncStorage for offline data
+- [x] Implement SQLite for local database
+- [x] Create lesson player component for mobile
+- [x] Create dashboard UI for mobile
+- [x] Implement background sync
+- [x] Add biometric authentication (Face ID / Fingerprint)
+- [x] Build home screen widgets
+- [ ] Create iOS build
+- [ ] Create Android build
+- [ ] Tests for mobile app
+
+### Phase 4: Review Reminders & Push Notifications
+- [x] Create review_reminders table (userId, lessonId, reminderTime, sent)
+- [x] Implement reminder scheduling logic
+- [x] Integrate with push notification system
+- [x] Create notification router endpoint
+- [x] Add reminder preferences UI
+- [x] Schedule background jobs for reminders
+- [x] Track reminder delivery and engagement
+- [x] Tests for reminder system
+
+### Phase 5: Review Dashboard Component
+- [x] Create ReviewDashboard component
+- [x] Display "Time to Review" indicator on lesson cards
+- [x] Show review statistics (mastered %, average ease factor)
+- [x] Display next review dates
+- [x] Create progress visualization (pie chart)
+- [x] Add filter by status (new, learning, review, mastered)
+- [ ] Create export review data feature
+- [x] Tests for dashboard component

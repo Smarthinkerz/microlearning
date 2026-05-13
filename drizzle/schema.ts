@@ -657,3 +657,57 @@ export const reviewHistory = mysqlTable("review_history", {
 
 export type ReviewHistory = typeof reviewHistory.$inferSelect;
 export type InsertReviewHistory = typeof reviewHistory.$inferInsert;
+
+
+// ─── Review Reminders (Push Notifications) ──────────────────────────
+export const reviewReminders = mysqlTable("review_reminders", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  lessonId: int("lessonId").notNull(),
+  orgId: int("orgId").notNull(),
+  
+  // Reminder Timing
+  reminderTime: bigint("reminderTime", { mode: "number" }).notNull(), // Unix timestamp when reminder should be sent
+  reminderType: mysqlEnum("reminderType", ["due_now", "due_tomorrow", "due_this_week", "custom"]).default("due_now").notNull(),
+  
+  // Status
+  sent: boolean("sent").default(false).notNull(),
+  sentAt: bigint("sentAt", { mode: "number" }), // Unix timestamp when sent
+  clicked: boolean("clicked").default(false).notNull(),
+  clickedAt: bigint("clickedAt", { mode: "number" }), // Unix timestamp when user clicked
+  
+  // Metadata
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ReviewReminder = typeof reviewReminders.$inferSelect;
+export type InsertReviewReminder = typeof reviewReminders.$inferInsert;
+
+// ─── Reminder Preferences (User Settings) ──────────────────────────
+export const reminderPreferences = mysqlTable("reminder_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  orgId: int("orgId").notNull(),
+  
+  // Reminder Settings
+  enableReminders: boolean("enableReminders").default(true).notNull(),
+  reminderFrequency: mysqlEnum("reminderFrequency", ["immediate", "daily", "weekly", "never"]).default("daily").notNull(),
+  
+  // Quiet Hours (no reminders during these times)
+  quietHoursEnabled: boolean("quietHoursEnabled").default(false).notNull(),
+  quietHoursStart: varchar("quietHoursStart", { length: 5 }), // HH:MM format
+  quietHoursEnd: varchar("quietHoursEnd", { length: 5 }), // HH:MM format
+  
+  // Notification Channels
+  enablePushNotifications: boolean("enablePushNotifications").default(true).notNull(),
+  enableEmailNotifications: boolean("enableEmailNotifications").default(false).notNull(),
+  enableInAppNotifications: boolean("enableInAppNotifications").default(true).notNull(),
+  
+  // Metadata
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ReminderPreferences = typeof reminderPreferences.$inferSelect;
+export type InsertReminderPreferences = typeof reminderPreferences.$inferInsert;

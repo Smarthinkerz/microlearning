@@ -25,6 +25,7 @@ import { teamManagementRouter } from "./routers/teamManagement";
 import { revenueTrackingRouter } from "./routers/revenueTracking";
 import { emailConfirmationRouter } from "./routers/emailConfirmation";
 import { spacedRepetitionRouter } from "./routers/spacedRepetition";
+import { reviewRemindersRouter } from "./routers/reviewReminders";
 import { gamificationRouter } from "./routers/gamification";
 import { checkAndUnlockAchievements, addPoints } from "./gamification";
 
@@ -1665,6 +1666,7 @@ export const appRouter = router({
   email: emailConfirmationRouter,
   gamification: gamificationRouter,
   spacedRepetition: spacedRepetitionRouter,
+  reviewReminders: reviewRemindersRouter,
 });
 
 export type AppRouter = typeof appRouter;
