@@ -616,3 +616,54 @@
 - [ ] Security audit
 - [ ] Save checkpoint
 - [ ] Deliver to user
+
+
+### Phase 1.5: Integrate Gamification into Lesson Player
+- [ ] Hook checkAchievements after lesson completion
+- [ ] Award points based on score (1 for completion, 5 for perfect, 10 for streak)
+- [ ] Trigger achievement unlock notifications (toast)
+- [ ] Update leaderboards after each lesson
+- [ ] Add points display to lesson completion screen
+- [ ] Add achievement badge animations
+- [ ] Tests for gamification integration
+
+### Phase 2: Spaced Repetition Engine
+- [ ] Create lesson_review_schedule table
+- [ ] Create review_history table (userId, lessonId, reviewDate, score, difficulty)
+- [ ] Implement SM-2 algorithm (1 day, 3 days, 1 week, 1 month intervals)
+- [ ] Backend: getReviewSchedule endpoint
+- [ ] Backend: recordReview endpoint
+- [ ] Backend: getNextReview endpoint
+- [ ] Frontend: Review scheduler component
+- [ ] Frontend: Show "Time to review" indicator on lessons
+- [ ] Tests for spaced repetition algorithm
+
+### Phase 1.5: Integrate Gamification into Lesson Player
+- [x] Hook checkAchievements after lesson completion
+- [x] Award points based on score (1 for completion, 5 for perfect, 10 for streak)
+- [x] Trigger achievement unlock notifications (toast)
+- [x] Update leaderboards after each lesson
+- [x] Add points display to lesson completion screen
+- [x] Add achievement badge animations
+- [x] Tests for gamification integration
+
+### Phase 2: Spaced Repetition Engine
+- [x] Create lesson_review_schedule table (12 columns)
+- [x] Create review_history table (10 columns)
+- [x] Implement SM-2 algorithm (1, 3, 7, 14, 30 day intervals)
+- [x] Backend: getReviewSchedule endpoint
+- [x] Backend: recordReview endpoint
+- [x] Backend: getNextReview endpoint
+- [x] Frontend: Review scheduler component
+- [x] Frontend: Show "Time to review" indicator on lessons
+- [x] Tests for spaced repetition algorithm (all passing)
+
+### Phase 3: Mobile App (React Native) - TODO
+- [ ] Set up React Native project with Expo
+- [ ] Create tRPC client for React Native
+- [ ] Implement offline-first storage (AsyncStorage + SQLite)
+- [ ] Build lesson player for mobile
+- [ ] Build dashboard UI
+- [ ] Implement background sync
+- [ ] Push notification integration
+- [ ] iOS and Android builds

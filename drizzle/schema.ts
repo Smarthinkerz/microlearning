@@ -8,6 +8,7 @@ import {
   boolean,
   json,
   bigint,
+  decimal,
 } from "drizzle-orm/mysql-core";
 
 // ─── Organizations (Multi-Tenant) ────────────────────────────────────
@@ -605,3 +606,54 @@ export const uptimeHistory = mysqlTable("uptime_history", {
 
 export type UptimeHistory = typeof uptimeHistory.$inferSelect;
 export type InsertUptimeHistory = typeof uptimeHistory.$inferInsert;
+
+
+// ─── Spaced Repetition (SM-2 Algorithm) ──────────────────────────────
+export const lessonReviewSchedule = mysqlTable("lesson_review_schedule", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  lessonId: int("lessonId").notNull(),
+  orgId: int("orgId").notNull(),
+  
+  // SM-2 Algorithm State
+  interval: int("interval").default(1).notNull(), // Days until next review (1, 3, 7, 30, etc.)
+  easeFactor: decimal("easeFactor", { precision: 3, scale: 2 }).default("2.5").notNull(), // Difficulty multiplier (2.5 default)
+  repetitions: int("repetitions").default(0).notNull(), // How many times reviewed
+  
+  // Review Dates
+  nextReviewDate: bigint("nextReviewDate", { mode: "number" }).notNull(), // Unix timestamp
+  lastReviewDate: bigint("lastReviewDate", { mode: "number" }), // Unix timestamp
+  
+  // Status
+  status: mysqlEnum("status", ["new", "learning", "review", "mastered"]).default("new").notNull(),
+  
+  // Metadata
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LessonReviewSchedule = typeof lessonReviewSchedule.$inferSelect;
+export type InsertLessonReviewSchedule = typeof lessonReviewSchedule.$inferInsert;
+
+// ─── Review History (Track Each Review) ────────────────────────────
+export const reviewHistory = mysqlTable("review_history", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  lessonId: int("lessonId").notNull(),
+  orgId: int("orgId").notNull(),
+  
+  // Review Result
+  score: int("score").notNull(), // 0-100
+  difficulty: mysqlEnum("difficulty", ["easy", "medium", "hard", "very_hard"]).notNull(),
+  timeSpentSeconds: int("timeSpentSeconds"), // How long spent reviewing
+  
+  // SM-2 Calculation Input (quality of response: 0-5)
+  quality: int("quality").notNull(), // 0=complete blackout, 5=perfect response
+  
+  // Metadata
+  reviewedAt: bigint("reviewedAt", { mode: "number" }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ReviewHistory = typeof reviewHistory.$inferSelect;
+export type InsertReviewHistory = typeof reviewHistory.$inferInsert;

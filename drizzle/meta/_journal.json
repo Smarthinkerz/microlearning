@@ -71,6 +71,13 @@
       "when": 1778655422128,
       "tag": "0009_organic_black_tom",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1778657727425,
+      "tag": "0010_misty_baron_strucker",
+      "breakpoints": true
     }
   ]
 }

@@ -24,7 +24,9 @@ import { statusPageRouter } from "./routers/statusPage";
 import { teamManagementRouter } from "./routers/teamManagement";
 import { revenueTrackingRouter } from "./routers/revenueTracking";
 import { emailConfirmationRouter } from "./routers/emailConfirmation";
+import { spacedRepetitionRouter } from "./routers/spacedRepetition";
 import { gamificationRouter } from "./routers/gamification";
+import { checkAndUnlockAchievements, addPoints } from "./gamification";
 
 // ─── Role middleware ─────────────────────────────────────────────────
 const employerAdminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -477,7 +479,7 @@ const attemptRouter = router({
       timeSpentSeconds: z.number().optional(),
     })).optional(),
     timeSpentSeconds: z.number().optional(),
-  })).mutation(async ({ input }) => {
+  })).mutation(async ({ input, ctx }) => {
     const { id, assignmentId, ...data } = input;
     await db.updateAttempt(id, {
       ...data,
@@ -489,7 +491,30 @@ const attemptRouter = router({
       status: "completed",
       completedAt: Date.now(),
     });
-    return { success: true };
+
+    // Integrate gamification: Award points and check achievements
+    let gamificationResult = null;
+    try {
+      // Award points based on score
+      let points = 1; // Base point for completion
+      if (data.score && data.maxScore && data.score === data.maxScore) {
+        points = 5; // Perfect score bonus
+      }
+      
+      await addPoints(ctx.user.id, points, `Lesson completion: ${points} points`);
+      
+      // Check and unlock achievements
+      const newAchievements = await checkAndUnlockAchievements(ctx.user.id);
+      
+      gamificationResult = {
+        pointsAwarded: points,
+        newAchievements: newAchievements,
+      };
+    } catch (error) {
+      console.error("[Gamification] Error in lesson completion:", error);
+    }
+    
+    return { success: true, gamification: gamificationResult };
   }),
   syncOffline: protectedProcedure.input(z.object({
     attempts: z.array(z.object({
@@ -1639,6 +1664,7 @@ export const appRouter = router({
   revenue: revenueTrackingRouter,
   email: emailConfirmationRouter,
   gamification: gamificationRouter,
+  spacedRepetition: spacedRepetitionRouter,
 });
 
 export type AppRouter = typeof appRouter;
