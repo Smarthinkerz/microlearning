@@ -314,6 +314,67 @@ export const pushSubscriptions = mysqlTable("push_subscriptions", {
   lastUsedAt: timestamp("lastUsedAt").defaultNow().notNull(),
 });
 
+// ─── Gamification: Achievements ──────────────────────────────────────
+export const achievements = mysqlTable("achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 255 }).notNull(), // emoji or icon name
+  category: mysqlEnum("category", ["learning", "performance", "consistency", "social", "mastery"]).notNull(),
+  rarity: mysqlEnum("rarity", ["common", "uncommon", "rare", "epic", "legendary"]).default("common").notNull(),
+  points: int("points").default(10).notNull(),
+  criteria: json("criteria").$type<{
+    type: "lesson_count" | "perfect_score" | "streak_days" | "completion_rate" | "score_threshold" | "custom";
+    value: number | string;
+  }>().notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = typeof achievements.$inferInsert;
+
+// ─── Gamification: User Achievements ───────────────────────────────
+export const userAchievements = mysqlTable("user_achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  achievementId: int("achievementId").notNull(),
+  unlockedAt: timestamp("unlockedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = typeof userAchievements.$inferInsert;
+
+// ─── Gamification: User Points ────────────────────────────────────
+export const userPoints = mysqlTable("user_points", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  totalPoints: int("totalPoints").default(0).notNull(),
+  level: int("level").default(1).notNull(),
+  currentLevelPoints: int("currentLevelPoints").default(0).notNull(),
+  nextLevelThreshold: int("nextLevelThreshold").default(100).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserPoints = typeof userPoints.$inferSelect;
+export type InsertUserPoints = typeof userPoints.$inferInsert;
+
+// ─── Gamification: Leaderboard (Cached) ───────────────────────────
+export const leaderboardCache = mysqlTable("leaderboard_cache", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  orgId: int("orgId"),
+  scope: mysqlEnum("scope", ["personal", "team", "organization", "global"]).notNull(),
+  rank: int("rank").notNull(),
+  points: int("points").notNull(),
+  level: int("level").notNull(),
+  lessonsCompleted: int("lessonsCompleted").default(0).notNull(),
+  perfectScores: int("perfectScores").default(0).notNull(),
+  currentStreak: int("currentStreak").default(0).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LeaderboardEntry = typeof leaderboardCache.$inferSelect;
+export type InsertLeaderboardEntry = typeof leaderboardCache.$inferInsert;
+
 // ─── Content Types ───────────────────────────────────────────────────
 export type LessonContentBlock = {
   id: string;
