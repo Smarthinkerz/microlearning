@@ -29,6 +29,7 @@ import { reviewRemindersRouter } from "./routers/reviewReminders";
 import { gamificationRouter } from "./routers/gamification";
 import { checkAndUnlockAchievements, addPoints } from "./gamification";
 import { paymentCallbackRouter } from "./routers/paymentCallback";
+import { webhookRouter } from "./routers/webhook";
 
 // ─── Role middleware ─────────────────────────────────────────────────
 const employerAdminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -1677,6 +1678,7 @@ export const appRouter = router({
   spacedRepetition: spacedRepetitionRouter,
   reviewReminders: reviewRemindersRouter,
   paymentCallback: paymentCallbackRouter,
+  webhook: webhookRouter,
 });
 
 export type AppRouter = typeof appRouter;

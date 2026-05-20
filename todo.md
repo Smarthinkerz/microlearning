@@ -851,3 +851,43 @@ All strategic features have been added to the database schema and subscription p
 - [ ] Send confirmation email to user
 - [ ] Log all webhook events for audit trail
 - [ ] Tests for webhook handler
+
+
+## Phase 1: Smarthinkerz Webhook Handler
+
+- [x] Create /api/smarthinkerz-webhook POST endpoint
+- [x] Verify webhook signature for security
+- [x] Parse payment status (paid, failed, refunded)
+- [x] Auto-activate subscription on paid status
+- [x] Update payment record with webhook data
+- [x] Send confirmation email to user
+- [x] Log all webhook events for audit trail
+- [x] Handle edge cases (duplicate webhooks, timeout)
+- [x] Add webhook retry logic
+- [x] Tests for webhook handler - All 451 tests passing
+
+## Phase 2: Push Notifications System
+
+- [ ] Set up push notification provider (Web Push API)
+- [ ] Create push notification router endpoints
+- [ ] Implement subscription to push notifications
+- [ ] Send review reminders based on spaced repetition schedule
+- [ ] Send achievement unlock notifications
+- [ ] Send lesson assignment notifications
+- [ ] Create push notification preferences UI
+- [ ] Track push notification engagement metrics
+- [ ] Add unsubscribe functionality
+- [ ] Tests for push notification system
+
+## Phase 3: A/B Testing Infrastructure
+
+- [ ] Create experiment table in database
+- [ ] Create experiment router endpoints
+- [ ] Implement user assignment to variants
+- [ ] Create pricing tier A/B test (Starter vs Pro default)
+- [ ] Track conversion metrics per variant
+- [ ] Create analytics dashboard for A/B test results
+- [ ] Add statistical significance calculator
+- [ ] Implement experiment result tracking
+- [ ] Create experiment management UI
+- [ ] Tests for A/B testing system
