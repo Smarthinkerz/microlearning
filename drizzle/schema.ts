@@ -426,7 +426,7 @@ export type AttemptResponse = {
 
 // ─── Plan Feature Types ─────────────────────────────────────────────
 export type PlanFeatures = {
-  maxLessons: number; // -1 = unlimited
+  maxLessons: number;
   offlineAccess: boolean;
   basicTracking: boolean;
   fullAnalytics: boolean;
@@ -445,6 +445,27 @@ export type PlanFeatures = {
   pushNotifications: boolean;
   emailSupport: boolean;
   prioritySupport: boolean;
+  voiceNarration: boolean;
+  vrXrTraining: boolean;
+  skillsIntelligence: boolean;
+  workforceCompetencyMapping: boolean;
+  complianceAutomation: boolean;
+  aiCoachingAssistant: boolean;
+  managerInsightsDashboard: boolean;
+  learningRoiReporting: boolean;
+  enterpriseIntegrations: boolean;
+  skillReadinessForecast: boolean;
+  teamCapabilityMapping: boolean;
+  learningImpactAnalytics: boolean;
+  aiWorkforceDevelopmentInsights: boolean;
+  predictiveChurnAnalysis: boolean;
+  personalizedAiCoach: boolean;
+  skillMasteryAnalytics: boolean;
+  certificatesAchievements: boolean;
+  adaptivePathways: boolean;
+  premiumAiMentorConversations: boolean;
+  skillsGapAnalysis: boolean;
+  learningPathwaysAutomation: boolean;
 };
 
 export type AddOn = {
