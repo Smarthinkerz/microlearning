@@ -30,6 +30,7 @@ import OnboardingWizard from "./pages/OnboardingWizard";
 import SystemStatus from "./pages/SystemStatus";
 import { CheckoutSuccess } from "./pages/CheckoutSuccess";
 import { CheckoutFailed } from "./pages/CheckoutFailed";
+import { PaymentCallback } from "./pages/PaymentCallback";
 
 function DashboardRoutes() {
   return (
@@ -74,6 +75,7 @@ function Router() {
       <Route path="/onboarding" component={OnboardingWizard} />
       <Route path="/checkout/success" component={CheckoutSuccess} />
       <Route path="/checkout/failed" component={CheckoutFailed} />
+      <Route path="/payment-callback" component={PaymentCallback} />
       <Route path="/404" component={NotFound} />
       <Route>
         <DashboardRoutes />
