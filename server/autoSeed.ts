@@ -103,28 +103,28 @@ export async function autoSeedPlans() {
 
     const defaultPlans = [
       {
-        name: "Starter - Learn",
+        name: "Starter",
         slug: "starter",
         tier: "starter" as const,
-        priceMonthly: 0,
-        priceYearly: 0,
+        priceMonthly: 395,
+        priceYearly: 3950,
         isPerUser: true,
         sortOrder: 1,
         features: {
-          maxLessons: -1, offlineAccess: true, basicTracking: true, fullAnalytics: false,
-          adaptiveRecommendations: false, contentAuthoring: false, cohortManagement: false,
+          maxLessons: 30, offlineAccess: true, basicTracking: true, fullAnalytics: false,
+          adaptiveRecommendations: false, contentAuthoring: false, cohortManagement: true,
           scormXapiExport: false, rbac: false, sso: false, hrisIntegration: false,
           whiteLabel: false, customOnboarding: false, sla: false, dedicatedManager: false,
           gamification: true, pushNotifications: true, emailSupport: true, prioritySupport: false,
-          voiceNarration: false,
+          voiceNarration: true,
         },
       },
       {
-        name: "Pro - Master",
+        name: "Pro",
         slug: "pro",
         tier: "pro" as const,
-        priceMonthly: 1900,
-        priceYearly: 19000,
+        priceMonthly: 895,
+        priceYearly: 8950,
         isPerUser: true,
         sortOrder: 2,
         features: {
@@ -137,11 +137,11 @@ export async function autoSeedPlans() {
         },
       },
       {
-        name: "Enterprise - Transform",
+        name: "Enterprise",
         slug: "enterprise",
         tier: "enterprise" as const,
-        priceMonthly: 0,
-        priceYearly: 0,
+        priceMonthly: 1200,
+        priceYearly: 12000,
         isPerUser: true,
         sortOrder: 3,
         features: {
@@ -173,8 +173,8 @@ export async function autoSeedPlans() {
         name: "Premium",
         slug: "consumer-premium",
         tier: "consumer_premium" as const,
-        priceMonthly: 299,
-        priceYearly: 2990,
+        priceMonthly: 499,
+        priceYearly: 4990,
         isPerUser: false,
         sortOrder: 5,
         features: {
