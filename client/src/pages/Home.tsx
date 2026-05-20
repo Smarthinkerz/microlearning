@@ -91,7 +91,7 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container flex items-center justify-between h-28">
           <div className="flex items-center gap-2">
-            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/smarthinkerz-logo-original_15b12a42.jpg" alt="Smarthinkerz LearnShift" className="h-28 w-auto object-contain" />
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310419663029149863/hiMSRR6jLFgWQvJW7KXFLZ/transparentlogo16bf8f59-9318-4def-865f-b865b1d67d4c-removebg-preview_04f6f9de.png" alt="Smarthinkerz LearnShift" className="h-20 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (

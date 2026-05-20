@@ -1185,19 +1185,27 @@ const subscriptionRouter = router({
       orgId = orgs[0]?.id || 1;
     }
     
-    const customerName = ctx.user.name || "Customer";
+    // Parse customer name into firstName and lastName
+    const nameParts = (ctx.user.name || "Customer").split(" ");
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(" ") || "";
     const customerEmail = ctx.user.email || "customer@example.com";
-    const customerPhone = "+1234567890"; // Default phone for Smarthinkerz
     
+    // Generate external reference for reconciliation
+    const externalRef = `user_${ctx.user.id}_${Date.now()}`;
+    
+    // Build form data according to Smarthinkerz API spec
     const formData = new URLSearchParams();
     formData.append("plan", input.planSlug);
-    if (input.cycle) formData.append("cycle", input.cycle);
-    formData.append("name", customerName);
+    formData.append("cycle", input.cycle || "monthly");
+    formData.append("firstName", firstName);
+    if (lastName) formData.append("lastName", lastName);
     formData.append("email", customerEmail);
-    formData.append("phone", customerPhone);
+    formData.append("external_ref", externalRef);
+    formData.append("return_url", `${input.origin}/payment-callback`);
     
     try {
-      const response = await fetch("https://smarthinkerz.replit.app/api/checkout", {
+      const response = await fetch("https://smarhinkerz.com/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData.toString(),

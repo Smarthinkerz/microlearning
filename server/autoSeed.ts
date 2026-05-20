@@ -103,28 +103,28 @@ export async function autoSeedPlans() {
 
     const defaultPlans = [
       {
-        name: "Starter",
+        name: "Starter - Learn",
         slug: "starter",
         tier: "starter" as const,
-        priceMonthly: 395,
-        priceYearly: 3950,
+        priceMonthly: 0,
+        priceYearly: 0,
         isPerUser: true,
         sortOrder: 1,
         features: {
-          maxLessons: 30, offlineAccess: true, basicTracking: true, fullAnalytics: false,
+          maxLessons: -1, offlineAccess: true, basicTracking: true, fullAnalytics: false,
           adaptiveRecommendations: false, contentAuthoring: false, cohortManagement: false,
           scormXapiExport: false, rbac: false, sso: false, hrisIntegration: false,
           whiteLabel: false, customOnboarding: false, sla: false, dedicatedManager: false,
-          gamification: false, pushNotifications: true, emailSupport: true, prioritySupport: false,
+          gamification: true, pushNotifications: true, emailSupport: true, prioritySupport: false,
           voiceNarration: false,
         },
       },
       {
-        name: "Pro",
+        name: "Pro - Master",
         slug: "pro",
         tier: "pro" as const,
-        priceMonthly: 895,
-        priceYearly: 8950,
+        priceMonthly: 1900,
+        priceYearly: 19000,
         isPerUser: true,
         sortOrder: 2,
         features: {
@@ -137,11 +137,11 @@ export async function autoSeedPlans() {
         },
       },
       {
-        name: "Enterprise",
+        name: "Enterprise - Transform",
         slug: "enterprise",
         tier: "enterprise" as const,
-        priceMonthly: 1200,
-        priceYearly: 12000,
+        priceMonthly: 0,
+        priceYearly: 0,
         isPerUser: true,
         sortOrder: 3,
         features: {

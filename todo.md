@@ -702,3 +702,12 @@
 - [x] Add filter by status (new, learning, review, mastered)
 - [ ] Create export review data feature
 - [x] Tests for dashboard component
+
+
+## Critical Bug Fixes
+
+- [x] Fix payment 404 error from Smarthinkerz Tap gateway
+- [x] Update endpoint to https://smarhinkerz.com/api/checkout (correct domain)
+- [x] Update request format to match Smarthinkerz API spec (firstName, lastName, email, etc.)
+- [x] Update subscription plans: Starter Free, Pro $19/mo, Enterprise Custom
+- [x] All 451 tests passing with new payment integration
