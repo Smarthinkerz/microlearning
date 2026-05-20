@@ -822,3 +822,32 @@ All strategic features have been added to the database schema and subscription p
 - [ ] Add team member drill-down
 - [ ] Create custom reports
 - [ ] Add export functionality
+
+
+## Phase 3: Manager Insights Dashboard
+- [ ] Create ManagerInsightsDashboard component
+- [ ] Display team performance metrics (completion %, avg score, engagement)
+- [ ] Show ROI analytics (cost per user, learning impact, productivity gains)
+- [ ] Add compliance tracking (certifications, training status, expiration alerts)
+- [ ] Create manager insights (top performers, at-risk learners, skill gaps by team)
+- [ ] Add team leaderboards and performance trends
+- [ ] Export manager reports to PDF/CSV
+- [ ] Tests for manager dashboard
+
+## Phase 4: Integrate Skills Gap into Dashboard
+- [ ] Add SkillsGapDashboard widget to main Dashboard
+- [ ] Show top 3 skill gaps with priority badges
+- [ ] Add "Start Learning" CTAs for each gap
+- [ ] Display overall mastery percentage
+- [ ] Add quick access to full Skills Gap Dashboard
+- [ ] Tests for dashboard integration
+
+## Phase 5: Payment Webhook Handler
+- [ ] Create /api/smarthinkerz-webhook endpoint
+- [ ] Verify webhook signature from Smarthinkerz
+- [ ] Parse payment notification (status, order_id, external_ref)
+- [ ] Auto-activate subscription on payment success
+- [ ] Handle payment failures and cancellations
+- [ ] Send confirmation email to user
+- [ ] Log all webhook events for audit trail
+- [ ] Tests for webhook handler
