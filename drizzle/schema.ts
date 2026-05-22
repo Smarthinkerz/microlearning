@@ -732,3 +732,54 @@ export const reminderPreferences = mysqlTable("reminder_preferences", {
 
 export type ReminderPreferences = typeof reminderPreferences.$inferSelect;
 export type InsertReminderPreferences = typeof reminderPreferences.$inferInsert;
+
+// ─── A/B Testing & Experiments ──────────────────────────────────────
+export const abTests = mysqlTable("ab_tests", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  type: mysqlEnum("type", ["pricing", "feature", "ui", "messaging"]).notNull(),
+  status: mysqlEnum("status", ["draft", "active", "paused", "completed"]).default("draft").notNull(),
+  startDate: bigint("startDate", { mode: "number" }),
+  endDate: bigint("endDate", { mode: "number" }),
+  targetAudience: varchar("targetAudience", { length: 255 }), // "all", "pro_users", "new_users", etc.
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const abTestVariants = mysqlTable("ab_test_variants", {
+  id: int("id").autoincrement().primaryKey(),
+  testId: int("testId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(), // "control", "variant_a", "variant_b"
+  weight: int("weight").default(50), // percentage allocation (0-100)
+  config: json("config").$type<Record<string, unknown>>(), // variant-specific config
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const abTestAssignments = mysqlTable("ab_test_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  testId: int("testId").notNull(),
+  userId: int("userId").notNull(),
+  variantId: int("variantId").notNull(),
+  assignedAt: bigint("assignedAt", { mode: "number" }).notNull(),
+});
+
+export const abTestMetrics = mysqlTable("ab_test_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  testId: int("testId").notNull(),
+  variantId: int("variantId").notNull(),
+  metricName: varchar("metricName", { length: 255 }).notNull(), // "conversion", "revenue", "engagement"
+  value: decimal("value", { precision: 10, scale: 2 }),
+  count: int("count").default(0),
+  recordedAt: timestamp("recordedAt").defaultNow().notNull(),
+});
+
+export type ABTest = typeof abTests.$inferSelect;
+export type InsertABTest = typeof abTests.$inferInsert;
+export type ABTestVariant = typeof abTestVariants.$inferSelect;
+export type InsertABTestVariant = typeof abTestVariants.$inferInsert;
+export type ABTestAssignment = typeof abTestAssignments.$inferSelect;
+export type InsertABTestAssignment = typeof abTestAssignments.$inferInsert;
+export type ABTestMetric = typeof abTestMetrics.$inferSelect;
+export type InsertABTestMetric = typeof abTestMetrics.$inferInsert;

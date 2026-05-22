@@ -891,3 +891,26 @@ All strategic features have been added to the database schema and subscription p
 - [ ] Implement experiment result tracking
 - [ ] Create experiment management UI
 - [ ] Tests for A/B testing system
+
+
+## Phase 2: Push Notifications System
+
+- [ ] Set up Web Push API with service worker
+- [ ] Create push subscription management endpoints
+- [ ] Implement push notification sender for review reminders
+- [ ] Implement push notification sender for achievement unlocks
+- [ ] Add notification preferences UI (opt-in/opt-out)
+- [ ] Track push notification engagement metrics
+- [ ] Schedule review reminder notifications (cron job)
+- [ ] Tests for push notification system
+
+## Phase 3: A/B Testing Infrastructure
+
+- [ ] Create A/B test configuration table in database
+- [ ] Build experiment tracking router
+- [ ] Implement variant assignment logic (deterministic by user ID)
+- [ ] Create pricing tier A/B test (Pro default vs Starter default)
+- [ ] Add experiment analytics dashboard
+- [ ] Track conversion metrics per variant
+- [ ] Implement statistical significance calculator
+- [ ] Tests for A/B testing system
