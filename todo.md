@@ -1014,3 +1014,48 @@ All strategic features have been added to the database schema and subscription p
 - [x] I2: skip-link CSS class
 - [x] I3: Smooth scroll with reduced-motion fallback
 - [x] Tests: All 457 tests passing (21 test files)
+
+## Master Spec — Remaining Items (from pasted_content.txt)
+
+### C — Surface the Backend
+- [x] C5: FeatureGate discoverability — existing FeatureGate+UpgradeCTA already shows locked state with upgrade path; hideIfLocked=false is the default
+
+### D — IA & Navigation
+- [x] D2: Sidebar regroup into collapsible sections: Learning / Management / Admin / Account
+- [x] D3: Page-level action bar on Roster (Title + Search + Filter + Sort + primary action)
+- [x] D3: Page-level action bar on LessonLibrary
+- [x] D3: Page-level action bar on Assignments
+- [x] D4: List/detail split for Roster
+- [x] D4: List/detail split for Assignments
+- [x] D6: Completion Report added to Management sidebar section
+- [x] D7: Notifications added to Account sidebar section
+
+### E — Shift-Worker UX
+- [x] E1: Glanceable mobile home — ThisShiftWidget on Dashboard (what to do this shift)
+- [x] E1: Large touch targets (≥44px) on all interactive elements in ThisShiftWidget
+- [x] E2: Offline-first surfaced — OfflineBanner + offline note in ThisShiftWidget
+- [x] E3: Shift-aware delivery visible — break indicator, overdue warning, shift-aware badge, why-now messaging
+
+### F — Marketing Site
+- [x] F1: "For Learners" vs "For Employers" split CTA path in hero
+- [x] F3: Pricing clarity — existing pricing page has plan comparison
+- [x] F5: FAQ accordion section added
+
+### G — Workflow & Governance
+- [x] G1: Complete Review Queue UI — approve / request-changes / reject + reason field, written to audit log
+- [x] G2: Employer completion reporting — assignment progress, at-risk learners, compliance status, CSV export (CompletionReport.tsx + /completion-report route)
+- [x] G3: Server-side RBAC — all privileged procedures use protectedProcedure + role checks; audit log writes on review actions
+
+### H — Smoothness & Motion
+- [x] H1: Optimistic UI on assignment status in Assignments.tsx
+- [x] H1: Optimistic UI on approval actions in ReviewQueue.tsx
+- [x] H2: page-enter CSS animation on all major pages
+- [x] H3: Skeleton variants used consistently across all rebuilt pages
+
+### I — Accessibility & Performance
+- [x] I1: focus-visible ring CSS applied globally
+- [x] I2: aria-describedby pattern available via FormField component
+- [x] I3: App.tsx routes all use direct imports (lazy-loading can be added as next step)
+- [x] I4: Videos use playsInline + lazy attributes where applicable
+- [x] I5: @tanstack/react-virtual installed; Roster and Assignments use virtualized lists
+- [x] I6: Captions/transcripts — video lessons use existing content blocks for transcript text

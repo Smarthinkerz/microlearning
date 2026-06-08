@@ -15,6 +15,7 @@ import {
   Volume2,
   VolumeX,
   CheckCircle2,
+  Check,
   Star,
   Users,
   TrendingUp,
@@ -27,6 +28,8 @@ import {
   BookOpen,
   Sun,
   Moon,
+  Building2,
+  User,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -237,19 +240,36 @@ export default function Home() {
                   <strong className="text-foreground tabular-nums">10,000+</strong> learners already trained
                 </span>
               </div>
-              <div className="flex flex-col sm:flex-row items-center lg:items-start gap-3">
-                <Button size="lg" className="w-full sm:w-auto text-base px-8" onClick={() => { window.location.href = getLoginUrl(); }}>
-                  Start Free Trial — No Card Needed
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="lg" className="w-full sm:w-auto text-base px-8 bg-transparent"
-                  onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}>
-                  See Features
-                </Button>
+              {/* Employer vs Individual CTA split */}
+              <div className="flex flex-col gap-3 w-full">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    size="lg"
+                    className="flex-1 text-base min-h-[52px] gap-2"
+                    onClick={() => { window.location.href = getLoginUrl(); }}
+                    aria-label="Start free trial for individual learners"
+                  >
+                    <User className="h-4 w-4" />
+                    For Learners — Start Free
+                    <ArrowRight className="ml-1 h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="flex-1 text-base min-h-[52px] gap-2 bg-transparent border-primary/40 hover:bg-primary/10"
+                    onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+                    aria-label="See employer team plans and pricing"
+                  >
+                    <Building2 className="h-4 w-4" />
+                    For Employers — See Plans
+                  </Button>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground justify-center lg:justify-start">
+                  <span className="flex items-center gap-1"><Check className="h-3 w-3 text-success" /> Free forever up to 5 learners</span>
+                  <span className="flex items-center gap-1"><Check className="h-3 w-3 text-success" /> No credit card required</span>
+                  <span className="flex items-center gap-1"><Check className="h-3 w-3 text-success" /> Cancel anytime</span>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-3 text-center lg:text-left">
-                Free forever for up to 5 learners · No credit card required
-              </p>
             </div>
 
             {/* Right: Featured Main Video */}

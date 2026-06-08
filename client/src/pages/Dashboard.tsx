@@ -21,6 +21,7 @@ import {
   Database,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { ThisShiftWidget } from "@/components/ThisShiftWidget";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -41,7 +42,7 @@ export default function Dashboard() {
   const isAdmin = ["employer_admin", "super_admin"].includes(appRole);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       {/* Header */}
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-foreground">
@@ -53,6 +54,9 @@ export default function Dashboard() {
             : "Here's your learning progress and upcoming lessons."}
         </p>
       </div>
+
+      {/* This-Shift glanceable widget — shift-aware delivery */}
+      {!isAdmin && <ThisShiftWidget />}
 
       {/* Learner Stats */}
       {!isAdmin && (

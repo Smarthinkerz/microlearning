@@ -1243,3 +1243,86 @@ export async function pruneOldUptimeHistory(olderThanTs: number) {
   );
 }
 
+
+// ─── Employer Completion Report ───────────────────────────────────────
+export async function getOrgCompletionReport(orgId: number) {
+  const db = await getDb();
+  if (!db) return { members: [], summary: null };
+
+  const members = await getUsersByOrg(orgId);
+  const assignments = await db
+    .select({
+      id: lessonAssignments.id,
+      userId: lessonAssignments.userId,
+      lessonId: lessonAssignments.lessonId,
+      status: lessonAssignments.status,
+      priority: lessonAssignments.priority,
+      dueDate: lessonAssignments.dueDate,
+      completedAt: lessonAssignments.completedAt,
+      isScheduleAware: lessonAssignments.isScheduleAware,
+      createdAt: lessonAssignments.createdAt,
+    })
+    .from(lessonAssignments)
+    .where(eq(lessonAssignments.orgId, orgId))
+    .orderBy(desc(lessonAssignments.createdAt));
+
+  const memberMap = new Map<number, {
+    userId: number; name: string | null; email: string | null;
+    appRole: string; approvalStatus: string;
+    total: number; completed: number; inProgress: number; overdue: number;
+    completionRate: number; lastActivity: number | null;
+  }>();
+
+  for (const m of members) {
+    memberMap.set(m.id, {
+      userId: m.id, name: m.name, email: m.email,
+      appRole: m.appRole, approvalStatus: m.approvalStatus,
+      total: 0, completed: 0, inProgress: 0, overdue: 0,
+      completionRate: 0, lastActivity: null,
+    });
+  }
+
+  const now = Date.now();
+  for (const a of assignments) {
+    const entry = memberMap.get(a.userId);
+    if (!entry) continue;
+    entry.total++;
+    if (a.status === "completed") {
+      entry.completed++;
+      if (a.completedAt && (!entry.lastActivity || a.completedAt > entry.lastActivity)) {
+        entry.lastActivity = a.completedAt;
+      }
+    } else if (a.status === "in_progress") {
+      entry.inProgress++;
+    } else if (a.dueDate && a.dueDate < now && (a.status as string) !== "completed") {
+      entry.overdue++;
+    }
+  }
+
+  const memberStats = Array.from(memberMap.values()).map((m) => ({
+    ...m,
+    completionRate: m.total > 0 ? Math.round((m.completed / m.total) * 100) : 0,
+    atRisk: m.overdue > 0 || (m.total > 0 && m.completed / m.total < 0.3),
+  }));
+
+  const totalAssignments = assignments.length;
+  const completedAssignments = assignments.filter((a) => (a.status as string) === "completed").length;
+  const overdueAssignments = assignments.filter(
+    (a) => a.dueDate && a.dueDate < now && (a.status as string) !== "completed"
+  ).length;
+  const atRiskCount = memberStats.filter((m) => m.atRisk).length;
+
+  return {
+    members: memberStats,
+    summary: {
+      totalMembers: members.length,
+      totalAssignments,
+      completedAssignments,
+      overdueAssignments,
+      atRiskCount,
+      orgCompletionRate: totalAssignments > 0
+        ? Math.round((completedAssignments / totalAssignments) * 100)
+        : 0,
+    },
+  };
+}

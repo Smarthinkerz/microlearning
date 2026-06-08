@@ -434,6 +434,12 @@ const assignmentRouter = router({
   getWithLesson: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
     return db.getAssignmentWithLesson(input.id);
   }),
+  completionReport: employerAdminProcedure.input(z.object({ orgId: z.number() })).query(async ({ input, ctx }) => {
+    if (ctx.user.orgId !== input.orgId && ctx.user.appRole !== 'super_admin') {
+      throw new TRPCError({ code: 'FORBIDDEN' });
+    }
+    return db.getOrgCompletionReport(input.orgId);
+  }),
 });
 
 // ─── Attempt Router ──────────────────────────────────────────────────

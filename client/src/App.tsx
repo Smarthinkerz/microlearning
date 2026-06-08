@@ -32,6 +32,7 @@ import { CheckoutSuccess } from "./pages/CheckoutSuccess";
 import { CheckoutFailed } from "./pages/CheckoutFailed";
 import { PaymentCallback } from "./pages/PaymentCallback";
 import { OfflineBanner } from "./components/OfflineBanner";
+import CompletionReport from "./pages/CompletionReport";
 
 function DashboardRoutes() {
   return (
@@ -57,6 +58,7 @@ function DashboardRoutes() {
         <Route path="/status" component={SystemStatus} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/notifications" component={Notifications} />
+        <Route path="/completion-report" component={CompletionReport} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
