@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useRouter } from "wouter";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 type PaymentStatus = "loading" | "success" | "failed" | "error";
 
 export function PaymentCallback() {
-  const [, navigate] = useRouter();
+  const [, navigate] = useLocation();
   const { user } = useAuth();
   const [status, setStatus] = useState<PaymentStatus>("loading");
   const [message, setMessage] = useState("");
@@ -34,10 +34,9 @@ export function PaymentCallback() {
 
         // Verify payment with backend
         const result = await verifyPaymentMutation.mutateAsync({
-          status: paymentStatus as "paid" | "failed" | "cancelled",
           orderId,
-          tapId: tapId || undefined,
-          externalRef: externalRef || undefined,
+          ...(tapId ? { tapId } : {}),
+          ...(externalRef ? { externalRef } : {}),
         });
 
         if (result.success) {

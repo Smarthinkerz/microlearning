@@ -31,6 +31,7 @@ import SystemStatus from "./pages/SystemStatus";
 import { CheckoutSuccess } from "./pages/CheckoutSuccess";
 import { CheckoutFailed } from "./pages/CheckoutFailed";
 import { PaymentCallback } from "./pages/PaymentCallback";
+import { OfflineBanner } from "./components/OfflineBanner";
 
 function DashboardRoutes() {
   return (
@@ -89,7 +90,8 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
-          <Toaster />
+          <OfflineBanner />
+          <Toaster richColors position="top-right" />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

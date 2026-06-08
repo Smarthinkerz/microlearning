@@ -7,7 +7,9 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Shield, FileText, Mail, BarChart3, Database, Users, ArrowLeft } from "lucide-react";
+import { Shield, FileText, Mail, BarChart3, Database, Users, ArrowLeft, CheckCircle, XCircle, Clock } from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { DetailSkeleton } from "@/components/ui/skeleton-variants";
 import { Link } from "wouter";
 
 const CONSENT_ICONS: Record<string, React.ReactNode> = {
@@ -54,23 +56,23 @@ export default function ConsentSettings() {
   if (!user) {
     return (
       <div className="container max-w-2xl py-12">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Please log in to manage your consent preferences.</p>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="py-12 text-center"><p className="text-muted-foreground">Please log in to manage your consent preferences.</p></CardContent></Card>
       </div>
     );
   }
 
+  if (consentsLoading) {
+    return <div className="container max-w-2xl py-8"><DetailSkeleton /></div>;
+  }
+
   return (
-    <div className="container max-w-2xl py-8">
+    <div className="container max-w-2xl py-8 page-enter">
       <div className="mb-6">
         <Link href="/settings" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="h-4 w-4" />
           Back to Settings
         </Link>
-        <h1 className="text-2xl font-bold">Privacy & Consent</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-primary" />Privacy & Consent</h1>
         <p className="text-muted-foreground mt-1">
           Manage your data processing preferences. Required consents cannot be withdrawn while using the platform.
         </p>
@@ -110,12 +112,25 @@ export default function ConsentSettings() {
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {type.description}
                       </p>
-                      {currentStatus?.grantedAt && (
-                        <p className="text-xs text-muted-foreground/70">
-                          Consented on {new Date(currentStatus.grantedAt).toLocaleDateString()}
-                          {currentStatus.version && ` (v${currentStatus.version})`}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-2 mt-1">
+                        <StatusBadge
+                          status={isGranted ? "active" : "inactive"}
+                          label={isGranted ? "Granted" : "Not granted"}
+                          size="sm"
+                          showIcon
+                        />
+                        {currentStatus?.grantedAt && (
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {new Date(currentStatus.grantedAt).toLocaleDateString()}
+                            {currentStatus.version && ` · v${currentStatus.version}`}
+                          </span>
+                        )}
+                        {currentStatus?.withdrawnAt && !isGranted && (
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            Withdrawn {new Date(currentStatus.withdrawnAt).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <Switch

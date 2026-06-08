@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
+import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
+import { trpc } from "@/lib/trpc";
 import {
   LayoutDashboard,
   LogOut,
@@ -208,6 +210,9 @@ function DashboardLayoutContent({
     ? "Author"
     : "Learner";
 
+  const { data: notifications } = trpc.notification.getMyNotifications.useQuery(undefined, { refetchInterval: 60000 });
+  const unreadCount = (notifications ?? []).filter((n: any) => !n.readAt).length;
+
   return (
     <>
       <div className="relative" ref={sidebarRef}>
@@ -310,21 +315,44 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
+        {/* Desktop top bar with breadcrumbs */}
+        {!isMobile && (
+          <div className="flex border-b h-12 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+            <SmartBreadcrumb className="text-xs" />
+            <button
+              onClick={() => setLocation("/notifications")}
+              className="relative h-8 w-8 flex items-center justify-center rounded-lg hover:bg-accent transition-fast"
+              aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : "Notifications"}
+            >
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-[9px] text-primary-foreground flex items-center justify-center font-bold tabular-nums">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+        {/* Mobile top bar */}
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
-              <div className="flex items-center gap-3">
-                <span className="tracking-tight text-foreground font-medium">
-                  {activeMenuItem?.label ?? "LearnShift"}
-                </span>
-              </div>
+              <span className="tracking-tight text-foreground font-medium">
+                {activeMenuItem?.label ?? "LearnShift"}
+              </span>
             </div>
             <button
               onClick={() => setLocation("/notifications")}
-              className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-accent transition-colors"
+              className="relative h-9 w-9 flex items-center justify-center rounded-lg hover:bg-accent transition-colors"
+              aria-label="Notifications"
             >
               <Bell className="h-4 w-4 text-muted-foreground" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-[9px] text-primary-foreground flex items-center justify-center font-bold">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </button>
           </div>
         )}

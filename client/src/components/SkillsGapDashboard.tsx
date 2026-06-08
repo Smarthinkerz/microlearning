@@ -18,7 +18,7 @@ interface SkillGap {
 export function SkillsGapDashboard() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { data: lessons, isLoading: lessonsLoading } = trpc.library.browse.useQuery({});
-  const { data: attempts, isLoading: attemptsLoading } = trpc.attempt.getUserAttempts.useQuery({});
+  const { data: attempts, isLoading: attemptsLoading } = trpc.attempt.getByUser.useQuery();
 
   const skillGaps = useMemo(() => {
     if (!lessons || !attempts) return [];
@@ -34,7 +34,7 @@ export function SkillsGapDashboard() {
     });
 
     // Count completed lessons by category
-    attempts?.forEach((attempt) => {
+    (attempts as Array<{ status: string; lessonId: number }> | undefined)?.forEach((attempt) => {
       if (attempt.status === "completed") {
         const lesson = lessons.find((l) => l.id === attempt.lessonId);
         if (lesson) {

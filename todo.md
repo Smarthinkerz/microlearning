@@ -914,3 +914,103 @@ All strategic features have been added to the database schema and subscription p
 - [ ] Track conversion metrics per variant
 - [ ] Implement statistical significance calculator
 - [ ] Tests for A/B testing system
+
+## Master Spec Implementation (Corporate & Smoothness)
+
+### P0 — Token Foundation & Design System (A)
+- [ ] A.1 Add semantic success/warning/info color tokens to index.css
+- [ ] A.2 Fix invisible accent token (bump lightness/chroma from oklch 0.36)
+- [ ] A.3 Add tabular-numbers utility and apply to all numeric displays
+- [ ] A.4 Standardize hover contract: hover:bg-accent / hover:border-primary/30
+- [ ] A.5 De-hardcode tier/plan colors in Pricing.tsx into shared tierConfig
+- [ ] A.6 Replace hardcoded status colors with semantic tokens across all pages
+- [ ] A.7 Add motion tokens (easing cubic-bezier, spring values) to CSS
+
+### P0 — Shared Component Library (B)
+- [ ] B.1 Create DataTable component (sort/filter/pagination + column config)
+- [ ] B.2 Create StatusBadge component (approved/pending/rejected/published/draft)
+- [ ] B.3 Create FormField wrapper (Label + Input + inline error + helper + aria-describedby)
+- [ ] B.4 Create EmptyState component (icon/title/description/action)
+- [ ] B.5 Create Skeleton variants (list/card/table/detail)
+- [ ] B.6 Create ConfirmDialog wrapper (one pattern for delete/approve)
+- [ ] B.7 Standardize heading weights (H1=800/H2=700/H3=600/H4=500) via CSS
+- [ ] B.8 Replace raw-HTML tables in Roster, Audit Logs, Assignments with DataTable
+
+### P1 — Surface Backend (C)
+- [ ] C.1 Push Notifications: permission prompt + settings panel
+- [ ] C.2 Push Notifications: in-app inbox (lesson_available/reminder/achievement/system)
+- [ ] C.3 Certificates: learner-facing verifiable/shareable view
+- [ ] C.4 FeatureGate: show locked state + upgrade path (not silent hide)
+- [ ] C.5 A/B Tests: admin surface to view/run experiments
+
+### P1 — IA & Navigation (D + G)
+- [ ] D.1 Add Breadcrumb navigation to all nested routes
+- [ ] D.2 Regroup sidebar into collapsible sections (Learning/Management/Admin/Account)
+- [ ] D.3 Add page-level action bar (Title + Search + Filter + Sort + primary action)
+- [ ] D.4 Add search to Roster, Library, Assignments pages
+- [ ] D.5 Complete Review Queue UI (approve/request-changes/reject + reason + audit log)
+- [ ] D.6 Add employer completion reporting (at-risk learners, exportable)
+
+### P2 — Shift-Worker UX (E)
+- [ ] E.1 Mobile-first glanceable dashboard home (what to do this shift)
+- [ ] E.2 Surface offline state: downloaded lessons + sync status per lesson
+- [ ] E.3 Shift-aware delivery visibility ("available during your break", "due before shift ends")
+- [ ] E.4 Lesson player: instant open, progress/time-remaining (tabular), resume mid-lesson
+- [ ] E.5 All touch targets ≥44px, bottom-anchored primary actions on mobile
+
+### P2 — Marketing Site (F)
+- [ ] F.1 Add employer trust block (logos, testimonials, proof metrics, compliance badges)
+- [ ] F.2 De-hardcode marketing copy into platformSettings/CMS
+- [ ] F.3 One dominant hero CTA with clear Employer vs Individual paths
+- [ ] F.4 Add hero video poster image + lazy-load for performance
+- [ ] F.5 Add FAQ accordion section to Home page
+- [ ] F.6 Add "what happens after you click" near checkout on pricing page
+
+### P2 — Smoothness & Motion (H)
+- [ ] H.1 Add motion tokens (easing + spring) to CSS variables
+- [ ] H.2 Implement optimistic UI for lesson progress, assignment status, approvals
+- [ ] H.3 Consistent layout-matched skeletons (zero layout shift) with cross-fade
+- [ ] H.4 Route transitions: fade/shared-element morph (lesson card → player), 180ms
+- [ ] H.5 Add prefers-reduced-motion support throughout
+
+### P3 — Accessibility & Performance (I)
+- [ ] I.1 Fix ARIA labels on all icon buttons
+- [ ] I.2 Add aria-describedby on all validated form fields
+- [ ] I.3 Add alt text to all marketing imagery
+- [ ] I.4 Virtualize long lists (Roster/Library/Assignments)
+- [ ] I.5 Code-split and lazy-load heavy pages
+- [ ] I.6 Add captions/transcripts on video lessons
+
+## Master Spec Implementation (All Phases)
+- [x] A1: OKLCH semantic token palette (success/warning/info/destructive)
+- [x] A2: Motion tokens (--duration-fast/base/slow, --ease-entrance)
+- [x] A3: Tabular numbers utility class and font-feature-settings
+- [x] A4: Hover contract utilities (transition-fast, transition-smooth, transition-interactive)
+- [x] B1: StatusBadge component with semantic status mapping
+- [x] B2: DataTable component with sort/filter/pagination
+- [x] B3: FormField component with label/error/hint
+- [x] B4: EmptyState component with icon/title/description/action
+- [x] B5: Skeleton variants (CardSkeleton, TableSkeleton, DetailSkeleton, ListSkeleton)
+- [x] B6: ConfirmDialog component
+- [x] C1: Notifications page with push settings tab and in-app inbox
+- [x] C2: Certificates page with expiry warnings, share/download, grouped sections
+- [x] C3: ConsentSettings upgraded with StatusBadge, audit trail, loading skeleton
+- [x] D1: SmartBreadcrumb component with auto-route detection
+- [x] D2: DashboardLayout breadcrumbs in desktop top bar
+- [x] D3: Notification badge with unread count in header
+- [x] E1: OfflineBanner component with online/offline detection
+- [x] E2: OfflineBanner integrated into App.tsx
+- [x] F1: Home page trust signals block (SOC2, GDPR, ISO27001, SLA)
+- [x] F2: Testimonials section with star ratings
+- [x] F3: Stats bar (10k+ learners, 94% completion, 3-10min, 125+ lessons)
+- [x] F4: FAQ accordion section
+- [x] F5: Improved nav with anchor links to sections
+- [x] F6: CTA clarity ("No card needed", "Free forever", checkmarks)
+- [x] F7: Footer with links and copyright
+- [x] H1: page-enter animation class on all upgraded pages
+- [x] H2: Toaster with richColors and top-right position
+- [x] H3: Reduced-motion media query disabling all animations
+- [x] I1: focus-visible ring CSS
+- [x] I2: skip-link CSS class
+- [x] I3: Smooth scroll with reduced-motion fallback
+- [x] Tests: All 457 tests passing (21 test files)
