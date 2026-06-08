@@ -54,63 +54,7 @@
 :root {
   --radius: 0.625rem;
 
-  /* ── Primary (Teal/Emerald) ─────────────────────────── */
-  --primary: oklch(0.65 0.16 175);
-  --primary-foreground: oklch(0.98 0 0);
-
-  /* ── Surfaces ───────────────────────────────────────── */
-  --background: oklch(0.27 0.012 250);
-  --foreground: oklch(0.95 0.005 256);
-  --card: oklch(0.31 0.012 250);
-  --card-foreground: oklch(0.95 0.005 256);
-  --popover: oklch(0.31 0.012 250);
-  --popover-foreground: oklch(0.95 0.005 256);
-
-  /* ── Secondary / Muted ──────────────────────────────── */
-  --secondary: oklch(0.35 0.010 250);
-  --secondary-foreground: oklch(0.90 0.005 256);
-  --muted: oklch(0.33 0.010 250);
-  --muted-foreground: oklch(0.68 0.02 256);
-
-  /* ── Accent (bumped from 0.36 → 0.42 for visible hover) */
-  --accent: oklch(0.42 0.018 250);
-  --accent-foreground: oklch(0.95 0.005 256);
-
-  /* ── Destructive ────────────────────────────────────── */
-  --destructive: oklch(0.65 0.2 25);
-  --destructive-foreground: oklch(0.98 0 0);
-
-  /* ── Borders / Inputs ───────────────────────────────── */
-  --border: oklch(0.40 0.010 250);
-  --input: oklch(0.35 0.010 250);
-  --ring: oklch(0.65 0.16 175);
-
-  /* ── Semantic Status Tokens ─────────────────────────── */
-  --success: oklch(0.72 0.15 145);
-  --success-foreground: oklch(0.98 0 0);
-  --warning: oklch(0.78 0.16 75);
-  --warning-foreground: oklch(0.15 0 0);
-  --info: oklch(0.67 0.12 250);
-  --info-foreground: oklch(0.98 0 0);
-
-  /* ── Charts ─────────────────────────────────────────── */
-  --chart-1: oklch(0.72 0.15 175);
-  --chart-2: oklch(0.62 0.15 160);
-  --chart-3: oklch(0.67 0.12 250);
-  --chart-4: oklch(0.72 0.14 140);
-  --chart-5: oklch(0.57 0.12 280);
-
-  /* ── Sidebar ────────────────────────────────────────── */
-  --sidebar: oklch(0.24 0.012 250);
-  --sidebar-foreground: oklch(0.90 0.005 256);
-  --sidebar-primary: oklch(0.65 0.16 175);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.42 0.018 250);
-  --sidebar-accent-foreground: oklch(0.95 0.005 256);
-  --sidebar-border: oklch(0.37 0.010 250);
-  --sidebar-ring: oklch(0.65 0.16 175);
-
-  /* ── Motion Tokens ──────────────────────────────────── */
+  /* ── Motion Tokens (theme-independent) ─────────────── */
   --ease-entrance: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-counter: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-exit: cubic-bezier(0.36, 0, 0.66, 0);
@@ -118,6 +62,46 @@
   --duration-base: 180ms;
   --duration-slow: 280ms;
   --duration-interactive: 240ms;
+
+  /* ── Light Theme (default) ──────────────────────────── */
+  --primary: oklch(0.55 0.16 175);
+  --primary-foreground: oklch(0.98 0 0);
+  --background: oklch(0.97 0.004 250);
+  --foreground: oklch(0.18 0.010 250);
+  --card: oklch(1.0 0 0);
+  --card-foreground: oklch(0.18 0.010 250);
+  --popover: oklch(1.0 0 0);
+  --popover-foreground: oklch(0.18 0.010 250);
+  --secondary: oklch(0.93 0.006 250);
+  --secondary-foreground: oklch(0.25 0.010 250);
+  --muted: oklch(0.94 0.005 250);
+  --muted-foreground: oklch(0.48 0.020 256);
+  --accent: oklch(0.90 0.010 250);
+  --accent-foreground: oklch(0.18 0.010 250);
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.86 0.008 250);
+  --input: oklch(0.90 0.006 250);
+  --ring: oklch(0.55 0.16 175);
+  --success: oklch(0.55 0.15 145);
+  --success-foreground: oklch(0.98 0 0);
+  --warning: oklch(0.65 0.16 75);
+  --warning-foreground: oklch(0.15 0 0);
+  --info: oklch(0.52 0.14 250);
+  --info-foreground: oklch(0.98 0 0);
+  --chart-1: oklch(0.55 0.15 175);
+  --chart-2: oklch(0.50 0.15 160);
+  --chart-3: oklch(0.52 0.12 250);
+  --chart-4: oklch(0.55 0.14 140);
+  --chart-5: oklch(0.45 0.12 280);
+  --sidebar: oklch(0.94 0.006 250);
+  --sidebar-foreground: oklch(0.18 0.010 250);
+  --sidebar-primary: oklch(0.55 0.16 175);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.88 0.010 250);
+  --sidebar-accent-foreground: oklch(0.18 0.010 250);
+  --sidebar-border: oklch(0.84 0.008 250);
+  --sidebar-ring: oklch(0.55 0.16 175);
 }
 
 .dark {
@@ -233,13 +217,12 @@
     background-clip: text;
   }
 
-  /* ── Glass card ───────────────────────────────────── */
+  /* ── Glass card (theme-aware) ───────────────────────── */
   .glass-card {
-    background: oklch(0.31 0.012 250 / 80%);
+    background: color-mix(in oklch, var(--card) 85%, transparent);
     backdrop-filter: blur(12px);
-    border: 1px solid oklch(0.40 0.010 250 / 50%);
+    border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
   }
-
   /* ── Tabular numbers (A.3) ────────────────────────── */
   .tabular-nums,
   .stat-value,

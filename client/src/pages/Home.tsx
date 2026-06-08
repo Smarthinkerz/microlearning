@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/contexts/ThemeContext";
 import { getLoginUrl } from "@/const";
 import {
   Clock,
@@ -24,6 +25,8 @@ import {
   Globe,
   HeartHandshake,
   BookOpen,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -131,6 +134,7 @@ export default function Home() {
   const [isMuted, setIsMuted] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const mainVideoRef = useRef<HTMLVideoElement>(null);
+  const { theme, toggleTheme } = useTheme();
 
   const togglePlay = () => {
     const video = mainVideoRef.current;
@@ -165,6 +169,18 @@ export default function Home() {
             <button onClick={() => document.getElementById("faq")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-fast">FAQ</button>
           </div>
           <div className="flex items-center gap-3">
+            {/* Dark / Light mode toggle */}
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-fast border border-border/50"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
             {isAuthenticated ? (
               <>
                 <Button variant="ghost" size="sm" onClick={() => setLocation("/dashboard")}>Dashboard</Button>
