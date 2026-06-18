@@ -1044,6 +1044,133 @@ const crmRouter = router({
   listPayments: adminProcedure.query(async () => {
     return db.getAllPaymentsAdmin();
   }),
+
+  // ── API Keys Management ──────────────────────────────────────────────
+  getApiKeys: adminProcedure.query(async () => {
+    const row = await db.getPlatformSetting("api_keys");
+    const keys = (row?.settingValue as Record<string, string> | null) ?? {};
+    return {
+      openaiApiKey: keys.openaiApiKey ? "sk-..." + keys.openaiApiKey.slice(-4) : "",
+      elevenLabsApiKey: keys.elevenLabsApiKey ? "..." + keys.elevenLabsApiKey.slice(-4) : "",
+      tapSecretKey: keys.tapSecretKey ? "sk-..." + keys.tapSecretKey.slice(-4) : "",
+      tapPublicKey: keys.tapPublicKey ? "pk-..." + keys.tapPublicKey.slice(-4) : "",
+      smarthinkerzWebhookSecret: keys.smarthinkerzWebhookSecret ? "..." + keys.smarthinkerzWebhookSecret.slice(-4) : "",
+      openaiBaseUrl: keys.openaiBaseUrl ?? "",
+      hasOpenaiApiKey: !!keys.openaiApiKey,
+      hasElevenLabsApiKey: !!keys.elevenLabsApiKey,
+      hasTapSecretKey: !!keys.tapSecretKey,
+      hasTapPublicKey: !!keys.tapPublicKey,
+      hasSmarthinkerzWebhookSecret: !!keys.smarthinkerzWebhookSecret,
+    };
+  }),
+
+  setApiKeys: adminProcedure
+    .input(z.object({
+      openaiApiKey: z.string().optional(),
+      elevenLabsApiKey: z.string().optional(),
+      tapSecretKey: z.string().optional(),
+      tapPublicKey: z.string().optional(),
+      smarthinkerzWebhookSecret: z.string().optional(),
+      openaiBaseUrl: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await db.getPlatformSetting("api_keys");
+      const current = (existing?.settingValue as Record<string, string> | null) ?? {};
+      const updated: Record<string, string> = { ...current };
+      if (input.openaiApiKey) updated.openaiApiKey = input.openaiApiKey;
+      if (input.elevenLabsApiKey) updated.elevenLabsApiKey = input.elevenLabsApiKey;
+      if (input.tapSecretKey) updated.tapSecretKey = input.tapSecretKey;
+      if (input.tapPublicKey) updated.tapPublicKey = input.tapPublicKey;
+      if (input.smarthinkerzWebhookSecret) updated.smarthinkerzWebhookSecret = input.smarthinkerzWebhookSecret;
+      if (input.openaiBaseUrl !== undefined) updated.openaiBaseUrl = input.openaiBaseUrl;
+      await db.upsertPlatformSetting("api_keys", updated, ctx.user.id);
+      return { success: true };
+    }),
+
+  clearApiKey: adminProcedure
+    .input(z.object({ key: z.enum(["openaiApiKey", "elevenLabsApiKey", "tapSecretKey", "tapPublicKey", "smarthinkerzWebhookSecret", "openaiBaseUrl"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await db.getPlatformSetting("api_keys");
+      const current = (existing?.settingValue as Record<string, string> | null) ?? {};
+      delete current[input.key];
+      await db.upsertPlatformSetting("api_keys", current, ctx.user.id);
+      return { success: true };
+    }),
+
+  // ── Platform-wide Subscriber Analytics ──────────────────────────────
+  getSubscriberAnalytics: adminProcedure.query(async () => {
+    const dbConn = await (await import("./db")).getDb();
+    if (!dbConn) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+    const { subscriptions: subs, subscriptionPlans: plansTable, payments: pays, users } = await import("../drizzle/schema");
+    const { eq, sql } = await import("drizzle-orm");
+
+    const byStatus = await dbConn
+      .select({ status: subs.status, total: sql<number>`COUNT(*)` })
+      .from(subs)
+      .groupBy(subs.status);
+
+    const byPlan = await dbConn
+      .select({ planName: plansTable.name, tier: plansTable.tier, priceMonthly: plansTable.priceMonthly, total: sql<number>`COUNT(*)` })
+      .from(subs)
+      .leftJoin(plansTable, eq(subs.planId, plansTable.id))
+      .where(eq(subs.status, "active"))
+      .groupBy(plansTable.id, plansTable.name, plansTable.tier, plansTable.priceMonthly);
+
+    const mrrRows = await dbConn
+      .select({ priceMonthly: plansTable.priceMonthly, qty: sql<number>`COUNT(*)` })
+      .from(subs)
+      .leftJoin(plansTable, eq(subs.planId, plansTable.id))
+      .where(eq(subs.status, "active"))
+      .groupBy(plansTable.priceMonthly);
+    const mrrCents = mrrRows.reduce((sum, r) => sum + (r.priceMonthly ?? 0) * Number(r.qty), 0);
+
+    const totalRevRows = await dbConn
+      .select({ total: sql<number>`COALESCE(SUM(amount), 0)` })
+      .from(pays)
+      .where(eq(pays.status, "succeeded"));
+    const totalRevenueCents = Number(totalRevRows[0]?.total ?? 0);
+
+    const sixMonthsAgo = Date.now() - 6 * 30 * 24 * 60 * 60 * 1000;
+    const monthlyRevRows = await dbConn
+      .select({
+        month: sql<string>`DATE_FORMAT(FROM_UNIXTIME(paidAt / 1000), '%Y-%m')`,
+        revenue: sql<number>`COALESCE(SUM(amount), 0)`,
+        count: sql<number>`COUNT(*)`
+      })
+      .from(pays)
+      .where(sql`paidAt >= ${sixMonthsAgo} AND status = 'succeeded'`)
+      .groupBy(sql`DATE_FORMAT(FROM_UNIXTIME(paidAt / 1000), '%Y-%m')`);
+
+    const monthlySubRows = await dbConn
+      .select({
+        month: sql<string>`DATE_FORMAT(createdAt, '%Y-%m')`,
+        newSubs: sql<number>`COUNT(*)`
+      })
+      .from(subs)
+      .where(sql`createdAt >= FROM_UNIXTIME(${sixMonthsAgo} / 1000)`)
+      .groupBy(sql`DATE_FORMAT(createdAt, '%Y-%m')`);
+
+    const userCountRows = await dbConn.select({ total: sql<number>`COUNT(*)` }).from(users);
+    const totalUsers = Number(userCountRows[0]?.total ?? 0);
+
+    const totalActive = byStatus.find(r => r.status === "active")?.total ?? 0;
+    const totalTrial = byStatus.find(r => r.status === "trial")?.total ?? 0;
+    const totalCanceled = byStatus.find(r => r.status === "canceled")?.total ?? 0;
+
+    return {
+      totalUsers,
+      totalActive: Number(totalActive),
+      totalTrial: Number(totalTrial),
+      totalCanceled: Number(totalCanceled),
+      mrrCents,
+      arrCents: mrrCents * 12,
+      totalRevenueCents,
+      byStatus: byStatus.map(r => ({ status: r.status, total: Number(r.total) })),
+      byPlan: byPlan.map(r => ({ planName: r.planName ?? "Unknown", tier: r.tier ?? "starter", priceMonthly: r.priceMonthly ?? 0, total: Number(r.total) })),
+      monthlyRevenue: monthlyRevRows.map(r => ({ month: r.month, revenue: Number(r.revenue), count: Number(r.count) })),
+      monthlyNewSubs: monthlySubRows.map(r => ({ month: r.month, newSubs: Number(r.newSubs) })),
+    };
+  }),
 });
 // ─── Subscription & Pricing Router ─────────────────────────────────────────
 const subscriptionRouter = router({

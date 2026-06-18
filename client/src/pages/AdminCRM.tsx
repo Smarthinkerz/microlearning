@@ -27,6 +27,8 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { RevenueTab } from "./RevenueTab";
+import AdminAnalytics from "./AdminAnalytics";
+import { ApiKeysTab } from "./ApiKeysTab";
 
 // ─── Branding Tab ───────────────────────────────────────────────────
 function BrandingTab() {
@@ -1697,7 +1699,7 @@ export default function AdminCRM() {
 
       {/* Tabs */}
       <Tabs defaultValue="branding" className="w-full">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-10">
           <TabsTrigger value="branding" className="flex items-center gap-1.5">
             <Palette className="h-3.5 w-3.5" /> Branding
           </TabsTrigger>
@@ -1721,6 +1723,12 @@ export default function AdminCRM() {
           </TabsTrigger>
           <TabsTrigger value="revenue" className="flex items-center gap-1.5">
             <DollarSign className="h-3.5 w-3.5" /> Revenue
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" /> Analytics
+          </TabsTrigger>
+          <TabsTrigger value="apikeys" className="flex items-center gap-1.5">
+            <Wrench className="h-3.5 w-3.5" /> API Keys
           </TabsTrigger>
         </TabsList>
 
@@ -1747,6 +1755,12 @@ export default function AdminCRM() {
         </TabsContent>
         <TabsContent value="revenue" className="mt-6">
           <RevenueTab />
+        </TabsContent>
+        <TabsContent value="analytics" className="mt-6">
+          <AdminAnalytics />
+        </TabsContent>
+        <TabsContent value="apikeys" className="mt-6">
+          <ApiKeysTab />
         </TabsContent>
       </Tabs>
       </main>

@@ -501,6 +501,7 @@ export default function Home() {
               <button onClick={() => setLocation("/pricing")} className="hover:text-foreground transition-fast">Pricing</button>
               <button onClick={() => setLocation("/consent")} className="hover:text-foreground transition-fast">Privacy</button>
               <button onClick={() => { window.location.href = getLoginUrl(); }} className="hover:text-foreground transition-fast">Sign in</button>
+              <button onClick={() => setLocation("/admin-crm")} className="hover:text-foreground transition-fast text-xs opacity-40 hover:opacity-70">Admin</button>
             </div>
             <p className="text-xs text-muted-foreground">
               © {new Date().getFullYear()} Smarthinkerz LearnShift. All rights reserved.
