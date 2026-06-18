@@ -1,0 +1,16 @@
+node_modules
+.pnpm-store
+dist
+build
+.env
+.env.*
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+*.log
+.manus-logs
+README.md
+SUPABASE-SETUP.md
+nixpacks.toml
