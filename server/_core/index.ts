@@ -23,12 +23,10 @@ function isPortAvailable(port: number): Promise<boolean> {
 }
 
 async function findAvailablePort(startPort: number = 3000): Promise<number> {
-  // For Manus deployment, must use fixed port 3000
-  // Do not fall back to other ports
+  // Railway injects PORT env var; respect it if set
   if (await isPortAvailable(startPort)) {
     return startPort;
   }
-  // If 3000 is busy, fail loudly so we know there's an issue
   throw new Error(`Port ${startPort} is not available. Kill any existing processes and retry.`);
 }
 
@@ -54,13 +52,15 @@ async function startServer() {
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
-        connectSrc: ["'self'", "https://api.manus.im", "https://api.elevenlabs.io", "https://api.tap.company", "wss:", "ws:"],
+        connectSrc: ["'self'", "https://api.elevenlabs.io", "https://api.tap.company", "wss:", "ws:"],
+        upgradeInsecureRequests: [],
+        workerSrc: ["'self'", "blob:"],
         mediaSrc: ["'self'", "https:", "blob:"],
         frameSrc: ["'self'", "https://tap.company", "https://checkout.tap.company"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
-        frameAncestors: ["'self'", "https://*.manus.computer", "https://*.manus.space"],
+        frameAncestors: ["'self'"],
       },
     },
     crossOriginEmbedderPolicy: false, // Allow cross-origin resources (CDN images, fonts)
