@@ -1,7 +1,7 @@
 import {
-  int,
-  mysqlEnum,
-  mysqlTable,
+  integer,
+  pgEnum,
+  pgTable,
   text,
   timestamp,
   varchar,
@@ -9,372 +9,572 @@ import {
   json,
   bigint,
   decimal,
-} from "drizzle-orm/mysql-core";
+  serial,
+  unique,
+} from "drizzle-orm/pg-core";
+
+// ─── Enums ────────────────────────────────────────────────────────────
+export const roleEnum = pgEnum("role", ["user", "admin"]);
+export const appRoleEnum = pgEnum("app_role", ["learner", "employer_admin", "content_author", "super_admin"]);
+export const approvalStatusEnum = pgEnum("approval_status", ["pending", "approved", "disapproved", "blocked", "removed"]);
+export const shiftTypeEnum = pgEnum("shift_type", ["morning", "afternoon", "night", "split", "custom"]);
+export const shiftSourceEnum = pgEnum("shift_source", ["manual", "webhook", "import"]);
+export const contentTypeEnum = pgEnum("content_type", ["video", "quiz", "scenario", "assessment", "mixed", "article"]);
+export const difficultyEnum = pgEnum("difficulty", ["beginner", "intermediate", "advanced"]);
+export const lessonStatusEnum = pgEnum("lesson_status", ["draft", "in_review", "published", "archived"]);
+export const assignmentStatusEnum = pgEnum("assignment_status", ["pending", "available", "in_progress", "completed", "expired", "skipped"]);
+export const priorityEnum = pgEnum("priority", ["low", "normal", "high", "urgent"]);
+export const attemptStatusEnum = pgEnum("attempt_status", ["in_progress", "completed", "abandoned"]);
+export const syncStatusEnum = pgEnum("sync_status", ["synced", "pending", "conflict"]);
+export const notificationTypeEnum = pgEnum("notification_type", ["lesson_available", "lesson_reminder", "shift_change", "assignment", "achievement", "system"]);
+export const subscriptionTierEnum = pgEnum("subscription_tier", ["starter", "pro", "enterprise", "consumer_free", "consumer_premium"]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "trial", "past_due", "canceled", "expired"]);
+export const paymentStatusEnum = pgEnum("payment_status", ["pending", "succeeded", "failed", "refunded"]);
+export const achievementCategoryEnum = pgEnum("achievement_category", ["learning", "performance", "consistency", "social", "mastery"]);
+export const rarityEnum = pgEnum("rarity", ["common", "uncommon", "rare", "epic", "legendary"]);
+export const leaderboardScopeEnum = pgEnum("leaderboard_scope", ["personal", "team", "organization", "global"]);
+export const uptimeStatusEnum = pgEnum("uptime_status", ["operational", "degraded", "down", "unknown"]);
+export const reviewStatusEnum = pgEnum("review_status", ["new", "learning", "review", "mastered"]);
+export const reviewDifficultyEnum = pgEnum("review_difficulty", ["easy", "medium", "hard", "very_hard"]);
+export const reminderTypeEnum = pgEnum("reminder_type", ["due_now", "due_tomorrow", "due_this_week", "custom"]);
+export const reminderFrequencyEnum = pgEnum("reminder_frequency", ["immediate", "daily", "weekly", "never"]);
+export const abTestTypeEnum = pgEnum("ab_test_type", ["pricing", "feature", "ui", "messaging"]);
+export const abTestStatusEnum = pgEnum("ab_test_status", ["draft", "active", "paused", "completed"]);
+export const consentTypeEnum = pgEnum("consent_type", ["terms_of_service", "privacy_policy", "marketing_emails", "analytics_tracking", "data_processing", "third_party_sharing"]);
+export const breachEventTypeEnum = pgEnum("breach_event_type", ["brute_force", "bulk_data_access", "unauthorized_admin_access", "data_exfiltration", "anomalous_pattern", "manual_report"]);
+export const severityEnum = pgEnum("severity", ["low", "medium", "high", "critical"]);
+export const detectedByEnum = pgEnum("detected_by", ["automated", "manual"]);
+export const breachStatusEnum = pgEnum("breach_status", ["detected", "investigating", "contained", "resolved", "false_positive"]);
+export const feedbackDifficultyEnum = pgEnum("feedback_difficulty", ["too_easy", "just_right", "too_hard"]);
 
 // ─── Organizations (Multi-Tenant) ────────────────────────────────────
-export const organizations = mysqlTable("organizations", {
-  id: int("id").autoincrement().primaryKey(),
+export const organizations = pgTable("organizations", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 128 }).notNull().unique(),
   industry: varchar("industry", { length: 128 }),
-  logoUrl: text("logoUrl"),
+  logoUrl: text("logo_url"),
   settings: json("settings").$type<Record<string, unknown>>(),
-  maxUsers: int("maxUsers").default(100),
-  isActive: boolean("isActive").default(true).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  maxUsers: integer("max_users").default(100),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // ─── Users ───────────────────────────────────────────────────────────
-export const users = mysqlTable("users", {
-  id: int("id").autoincrement().primaryKey(),
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  // Supabase Auth user ID (UUID from auth.users)
+  supabaseId: varchar("supabase_id", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
-  loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
-  appRole: mysqlEnum("appRole", ["learner", "employer_admin", "content_author", "super_admin"]).default("learner").notNull(),
-  orgId: int("orgId"),
+  role: roleEnum("role").default("user").notNull(),
+  appRole: appRoleEnum("app_role").default("learner").notNull(),
+  orgId: integer("org_id"),
   timezone: varchar("timezone", { length: 64 }).default("UTC"),
-  avatarUrl: text("avatarUrl"),
-  notificationPreferences: json("notificationPreferences").$type<{
+  avatarUrl: text("avatar_url"),
+  notificationPreferences: json("notification_preferences").$type<{
     email: boolean;
     push: boolean;
     inApp: boolean;
     quietHoursStart?: string;
     quietHoursEnd?: string;
   }>(),
-  // User approval and status management
-  approvalStatus: mysqlEnum("approvalStatus", ["pending", "approved", "disapproved", "blocked", "removed"]).default("pending").notNull(),
-  approvedAt: timestamp("approvedAt"),
-  approvedBy: int("approvedBy"),
-  disapprovalReason: text("disapprovalReason"),
-  blockReason: text("blockReason"),
-  lastActiveAt: timestamp("lastActiveAt"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  approvalStatus: approvalStatusEnum("approval_status").default("pending").notNull(),
+  approvedAt: timestamp("approved_at"),
+  approvedBy: integer("approved_by"),
+  disapprovalReason: text("disapproval_reason"),
+  blockReason: text("block_reason"),
+  lastActiveAt: timestamp("last_active_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  lastSignedIn: timestamp("last_signed_in").defaultNow().notNull(),
 });
 
 // ─── Shifts ──────────────────────────────────────────────────────────
-export const shifts = mysqlTable("shifts", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  orgId: int("orgId").notNull(),
+export const shifts = pgTable("shifts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  orgId: integer("org_id").notNull(),
   title: varchar("title", { length: 255 }),
-  startTime: bigint("startTime", { mode: "number" }).notNull(),
-  endTime: bigint("endTime", { mode: "number" }).notNull(),
-  breakStartTime: bigint("breakStartTime", { mode: "number" }),
-  breakEndTime: bigint("breakEndTime", { mode: "number" }),
-  shiftType: mysqlEnum("shiftType", ["morning", "afternoon", "night", "split", "custom"]).default("custom"),
+  startTime: bigint("start_time", { mode: "number" }).notNull(),
+  endTime: bigint("end_time", { mode: "number" }).notNull(),
+  breakStartTime: bigint("break_start_time", { mode: "number" }),
+  breakEndTime: bigint("break_end_time", { mode: "number" }),
+  shiftType: shiftTypeEnum("shift_type").default("custom"),
   location: varchar("location", { length: 255 }),
-  externalId: varchar("externalId", { length: 255 }),
-  source: mysqlEnum("source", ["manual", "webhook", "import"]).default("manual"),
-  isRecurring: boolean("isRecurring").default(false),
-  recurrenceRule: text("recurrenceRule"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  externalId: varchar("external_id", { length: 255 }),
+  source: shiftSourceEnum("source").default("manual"),
+  isRecurring: boolean("is_recurring").default(false),
+  recurrenceRule: text("recurrence_rule"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // ─── Lessons ─────────────────────────────────────────────────────────
-export const lessons = mysqlTable("lessons", {
-  id: int("id").autoincrement().primaryKey(),
-  orgId: int("orgId").notNull(),
+export const lessons = pgTable("lessons", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id").notNull(),
   title: varchar("title", { length: 500 }).notNull(),
   description: text("description"),
   content: json("content").$type<LessonContent>(),
-  contentType: mysqlEnum("contentType", ["video", "quiz", "scenario", "assessment", "mixed", "article"]).default("mixed"),
-  durationMinutes: int("durationMinutes").default(5),
-  difficulty: mysqlEnum("difficulty", ["beginner", "intermediate", "advanced"]).default("beginner"),
+  contentType: contentTypeEnum("content_type").default("mixed"),
+  durationMinutes: integer("duration_minutes").default(5),
+  difficulty: difficultyEnum("difficulty").default("beginner"),
   category: varchar("category", { length: 128 }),
   tags: json("tags").$type<string[]>(),
-  thumbnailUrl: text("thumbnailUrl"),
-  authorId: int("authorId").notNull(),
-  status: mysqlEnum("status", ["draft", "in_review", "published", "archived"]).default("draft"),
-  reviewerId: int("reviewerId"),
-  reviewNotes: text("reviewNotes"),
-  publishedAt: timestamp("publishedAt"),
-  contentSchemaVersion: int("contentSchemaVersion").default(1),
+  thumbnailUrl: text("thumbnail_url"),
+  authorId: integer("author_id").notNull(),
+  status: lessonStatusEnum("status").default("draft"),
+  reviewerId: integer("reviewer_id"),
+  reviewNotes: text("review_notes"),
+  publishedAt: timestamp("published_at"),
+  contentSchemaVersion: integer("content_schema_version").default(1),
   language: varchar("language", { length: 10 }).default("en"),
-  xapiActivityId: varchar("xapiActivityId", { length: 500 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  xapiActivityId: varchar("xapi_activity_id", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // ─── Lesson Assignments ──────────────────────────────────────────────
-export const lessonAssignments = mysqlTable("lesson_assignments", {
-  id: int("id").autoincrement().primaryKey(),
-  lessonId: int("lessonId").notNull(),
-  userId: int("userId").notNull(),
-  orgId: int("orgId").notNull(),
-  assignedBy: int("assignedBy"),
-  status: mysqlEnum("status", ["pending", "available", "in_progress", "completed", "expired", "skipped"]).default("pending"),
-  priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).default("normal"),
-  scheduledStartTime: bigint("scheduledStartTime", { mode: "number" }),
-  scheduledEndTime: bigint("scheduledEndTime", { mode: "number" }),
-  dueDate: bigint("dueDate", { mode: "number" }),
-  completedAt: bigint("completedAt", { mode: "number" }),
-  isScheduleAware: boolean("isScheduleAware").default(true),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+export const lessonAssignments = pgTable("lesson_assignments", {
+  id: serial("id").primaryKey(),
+  lessonId: integer("lesson_id").notNull(),
+  userId: integer("user_id").notNull(),
+  orgId: integer("org_id").notNull(),
+  assignedBy: integer("assigned_by"),
+  status: assignmentStatusEnum("status").default("pending"),
+  priority: priorityEnum("priority").default("normal"),
+  scheduledStartTime: bigint("scheduled_start_time", { mode: "number" }),
+  scheduledEndTime: bigint("scheduled_end_time", { mode: "number" }),
+  dueDate: bigint("due_date", { mode: "number" }),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  isScheduleAware: boolean("is_schedule_aware").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // ─── Lesson Attempts / Progress ──────────────────────────────────────
-export const lessonAttempts = mysqlTable("lesson_attempts", {
-  id: int("id").autoincrement().primaryKey(),
-  assignmentId: int("assignmentId").notNull(),
-  userId: int("userId").notNull(),
-  lessonId: int("lessonId").notNull(),
-  orgId: int("orgId").notNull(),
-  startedAt: bigint("startedAt", { mode: "number" }).notNull(),
-  completedAt: bigint("completedAt", { mode: "number" }),
-  timeSpentSeconds: int("timeSpentSeconds").default(0),
-  score: int("score"),
-  maxScore: int("maxScore"),
+export const lessonAttempts = pgTable("lesson_attempts", {
+  id: serial("id").primaryKey(),
+  assignmentId: integer("assignment_id").notNull(),
+  userId: integer("user_id").notNull(),
+  lessonId: integer("lesson_id").notNull(),
+  orgId: integer("org_id").notNull(),
+  startedAt: bigint("started_at", { mode: "number" }).notNull(),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  timeSpentSeconds: integer("time_spent_seconds").default(0),
+  score: integer("score"),
+  maxScore: integer("max_score"),
   passed: boolean("passed"),
   responses: json("responses").$type<AttemptResponse[]>(),
-  progress: int("progress").default(0),
-  currentStep: int("currentStep").default(0),
-  status: mysqlEnum("status", ["in_progress", "completed", "abandoned"]).default("in_progress"),
-  syncStatus: mysqlEnum("syncStatus", ["synced", "pending", "conflict"]).default("synced"),
-  clientTimestamp: bigint("clientTimestamp", { mode: "number" }),
-  serverTimestamp: bigint("serverTimestamp", { mode: "number" }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  progress: integer("progress").default(0),
+  currentStep: integer("current_step").default(0),
+  status: attemptStatusEnum("status").default("in_progress"),
+  syncStatus: syncStatusEnum("sync_status").default("synced"),
+  clientTimestamp: bigint("client_timestamp", { mode: "number" }),
+  serverTimestamp: bigint("server_timestamp", { mode: "number" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // ─── Certificates ────────────────────────────────────────────────────
-export const certificates = mysqlTable("certificates", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  lessonId: int("lessonId").notNull(),
-  orgId: int("orgId").notNull(),
-  attemptId: int("attemptId"),
-  certificateNumber: varchar("certificateNumber", { length: 128 }).notNull().unique(),
-  issuedAt: bigint("issuedAt", { mode: "number" }).notNull(),
-  expiresAt: bigint("expiresAt", { mode: "number" }),
-  pdfUrl: text("pdfUrl"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+export const certificates = pgTable("certificates", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  lessonId: integer("lesson_id").notNull(),
+  orgId: integer("org_id").notNull(),
+  attemptId: integer("attempt_id"),
+  certificateNumber: varchar("certificate_number", { length: 128 }).notNull().unique(),
+  issuedAt: bigint("issued_at", { mode: "number" }).notNull(),
+  expiresAt: bigint("expires_at", { mode: "number" }),
+  pdfUrl: text("pdf_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // ─── Audit Logs ──────────────────────────────────────────────────────
-export const auditLogs = mysqlTable("audit_logs", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId"),
-  orgId: int("orgId"),
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  orgId: integer("org_id"),
   action: varchar("action", { length: 128 }).notNull(),
-  resourceType: varchar("resourceType", { length: 64 }).notNull(),
-  resourceId: int("resourceId"),
+  resourceType: varchar("resource_type", { length: 64 }).notNull(),
+  resourceId: integer("resource_id"),
   details: json("details").$type<Record<string, unknown>>(),
-  ipAddress: varchar("ipAddress", { length: 64 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  ipAddress: varchar("ip_address", { length: 64 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // ─── Notifications ───────────────────────────────────────────────────
-export const notifications = mysqlTable("notifications", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  orgId: int("orgId"),
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  orgId: integer("org_id"),
   title: varchar("title", { length: 255 }).notNull(),
   message: text("message").notNull(),
-  type: mysqlEnum("type", ["lesson_available", "lesson_reminder", "shift_change", "assignment", "achievement", "system"]).default("system"),
-  isRead: boolean("isRead").default(false).notNull(),
-  actionUrl: text("actionUrl"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  type: notificationTypeEnum("type").default("system"),
+  isRead: boolean("is_read").default(false).notNull(),
+  actionUrl: text("action_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// ─── Platform Settings (CRM Branding & Config) ─────────────────────
-export const platformSettings = mysqlTable("platform_settings", {
-  id: int("id").autoincrement().primaryKey(),
-  settingKey: varchar("settingKey", { length: 128 }).notNull().unique(),
-  settingValue: json("settingValue").$type<Record<string, unknown>>(),
-  updatedBy: int("updatedBy"),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+// ─── Platform Settings ─────────────────────────────────────────────
+export const platformSettings = pgTable("platform_settings", {
+  id: serial("id").primaryKey(),
+  settingKey: varchar("setting_key", { length: 128 }).notNull().unique(),
+  settingValue: json("setting_value").$type<Record<string, unknown>>(),
+  updatedBy: integer("updated_by"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
-
-export type PlatformBranding = {
-  appName: string;
-  logoUrl: string;
-  faviconUrl: string;
-  primaryColor: string;
-  primaryHue: number;
-  accentColor: string;
-  theme: "dark" | "light";
-  sidebarStyle: "default" | "compact" | "minimal";
-  fontFamily: string;
-  heroTitle: string;
-  heroSubtitle: string;
-  footerText: string;
-  customCss: string;
-};
-
-export type PlatformSettings = typeof platformSettings.$inferSelect;
-export type InsertPlatformSettings = typeof platformSettings.$inferInsert;
 
 // ─── Subscription Plans ─────────────────────────────────────────────
-export const subscriptionPlans = mysqlTable("subscription_plans", {
-  id: int("id").autoincrement().primaryKey(),
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 128 }).notNull(),
   slug: varchar("slug", { length: 64 }).notNull().unique(),
-  tier: mysqlEnum("tier", ["starter", "pro", "enterprise", "consumer_free", "consumer_premium"]).notNull(),
-  priceMonthly: int("priceMonthly").notNull(), // in cents (e.g. 395 = $3.95)
-  priceYearly: int("priceYearly"), // in cents, annual total
+  tier: subscriptionTierEnum("tier").notNull(),
+  priceMonthly: integer("price_monthly").notNull(),
+  priceYearly: integer("price_yearly"),
   currency: varchar("currency", { length: 3 }).default("USD"),
-  isPerUser: boolean("isPerUser").default(true).notNull(),
-  maxUsers: int("maxUsers"), // null = unlimited
+  isPerUser: boolean("is_per_user").default(true).notNull(),
+  maxUsers: integer("max_users"),
   features: json("features").$type<PlanFeatures>(),
-  addOns: json("addOns").$type<AddOn[]>(),
-  isActive: boolean("isActive").default(true).notNull(),
-  sortOrder: int("sortOrder").default(0),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  addOns: json("add_ons").$type<AddOn[]>(),
+  isActive: boolean("is_active").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// ─── Organization Subscriptions ─────────────────────────────────────
-export const subscriptions = mysqlTable("subscriptions", {
-  id: int("id").autoincrement().primaryKey(),
-  orgId: int("orgId").notNull(),
-  planId: int("planId").notNull(),
-  status: mysqlEnum("status", ["active", "trial", "past_due", "canceled", "expired"]).default("trial").notNull(),
-  currentPeriodStart: bigint("currentPeriodStart", { mode: "number" }).notNull(),
-  currentPeriodEnd: bigint("currentPeriodEnd", { mode: "number" }).notNull(),
-  canceledAt: bigint("canceledAt", { mode: "number" }),
-  trialEndsAt: bigint("trialEndsAt", { mode: "number" }),
-  quantity: int("quantity").default(1), // number of user seats
-  externalPaymentId: varchar("externalPaymentId", { length: 255 }), // Tap gateway charge ID
-  externalCustomerId: varchar("externalCustomerId", { length: 255 }), // Tap customer ID
+// ─── Organization Subscriptions ────────────────────────────────────
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id").notNull(),
+  planId: integer("plan_id").notNull(),
+  status: subscriptionStatusEnum("status").default("trial").notNull(),
+  currentPeriodStart: bigint("current_period_start", { mode: "number" }).notNull(),
+  currentPeriodEnd: bigint("current_period_end", { mode: "number" }).notNull(),
+  canceledAt: bigint("canceled_at", { mode: "number" }),
+  trialEndsAt: bigint("trial_ends_at", { mode: "number" }),
+  quantity: integer("quantity").default(1),
+  externalPaymentId: varchar("external_payment_id", { length: 255 }),
+  externalCustomerId: varchar("external_customer_id", { length: 255 }),
   metadata: json("metadata").$type<Record<string, unknown>>(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // ─── Payment History ────────────────────────────────────────────────
-export const payments = mysqlTable("payments", {
-  id: int("id").autoincrement().primaryKey(),
-  orgId: int("orgId").notNull(),
-  subscriptionId: int("subscriptionId"),
-  amount: int("amount").notNull(), // in cents
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id").notNull(),
+  subscriptionId: integer("subscription_id"),
+  amount: integer("amount").notNull(),
   currency: varchar("currency", { length: 3 }).default("USD"),
-  status: mysqlEnum("status", ["pending", "succeeded", "failed", "refunded"]).default("pending").notNull(),
-  paymentMethod: varchar("paymentMethod", { length: 64 }), // tap, card, etc.
-  externalChargeId: varchar("externalChargeId", { length: 255 }),
+  status: paymentStatusEnum("status").default("pending").notNull(),
+  paymentMethod: varchar("payment_method", { length: 64 }),
+  externalChargeId: varchar("external_charge_id", { length: 255 }),
   description: text("description"),
   metadata: json("metadata").$type<Record<string, unknown>>(),
-  paidAt: bigint("paidAt", { mode: "number" }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  paidAt: bigint("paid_at", { mode: "number" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// ─── Consumer Lesson Packs (In-App Purchases) ───────────────────────
-export const lessonPacks = mysqlTable("lesson_packs", {
-  id: int("id").autoincrement().primaryKey(),
+// ─── Consumer Lesson Packs ──────────────────────────────────────────
+export const lessonPacks = pgTable("lesson_packs", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 128 }).notNull().unique(),
   description: text("description"),
-  price: int("price").notNull(), // in cents (e.g. 199 = $1.99)
+  price: integer("price").notNull(),
   currency: varchar("currency", { length: 3 }).default("USD"),
-  lessonIds: json("lessonIds").$type<number[]>(),
+  lessonIds: json("lesson_ids").$type<number[]>(),
   category: varchar("category", { length: 128 }),
-  thumbnailUrl: text("thumbnailUrl"),
-  isActive: boolean("isActive").default(true).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // ─── User Pack Purchases ────────────────────────────────────────────
-export const userPackPurchases = mysqlTable("user_pack_purchases", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  packId: int("packId").notNull(),
-  paymentId: int("paymentId"),
-  purchasedAt: bigint("purchasedAt", { mode: "number" }).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+export const userPackPurchases = pgTable("user_pack_purchases", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  packId: integer("pack_id").notNull(),
+  paymentId: integer("payment_id"),
+  purchasedAt: bigint("purchased_at", { mode: "number" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // ─── WFM Webhook Configs ─────────────────────────────────────────────
-export const webhookConfigs = mysqlTable("webhook_configs", {
-  id: int("id").autoincrement().primaryKey(),
-  orgId: int("orgId").notNull(),
+export const webhookConfigs = pgTable("webhook_configs", {
+  id: serial("id").primaryKey(),
+  orgId: integer("org_id").notNull(),
   provider: varchar("provider", { length: 128 }).notNull(),
-  webhookUrl: text("webhookUrl"),
-  secretKey: varchar("secretKey", { length: 255 }),
-  isActive: boolean("isActive").default(true).notNull(),
-  lastSyncAt: timestamp("lastSyncAt"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  webhookUrl: text("webhook_url"),
+  secretKey: varchar("secret_key", { length: 255 }),
+  isActive: boolean("is_active").default(true).notNull(),
+  lastSyncAt: timestamp("last_sync_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// ─── Push Subscriptions (Web Push VAPID) ───────────────────────────────
-export const pushSubscriptions = mysqlTable("push_subscriptions", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
+// ─── Push Subscriptions ─────────────────────────────────────────────
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   endpoint: text("endpoint").notNull(),
   p256dh: text("p256dh").notNull(),
   auth: varchar("auth", { length: 255 }).notNull(),
-  userAgent: text("userAgent"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  lastUsedAt: timestamp("lastUsedAt").defaultNow().notNull(),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at").defaultNow().notNull(),
 });
 
-// ─── Gamification: Achievements ──────────────────────────────────────
-export const achievements = mysqlTable("achievements", {
-  id: int("id").autoincrement().primaryKey(),
+// ─── Achievements ────────────────────────────────────────────────────
+export const achievements = pgTable("achievements", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
-  icon: varchar("icon", { length: 255 }).notNull(), // emoji or icon name
-  category: mysqlEnum("category", ["learning", "performance", "consistency", "social", "mastery"]).notNull(),
-  rarity: mysqlEnum("rarity", ["common", "uncommon", "rare", "epic", "legendary"]).default("common").notNull(),
-  points: int("points").default(10).notNull(),
+  icon: varchar("icon", { length: 255 }).notNull(),
+  category: achievementCategoryEnum("category").notNull(),
+  rarity: rarityEnum("rarity").default("common").notNull(),
+  points: integer("points").default(10).notNull(),
   criteria: json("criteria").$type<{
     type: "lesson_count" | "perfect_score" | "streak_days" | "completion_rate" | "score_threshold" | "custom";
     value: number | string;
   }>().notNull(),
-  isActive: boolean("isActive").default(true).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
-export type Achievement = typeof achievements.$inferSelect;
-export type InsertAchievement = typeof achievements.$inferInsert;
 
-// ─── Gamification: User Achievements ───────────────────────────────
-export const userAchievements = mysqlTable("user_achievements", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  achievementId: int("achievementId").notNull(),
-  unlockedAt: timestamp("unlockedAt").defaultNow().notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+// ─── User Achievements ──────────────────────────────────────────────
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  achievementId: integer("achievement_id").notNull(),
+  unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
-export type UserAchievement = typeof userAchievements.$inferSelect;
-export type InsertUserAchievement = typeof userAchievements.$inferInsert;
 
-// ─── Gamification: User Points ────────────────────────────────────
-export const userPoints = mysqlTable("user_points", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  totalPoints: int("totalPoints").default(0).notNull(),
-  level: int("level").default(1).notNull(),
-  currentLevelPoints: int("currentLevelPoints").default(0).notNull(),
-  nextLevelThreshold: int("nextLevelThreshold").default(100).notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+// ─── User Points ─────────────────────────────────────────────────────
+export const userPoints = pgTable("user_points", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  totalPoints: integer("total_points").default(0).notNull(),
+  level: integer("level").default(1).notNull(),
+  currentLevelPoints: integer("current_level_points").default(0).notNull(),
+  nextLevelThreshold: integer("next_level_threshold").default(100).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
-export type UserPoints = typeof userPoints.$inferSelect;
-export type InsertUserPoints = typeof userPoints.$inferInsert;
 
-// ─── Gamification: Leaderboard (Cached) ───────────────────────────
-export const leaderboardCache = mysqlTable("leaderboard_cache", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  orgId: int("orgId"),
-  scope: mysqlEnum("scope", ["personal", "team", "organization", "global"]).notNull(),
-  rank: int("rank").notNull(),
-  points: int("points").notNull(),
-  level: int("level").notNull(),
-  lessonsCompleted: int("lessonsCompleted").default(0).notNull(),
-  perfectScores: int("perfectScores").default(0).notNull(),
-  currentStreak: int("currentStreak").default(0).notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+// ─── Leaderboard Cache ───────────────────────────────────────────────
+export const leaderboardCache = pgTable("leaderboard_cache", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  orgId: integer("org_id"),
+  scope: leaderboardScopeEnum("scope").notNull(),
+  rank: integer("rank").notNull(),
+  points: integer("points").notNull(),
+  level: integer("level").notNull(),
+  lessonsCompleted: integer("lessons_completed").default(0).notNull(),
+  perfectScores: integer("perfect_scores").default(0).notNull(),
+  currentStreak: integer("current_streak").default(0).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
-export type LeaderboardEntry = typeof leaderboardCache.$inferSelect;
-export type InsertLeaderboardEntry = typeof leaderboardCache.$inferInsert;
+
+// ─── Voice Audio Cache ──────────────────────────────────────────────
+export const voiceAudioCache = pgTable("voice_audio_cache", {
+  id: serial("id").primaryKey(),
+  textHash: varchar("text_hash", { length: 64 }).notNull(),
+  voiceId: varchar("voice_id", { length: 128 }).notNull(),
+  stability: varchar("stability", { length: 8 }).notNull().default("0.50"),
+  similarityBoost: varchar("similarity_boost", { length: 8 }).notNull().default("0.75"),
+  style: varchar("style", { length: 8 }).notNull().default("0.00"),
+  lessonId: integer("lesson_id"),
+  audioUrl: text("audio_url").notNull(),
+  fileKey: varchar("file_key", { length: 512 }).notNull(),
+  sizeBytes: integer("size_bytes").notNull().default(0),
+  charCount: integer("char_count").notNull().default(0),
+  hitCount: integer("hit_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastAccessedAt: timestamp("last_accessed_at").defaultNow().notNull(),
+});
+
+// ─── Admin IP Allowlist ─────────────────────────────────────────────
+export const adminIpAllowlist = pgTable("admin_ip_allowlist", {
+  id: serial("id").primaryKey(),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
+  label: varchar("label", { length: 255 }),
+  addedBy: integer("added_by"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at"),
+});
+
+// ─── GDPR Consents ──────────────────────────────────────────────────
+export const consents = pgTable("consents", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  consentType: consentTypeEnum("consent_type").notNull(),
+  granted: boolean("granted").default(false).notNull(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  version: varchar("version", { length: 32 }).default("1.0"),
+  grantedAt: bigint("granted_at", { mode: "number" }),
+  withdrawnAt: bigint("withdrawn_at", { mode: "number" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Breach Events ─────────────────────────────────────────────────
+export const breachEvents = pgTable("breach_events", {
+  id: serial("id").primaryKey(),
+  eventType: breachEventTypeEnum("event_type").notNull(),
+  severity: severityEnum("severity").notNull(),
+  description: text("description").notNull(),
+  affectedUserCount: integer("affected_user_count").default(0),
+  affectedResourceType: varchar("affected_resource_type", { length: 128 }),
+  sourceIp: varchar("source_ip", { length: 45 }),
+  detectedBy: detectedByEnum("detected_by").default("automated").notNull(),
+  status: breachStatusEnum("status").default("detected").notNull(),
+  notifiedAt: bigint("notified_at", { mode: "number" }),
+  resolvedAt: bigint("resolved_at", { mode: "number" }),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Lesson Feedback ────────────────────────────────────────────────
+export const lessonFeedback = pgTable("lesson_feedback", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  lessonId: integer("lesson_id").notNull(),
+  attemptId: integer("attempt_id"),
+  rating: integer("rating").notNull(),
+  comment: text("comment"),
+  difficulty: feedbackDifficultyEnum("difficulty"),
+  wouldRecommend: boolean("would_recommend"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Uptime History ─────────────────────────────────────────────────
+export const uptimeHistory = pgTable("uptime_history", {
+  id: serial("id").primaryKey(),
+  serviceName: varchar("service_name", { length: 128 }).notNull(),
+  status: uptimeStatusEnum("status").notNull(),
+  latencyMs: integer("latency_ms"),
+  message: text("message"),
+  checkedAt: bigint("checked_at", { mode: "number" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Spaced Repetition ──────────────────────────────────────────────
+export const lessonReviewSchedule = pgTable("lesson_review_schedule", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  lessonId: integer("lesson_id").notNull(),
+  orgId: integer("org_id").notNull(),
+  interval: integer("interval").default(1).notNull(),
+  easeFactor: decimal("ease_factor", { precision: 3, scale: 2 }).default("2.5").notNull(),
+  repetitions: integer("repetitions").default(0).notNull(),
+  nextReviewDate: bigint("next_review_date", { mode: "number" }).notNull(),
+  lastReviewDate: bigint("last_review_date", { mode: "number" }),
+  status: reviewStatusEnum("status").default("new").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Review History ─────────────────────────────────────────────────
+export const reviewHistory = pgTable("review_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  lessonId: integer("lesson_id").notNull(),
+  orgId: integer("org_id").notNull(),
+  score: integer("score").notNull(),
+  difficulty: reviewDifficultyEnum("difficulty").notNull(),
+  timeSpentSeconds: integer("time_spent_seconds"),
+  quality: integer("quality").notNull(),
+  reviewedAt: bigint("reviewed_at", { mode: "number" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Review Reminders ───────────────────────────────────────────────
+export const reviewReminders = pgTable("review_reminders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  lessonId: integer("lesson_id").notNull(),
+  orgId: integer("org_id").notNull(),
+  reminderTime: bigint("reminder_time", { mode: "number" }).notNull(),
+  reminderType: reminderTypeEnum("reminder_type").default("due_now").notNull(),
+  sent: boolean("sent").default(false).notNull(),
+  sentAt: bigint("sent_at", { mode: "number" }),
+  clicked: boolean("clicked").default(false).notNull(),
+  clickedAt: bigint("clicked_at", { mode: "number" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Reminder Preferences ───────────────────────────────────────────
+export const reminderPreferences = pgTable("reminder_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  orgId: integer("org_id").notNull(),
+  enableReminders: boolean("enable_reminders").default(true).notNull(),
+  reminderFrequency: reminderFrequencyEnum("reminder_frequency").default("daily").notNull(),
+  quietHoursEnabled: boolean("quiet_hours_enabled").default(false).notNull(),
+  quietHoursStart: varchar("quiet_hours_start", { length: 5 }),
+  quietHoursEnd: varchar("quiet_hours_end", { length: 5 }),
+  enablePushNotifications: boolean("enable_push_notifications").default(true).notNull(),
+  enableEmailNotifications: boolean("enable_email_notifications").default(false).notNull(),
+  enableInAppNotifications: boolean("enable_in_app_notifications").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── A/B Testing ────────────────────────────────────────────────────
+export const abTests = pgTable("ab_tests", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  type: abTestTypeEnum("type").notNull(),
+  status: abTestStatusEnum("status").default("draft").notNull(),
+  startDate: bigint("start_date", { mode: "number" }),
+  endDate: bigint("end_date", { mode: "number" }),
+  targetAudience: varchar("target_audience", { length: 255 }),
+  createdBy: integer("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const abTestVariants = pgTable("ab_test_variants", {
+  id: serial("id").primaryKey(),
+  testId: integer("test_id").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  weight: integer("weight").default(50),
+  config: json("config").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const abTestAssignments = pgTable("ab_test_assignments", {
+  id: serial("id").primaryKey(),
+  testId: integer("test_id").notNull(),
+  userId: integer("user_id").notNull(),
+  variantId: integer("variant_id").notNull(),
+  assignedAt: bigint("assigned_at", { mode: "number" }).notNull(),
+});
+
+export const abTestMetrics = pgTable("ab_test_metrics", {
+  id: serial("id").primaryKey(),
+  testId: integer("test_id").notNull(),
+  variantId: integer("variant_id").notNull(),
+  metricName: varchar("metric_name", { length: 255 }).notNull(),
+  value: decimal("value", { precision: 10, scale: 2 }),
+  count: integer("count").default(0),
+  recordedAt: timestamp("recorded_at").defaultNow().notNull(),
+});
 
 // ─── Content Types ───────────────────────────────────────────────────
 export type LessonContentBlock = {
@@ -424,7 +624,6 @@ export type AttemptResponse = {
   timeSpentSeconds?: number;
 };
 
-// ─── Plan Feature Types ─────────────────────────────────────────────
 export type PlanFeatures = {
   maxLessons: number;
   offlineAccess: boolean;
@@ -471,8 +670,24 @@ export type PlanFeatures = {
 export type AddOn = {
   id: string;
   name: string;
-  priceMonthly: number; // in cents
+  priceMonthly: number;
   description: string;
+};
+
+export type PlatformBranding = {
+  appName: string;
+  logoUrl: string;
+  faviconUrl: string;
+  primaryColor: string;
+  primaryHue: number;
+  accentColor: string;
+  theme: "dark" | "light";
+  sidebarStyle: "default" | "compact" | "minimal";
+  fontFamily: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  footerText: string;
+  customCss: string;
 };
 
 // ─── Type Exports ────────────────────────────────────────────────────
@@ -493,6 +708,8 @@ export type Notification = typeof notifications.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type WebhookConfig = typeof webhookConfigs.$inferSelect;
 export type PlatformSettingsRow = typeof platformSettings.$inferSelect;
+export type PlatformSettings = typeof platformSettings.$inferSelect;
+export type InsertPlatformSettings = typeof platformSettings.$inferInsert;
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
 export type Subscription = typeof subscriptions.$inferSelect;
@@ -502,279 +719,34 @@ export type InsertPayment = typeof payments.$inferInsert;
 export type LessonPack = typeof lessonPacks.$inferSelect;
 export type InsertLessonPack = typeof lessonPacks.$inferInsert;
 export type UserPackPurchase = typeof userPackPurchases.$inferSelect;
-
-// ─── Voice Audio Cache ──────────────────────────────────────────────
-export const voiceAudioCache = mysqlTable("voice_audio_cache", {
-  id: int("id").autoincrement().primaryKey(),
-  textHash: varchar("textHash", { length: 64 }).notNull(),
-  voiceId: varchar("voiceId", { length: 128 }).notNull(),
-  stability: varchar("stability", { length: 8 }).notNull().default("0.50"),
-  similarityBoost: varchar("similarityBoost", { length: 8 }).notNull().default("0.75"),
-  style: varchar("style", { length: 8 }).notNull().default("0.00"),
-  lessonId: int("lessonId"),
-  audioUrl: text("audioUrl").notNull(),
-  fileKey: varchar("fileKey", { length: 512 }).notNull(),
-  sizeBytes: int("sizeBytes").notNull().default(0),
-  charCount: int("charCount").notNull().default(0),
-  hitCount: int("hitCount").notNull().default(0),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  lastAccessedAt: timestamp("lastAccessedAt").defaultNow().notNull(),
-});
-
 export type VoiceAudioCache = typeof voiceAudioCache.$inferSelect;
 export type InsertVoiceAudioCache = typeof voiceAudioCache.$inferInsert;
-
-// ─── Admin IP Allowlist ─────────────────────────────────────────────
-export const adminIpAllowlist = mysqlTable("admin_ip_allowlist", {
-  id: int("id").autoincrement().primaryKey(),
-  ipAddress: varchar("ipAddress", { length: 45 }).notNull(), // IPv4 or IPv6
-  label: varchar("label", { length: 255 }), // e.g. "Office HQ", "VPN Exit"
-  addedBy: int("addedBy"), // userId who added this entry
-  isActive: boolean("isActive").default(true).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  expiresAt: timestamp("expiresAt"), // optional expiry for temporary access
-});
-
 export type AdminIpAllowlistEntry = typeof adminIpAllowlist.$inferSelect;
 export type InsertAdminIpAllowlistEntry = typeof adminIpAllowlist.$inferInsert;
-
-// ─── GDPR Consent Records ──────────────────────────────────────────
-export const consents = mysqlTable("consents", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  consentType: mysqlEnum("consentType", [
-    "terms_of_service",
-    "privacy_policy",
-    "marketing_emails",
-    "analytics_tracking",
-    "data_processing",
-    "third_party_sharing",
-  ]).notNull(),
-  granted: boolean("granted").default(false).notNull(),
-  ipAddress: varchar("ipAddress", { length: 45 }),
-  userAgent: text("userAgent"),
-  version: varchar("version", { length: 32 }).default("1.0"), // policy version consented to
-  grantedAt: bigint("grantedAt", { mode: "number" }),
-  withdrawnAt: bigint("withdrawnAt", { mode: "number" }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
 export type Consent = typeof consents.$inferSelect;
 export type InsertConsent = typeof consents.$inferInsert;
-
-// ─── Breach Events ─────────────────────────────────────────────────
-export const breachEvents = mysqlTable("breach_events", {
-  id: int("id").autoincrement().primaryKey(),
-  eventType: mysqlEnum("eventType", [
-    "brute_force",
-    "bulk_data_access",
-    "unauthorized_admin_access",
-    "data_exfiltration",
-    "anomalous_pattern",
-    "manual_report",
-  ]).notNull(),
-  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).notNull(),
-  description: text("description").notNull(),
-  affectedUserCount: int("affectedUserCount").default(0),
-  affectedResourceType: varchar("affectedResourceType", { length: 128 }),
-  sourceIp: varchar("sourceIp", { length: 45 }),
-  detectedBy: mysqlEnum("detectedBy", ["automated", "manual"]).default("automated").notNull(),
-  status: mysqlEnum("status", [
-    "detected",
-    "investigating",
-    "contained",
-    "resolved",
-    "false_positive",
-  ]).default("detected").notNull(),
-  notifiedAt: bigint("notifiedAt", { mode: "number" }),
-  resolvedAt: bigint("resolvedAt", { mode: "number" }),
-  metadata: json("metadata").$type<Record<string, unknown>>(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
 export type BreachEvent = typeof breachEvents.$inferSelect;
 export type InsertBreachEvent = typeof breachEvents.$inferInsert;
-
-// ─── Lesson Feedback & Ratings ──────────────────────────────────────
-export const lessonFeedback = mysqlTable("lesson_feedback", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  lessonId: int("lessonId").notNull(),
-  attemptId: int("attemptId"),
-  rating: int("rating").notNull(), // 1-5 stars
-  comment: text("comment"),
-  difficulty: mysqlEnum("difficulty", ["too_easy", "just_right", "too_hard"]),
-  wouldRecommend: boolean("wouldRecommend"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
 export type LessonFeedback = typeof lessonFeedback.$inferSelect;
 export type InsertLessonFeedback = typeof lessonFeedback.$inferInsert;
-
-// ─── Uptime History (Service Health Snapshots) ──────────────────────
-export const uptimeHistory = mysqlTable("uptime_history", {
-  id: int("id").autoincrement().primaryKey(),
-  serviceName: varchar("serviceName", { length: 128 }).notNull(),
-  status: mysqlEnum("status", ["operational", "degraded", "down", "unknown"]).notNull(),
-  latencyMs: int("latencyMs"),
-  message: text("message"),
-  checkedAt: bigint("checkedAt", { mode: "number" }).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
 export type UptimeHistory = typeof uptimeHistory.$inferSelect;
 export type InsertUptimeHistory = typeof uptimeHistory.$inferInsert;
-
-
-// ─── Spaced Repetition (SM-2 Algorithm) ──────────────────────────────
-export const lessonReviewSchedule = mysqlTable("lesson_review_schedule", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  lessonId: int("lessonId").notNull(),
-  orgId: int("orgId").notNull(),
-  
-  // SM-2 Algorithm State
-  interval: int("interval").default(1).notNull(), // Days until next review (1, 3, 7, 30, etc.)
-  easeFactor: decimal("easeFactor", { precision: 3, scale: 2 }).default("2.5").notNull(), // Difficulty multiplier (2.5 default)
-  repetitions: int("repetitions").default(0).notNull(), // How many times reviewed
-  
-  // Review Dates
-  nextReviewDate: bigint("nextReviewDate", { mode: "number" }).notNull(), // Unix timestamp
-  lastReviewDate: bigint("lastReviewDate", { mode: "number" }), // Unix timestamp
-  
-  // Status
-  status: mysqlEnum("status", ["new", "learning", "review", "mastered"]).default("new").notNull(),
-  
-  // Metadata
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
 export type LessonReviewSchedule = typeof lessonReviewSchedule.$inferSelect;
 export type InsertLessonReviewSchedule = typeof lessonReviewSchedule.$inferInsert;
-
-// ─── Review History (Track Each Review) ────────────────────────────
-export const reviewHistory = mysqlTable("review_history", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  lessonId: int("lessonId").notNull(),
-  orgId: int("orgId").notNull(),
-  
-  // Review Result
-  score: int("score").notNull(), // 0-100
-  difficulty: mysqlEnum("difficulty", ["easy", "medium", "hard", "very_hard"]).notNull(),
-  timeSpentSeconds: int("timeSpentSeconds"), // How long spent reviewing
-  
-  // SM-2 Calculation Input (quality of response: 0-5)
-  quality: int("quality").notNull(), // 0=complete blackout, 5=perfect response
-  
-  // Metadata
-  reviewedAt: bigint("reviewedAt", { mode: "number" }).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
 export type ReviewHistory = typeof reviewHistory.$inferSelect;
 export type InsertReviewHistory = typeof reviewHistory.$inferInsert;
-
-
-// ─── Review Reminders (Push Notifications) ──────────────────────────
-export const reviewReminders = mysqlTable("review_reminders", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  lessonId: int("lessonId").notNull(),
-  orgId: int("orgId").notNull(),
-  
-  // Reminder Timing
-  reminderTime: bigint("reminderTime", { mode: "number" }).notNull(), // Unix timestamp when reminder should be sent
-  reminderType: mysqlEnum("reminderType", ["due_now", "due_tomorrow", "due_this_week", "custom"]).default("due_now").notNull(),
-  
-  // Status
-  sent: boolean("sent").default(false).notNull(),
-  sentAt: bigint("sentAt", { mode: "number" }), // Unix timestamp when sent
-  clicked: boolean("clicked").default(false).notNull(),
-  clickedAt: bigint("clickedAt", { mode: "number" }), // Unix timestamp when user clicked
-  
-  // Metadata
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
 export type ReviewReminder = typeof reviewReminders.$inferSelect;
 export type InsertReviewReminder = typeof reviewReminders.$inferInsert;
-
-// ─── Reminder Preferences (User Settings) ──────────────────────────
-export const reminderPreferences = mysqlTable("reminder_preferences", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().unique(),
-  orgId: int("orgId").notNull(),
-  
-  // Reminder Settings
-  enableReminders: boolean("enableReminders").default(true).notNull(),
-  reminderFrequency: mysqlEnum("reminderFrequency", ["immediate", "daily", "weekly", "never"]).default("daily").notNull(),
-  
-  // Quiet Hours (no reminders during these times)
-  quietHoursEnabled: boolean("quietHoursEnabled").default(false).notNull(),
-  quietHoursStart: varchar("quietHoursStart", { length: 5 }), // HH:MM format
-  quietHoursEnd: varchar("quietHoursEnd", { length: 5 }), // HH:MM format
-  
-  // Notification Channels
-  enablePushNotifications: boolean("enablePushNotifications").default(true).notNull(),
-  enableEmailNotifications: boolean("enableEmailNotifications").default(false).notNull(),
-  enableInAppNotifications: boolean("enableInAppNotifications").default(true).notNull(),
-  
-  // Metadata
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
 export type ReminderPreferences = typeof reminderPreferences.$inferSelect;
 export type InsertReminderPreferences = typeof reminderPreferences.$inferInsert;
-
-// ─── A/B Testing & Experiments ──────────────────────────────────────
-export const abTests = mysqlTable("ab_tests", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
-  type: mysqlEnum("type", ["pricing", "feature", "ui", "messaging"]).notNull(),
-  status: mysqlEnum("status", ["draft", "active", "paused", "completed"]).default("draft").notNull(),
-  startDate: bigint("startDate", { mode: "number" }),
-  endDate: bigint("endDate", { mode: "number" }),
-  targetAudience: varchar("targetAudience", { length: 255 }), // "all", "pro_users", "new_users", etc.
-  createdBy: int("createdBy").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export const abTestVariants = mysqlTable("ab_test_variants", {
-  id: int("id").autoincrement().primaryKey(),
-  testId: int("testId").notNull(),
-  name: varchar("name", { length: 255 }).notNull(), // "control", "variant_a", "variant_b"
-  weight: int("weight").default(50), // percentage allocation (0-100)
-  config: json("config").$type<Record<string, unknown>>(), // variant-specific config
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export const abTestAssignments = mysqlTable("ab_test_assignments", {
-  id: int("id").autoincrement().primaryKey(),
-  testId: int("testId").notNull(),
-  userId: int("userId").notNull(),
-  variantId: int("variantId").notNull(),
-  assignedAt: bigint("assignedAt", { mode: "number" }).notNull(),
-});
-
-export const abTestMetrics = mysqlTable("ab_test_metrics", {
-  id: int("id").autoincrement().primaryKey(),
-  testId: int("testId").notNull(),
-  variantId: int("variantId").notNull(),
-  metricName: varchar("metricName", { length: 255 }).notNull(), // "conversion", "revenue", "engagement"
-  value: decimal("value", { precision: 10, scale: 2 }),
-  count: int("count").default(0),
-  recordedAt: timestamp("recordedAt").defaultNow().notNull(),
-});
-
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = typeof achievements.$inferInsert;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = typeof userAchievements.$inferInsert;
+export type UserPoints = typeof userPoints.$inferSelect;
+export type InsertUserPoints = typeof userPoints.$inferInsert;
+export type LeaderboardEntry = typeof leaderboardCache.$inferSelect;
+export type InsertLeaderboardEntry = typeof leaderboardCache.$inferInsert;
 export type ABTest = typeof abTests.$inferSelect;
 export type InsertABTest = typeof abTests.$inferInsert;
 export type ABTestVariant = typeof abTestVariants.$inferSelect;

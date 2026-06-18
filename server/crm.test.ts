@@ -6,10 +6,9 @@ function createAdminContext(): TrpcContext {
   return {
     user: {
       id: 1,
-      openId: "admin-user",
+      supabaseId: "admin-user",
       email: "admin@example.com",
       name: "Admin User",
-      loginMethod: "manus",
       role: "admin",
       appRole: "super_admin",
       orgId: 1,

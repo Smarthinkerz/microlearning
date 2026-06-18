@@ -151,8 +151,7 @@ export const offlineSyncRouter = router({
           try {
             await db.updateAssignmentStatus(
               statusUpdate.assignmentId,
-              statusUpdate.status,
-              statusUpdate.status === "completed" ? Date.now() : undefined
+              statusUpdate.status
             );
             results.assignments.synced++;
           } catch {

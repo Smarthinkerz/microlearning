@@ -102,7 +102,11 @@ export async function sendPushToUser(
   let expired = 0;
 
   for (const sub of subscriptions) {
-    const result = await sendPush(sub, payload);
+    const subData: PushSubscriptionData = {
+      endpoint: sub.endpoint,
+      keys: { p256dh: sub.p256dh, auth: sub.auth },
+    };
+    const result = await sendPush(subData, payload);
     if (result.success) {
       sent++;
     } else if (result.error === "subscription_expired") {
@@ -207,15 +211,17 @@ export async function generateShiftReminders(): Promise<{
   let scheduled = 0;
   let skipped = 0;
 
-  for (const user of usersWithShifts) {
-    const optimalTime = await calculateOptimalNotificationTime(user.id);
+  for (const row of usersWithShifts) {
+    const userId = (row as any).user?.id ?? (row as any).id;
+    if (!userId) { skipped++; continue; }
+    const optimalTime = await calculateOptimalNotificationTime(userId);
     if (!optimalTime) {
       skipped++;
       continue;
     }
 
     // Check if user has incomplete assignments
-    const assignments = await db.getAssignmentsByUser(user.id, "available");
+    const assignments = await db.getAssignmentsByUser(userId, "available");
     if (!assignments || assignments.length === 0) {
       skipped++;
       continue;
@@ -225,7 +231,7 @@ export async function generateShiftReminders(): Promise<{
       title: "Time for a Quick Lesson!",
       body: `You have ${assignments.length} lesson${assignments.length > 1 ? "s" : ""} to complete before your shift. Start a 5-minute micro-lesson now!`,
       icon: "/favicon.ico",
-      tag: `shift-reminder-${user.id}-${Date.now()}`,
+      tag: `shift-reminder-${userId}-${Date.now()}`,
       data: {
         type: "shift_reminder",
         assignmentCount: assignments.length,
@@ -238,7 +244,7 @@ export async function generateShiftReminders(): Promise<{
       requireInteraction: true,
     };
 
-    await sendPushToUser(user.id, payload);
+    await sendPushToUser(userId, payload);
     scheduled++;
   }
 
@@ -252,7 +258,8 @@ async function isInQuietHours(userId: number): Promise<boolean> {
 }
 
 async function isInQuietHoursAt(userId: number, timestamp: number): Promise<boolean> {
-  const prefs = await db.getUserNotificationPrefs(userId);
+  const user = await db.getUserById(userId);
+  const prefs = (user?.notificationPreferences as any) ?? {};
   if (!prefs?.quietHoursStart || !prefs?.quietHoursEnd) return false;
 
   const date = new Date(timestamp);
@@ -260,8 +267,8 @@ async function isInQuietHoursAt(userId: number, timestamp: number): Promise<bool
   const currentMinute = date.getMinutes();
   const currentTime = currentHour * 60 + currentMinute;
 
-  const [startH, startM] = prefs.quietHoursStart.split(":").map(Number);
-  const [endH, endM] = prefs.quietHoursEnd.split(":").map(Number);
+  const [startH, startM] = (prefs.quietHoursStart as string).split(":").map(Number);
+  const [endH, endM] = (prefs.quietHoursEnd as string).split(":").map(Number);
   const startTime = startH * 60 + startM;
   const endTime = endH * 60 + endM;
 

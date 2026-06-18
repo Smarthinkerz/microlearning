@@ -7,10 +7,9 @@ function createAdminContext(): TrpcContext {
   return {
     user: {
       id: 1,
-      openId: "admin-user",
+      supabaseId: "admin-user",
       email: "admin@example.com",
       name: "Admin User",
-      loginMethod: "manus",
       role: "admin",
       appRole: "super_admin",
       orgId: 1,
@@ -31,10 +30,9 @@ function createUserContext(): TrpcContext {
   return {
     user: {
       id: 2,
-      openId: "regular-user",
+      supabaseId: "regular-user",
       email: "user@example.com",
       name: "Regular User",
-      loginMethod: "manus",
       role: "user",
       appRole: "learner",
       orgId: null,

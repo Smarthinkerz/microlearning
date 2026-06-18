@@ -7,10 +7,9 @@ type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 function createMockUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
   return {
     id: 1,
-    openId: "test-user-sub-001",
+    supabaseId: "test-user-sub-001",
     email: "admin@example.com",
     name: "Admin User",
-    loginMethod: "manus",
     role: "admin",
     appRole: "super_admin",
     orgId: 1,

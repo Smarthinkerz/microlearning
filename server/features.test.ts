@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
-import { COOKIE_NAME } from "../shared/const";
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
@@ -8,10 +7,9 @@ type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 function createMockUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
   return {
     id: 1,
-    openId: "test-user-001",
+    supabaseId: "test-user-001",
     email: "test@example.com",
     name: "Test User",
-    loginMethod: "manus",
     role: "user",
     appRole: "super_admin",
     orgId: 1,
@@ -24,21 +22,16 @@ function createMockUser(overrides: Partial<AuthenticatedUser> = {}): Authenticat
   } as AuthenticatedUser;
 }
 
-function createMockContext(user?: AuthenticatedUser | null): { ctx: TrpcContext; clearedCookies: any[] } {
-  const clearedCookies: any[] = [];
+function createMockContext(user?: AuthenticatedUser | null): { ctx: TrpcContext } {
   const ctx: TrpcContext = {
     user: user ?? null,
     req: {
       protocol: "https",
       headers: {},
     } as TrpcContext["req"],
-    res: {
-      clearCookie: (name: string, options: Record<string, unknown>) => {
-        clearedCookies.push({ name, options });
-      },
-    } as TrpcContext["res"],
+    res: {} as TrpcContext["res"],
   };
-  return { ctx, clearedCookies };
+  return { ctx };
 }
 
 describe("Auth Router", () => {
@@ -55,19 +48,17 @@ describe("Auth Router", () => {
     const caller = appRouter.createCaller(ctx);
     const result = await caller.auth.me();
     expect(result).toBeDefined();
-    expect(result?.openId).toBe("test-user-001");
+    expect(result?.supabaseId).toBe("test-user-001");
     expect(result?.name).toBe("Test User");
     expect(result?.email).toBe("test@example.com");
   });
 
-  it("clears session cookie on logout", async () => {
+  it("returns success on logout (Supabase logout is client-side)", async () => {
     const user = createMockUser();
-    const { ctx, clearedCookies } = createMockContext(user);
+    const { ctx } = createMockContext(user);
     const caller = appRouter.createCaller(ctx);
     const result = await caller.auth.logout();
     expect(result).toEqual({ success: true });
-    expect(clearedCookies).toHaveLength(1);
-    expect(clearedCookies[0]?.name).toBe(COOKIE_NAME);
   });
 });
 

@@ -166,9 +166,9 @@ export async function createTest(
     createdBy,
     createdAt: new Date(),
     updatedAt: new Date(),
-  });
+  }).returning({ id: abTests.id });
   
-  const testId = result[0]?.insertId || 0;
+  const testId = result[0]?.id || 0;
   
   // Create variants
   for (const variant of variants) {

@@ -1059,3 +1059,17 @@ All strategic features have been added to the database schema and subscription p
 - [x] I4: Videos use playsInline + lazy attributes where applicable
 - [x] I5: @tanstack/react-virtual installed; Roster and Assignments use virtualized lists
 - [x] I6: Captions/transcripts — video lessons use existing content blocks for transcript text
+
+## Supabase Migration (completed)
+- [x] Replace Manus OAuth with Supabase JS client (client/src/lib/supabase.ts)
+- [x] Rewrite useAuth hook to use Supabase session (client/src/_core/hooks/useAuth.ts)
+- [x] Send Supabase JWT as Authorization header on every tRPC request (client/src/main.tsx)
+- [x] Replace getLoginUrl() Manus OAuth redirect with /login route
+- [x] Create Login page with email/password sign-in, sign-up, and password reset (client/src/pages/Login.tsx)
+- [x] Add /login route to App.tsx
+- [x] Update DashboardLayout to redirect to /login instead of Manus OAuth
+- [x] Replace Manus S3 proxy storage with Supabase Storage SDK (server/storage.ts)
+- [x] Generate Supabase PostgreSQL schema SQL (supabase/schema.sql)
+- [x] Update server auth router logout to stateless no-op (Supabase handles client-side)
+- [x] Update all test files to use supabaseId instead of openId user shape
+- [x] Fix auth.logout.test.ts and features.test.ts for new stateless logout

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
-import { COOKIE_NAME } from "../shared/const";
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
@@ -8,10 +7,9 @@ type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 function createAdminContext(): { ctx: TrpcContext } {
   const user: AuthenticatedUser = {
     id: 1,
-    openId: "admin-user",
+    supabaseId: "admin-user",
     email: "admin@example.com",
     name: "Admin User",
-    loginMethod: "manus",
     role: "admin",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -52,10 +50,9 @@ function createPublicContext(): { ctx: TrpcContext } {
 function createLearnerContext(): { ctx: TrpcContext } {
   const user: AuthenticatedUser = {
     id: 2,
-    openId: "learner-user",
+    supabaseId: "learner-user",
     email: "learner@example.com",
     name: "Learner User",
-    loginMethod: "manus",
     role: "user",
     createdAt: new Date(),
     updatedAt: new Date(),

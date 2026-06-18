@@ -1,7 +1,17 @@
-import { getLoginUrl } from "@/const";
+/**
+ * useAuth — Supabase Auth hook
+ *
+ * Replaces the old Manus OAuth-based hook.
+ * Uses Supabase JS client for session management and tRPC for the local user record.
+ *
+ * The Supabase JWT is sent automatically on every tRPC request via the
+ * Authorization header (configured in main.tsx).
+ */
+
+import { supabase } from "@/lib/supabase";
 import { trpc } from "@/lib/trpc";
-import { TRPCClientError } from "@trpc/client";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -9,72 +19,76 @@ type UseAuthOptions = {
 };
 
 export function useAuth(options?: UseAuthOptions) {
-  const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
+  const { redirectOnUnauthenticated = false, redirectPath = "/login" } =
     options ?? {};
+
   const utils = trpc.useUtils();
 
+  // Track Supabase session state locally
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
+
+  useEffect(() => {
+    // Hydrate session on mount
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+    });
+
+    // Subscribe to auth state changes (login, logout, token refresh)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Fetch the local user record from our database (via tRPC)
+  // Only run when we have a Supabase session
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
-  });
-
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      utils.auth.me.setData(undefined, null);
-    },
+    enabled: session !== undefined, // wait until session is hydrated
   });
 
   const logout = useCallback(async () => {
-    try {
-      await logoutMutation.mutateAsync();
-    } catch (error: unknown) {
-      if (
-        error instanceof TRPCClientError &&
-        error.data?.code === "UNAUTHORIZED"
-      ) {
-        return;
-      }
-      throw error;
-    } finally {
-      utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
+    await supabase.auth.signOut();
+    // Clear tRPC cache
+    utils.auth.me.setData(undefined, null);
+    await utils.auth.me.invalidate();
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
     }
-  }, [logoutMutation, utils]);
+  }, [utils]);
+
+  const sessionLoading = session === undefined;
+  const loading = sessionLoading || (session !== null && meQuery.isLoading);
 
   const state = useMemo(() => {
-    localStorage.setItem(
-      "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
-    );
+    const user = meQuery.data ?? null;
+    // Persist for any legacy code that reads from localStorage
+    if (user) {
+      localStorage.setItem("manus-runtime-user-info", JSON.stringify(user));
+    }
     return {
-      user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
-      error: meQuery.error ?? logoutMutation.error ?? null,
-      isAuthenticated: Boolean(meQuery.data),
+      user,
+      session,
+      loading,
+      error: meQuery.error ?? null,
+      isAuthenticated: Boolean(session && user),
     };
-  }, [
-    meQuery.data,
-    meQuery.error,
-    meQuery.isLoading,
-    logoutMutation.error,
-    logoutMutation.isPending,
-  ]);
+  }, [meQuery.data, meQuery.error, session, loading]);
 
+  // Redirect to login if unauthenticated (and option is set)
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
-    if (meQuery.isLoading || logoutMutation.isPending) return;
-    if (state.user) return;
+    if (loading) return;
+    if (state.isAuthenticated) return;
     if (typeof window === "undefined") return;
     if (window.location.pathname === redirectPath) return;
 
-    window.location.href = redirectPath
-  }, [
-    redirectOnUnauthenticated,
-    redirectPath,
-    logoutMutation.isPending,
-    meQuery.isLoading,
-    state.user,
-  ]);
+    window.location.href = redirectPath;
+  }, [redirectOnUnauthenticated, redirectPath, loading, state.isAuthenticated]);
 
   return {
     ...state,

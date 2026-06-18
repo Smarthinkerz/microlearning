@@ -1,5 +1,3 @@
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -571,7 +569,7 @@ const notificationRouter = router({
   getMyNotifications: protectedProcedure.input(z.object({
     unreadOnly: z.boolean().optional(),
   }).optional()).query(async ({ ctx, input }) => {
-    return db.getNotificationsByUser(ctx.user.id, input?.unreadOnly);
+    return db.getNotificationsByUser(ctx.user.id, input?.unreadOnly ? 20 : 50);
   }),
   markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
     await db.markNotificationRead(input.id);
@@ -1425,7 +1423,7 @@ const subscriptionRouter = router({
   cancelSubscription: protectedProcedure.input(z.object({
     subscriptionId: z.number(),
   })).mutation(async ({ input }) => {
-    await db.updateSubscriptionStatus(input.subscriptionId, "canceled", Date.now());
+    await db.updateSubscriptionStatus(input.subscriptionId, "canceled");
     return { success: true };
   }),
 
@@ -1447,7 +1445,7 @@ const subscriptionRouter = router({
     packId: z.number(),
   })).mutation(async ({ ctx, input }) => {
     // Record purchase (payment will be handled by Tap gateway when integrated)
-    await db.recordPackPurchase(ctx.user.id, input.packId);
+    await db.recordPackPurchase({ userId: ctx.user.id, packId: input.packId, orgId: ctx.user.orgId ?? 0, amount: 0, currency: "USD" });
     return { success: true, message: "Pack purchased successfully" };
   }),
 
@@ -1805,9 +1803,9 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+    // Supabase Auth: logout is handled client-side via supabase.auth.signOut().
+    // This endpoint is kept for API compatibility but is effectively a no-op.
+    logout: publicProcedure.mutation(() => {
       return { success: true } as const;
     }),
   }),

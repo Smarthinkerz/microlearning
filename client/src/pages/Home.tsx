@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
-import { getLoginUrl } from "@/const";
+
 import {
   Clock,
   WifiOff,
@@ -193,8 +193,8 @@ export default function Home() {
               </>
             ) : (
               <>
-                <Button variant="ghost" size="sm" onClick={() => { window.location.href = getLoginUrl(); }}>Sign in</Button>
-                <Button size="sm" onClick={() => { window.location.href = getLoginUrl(); }}>
+                <Button variant="ghost" size="sm" onClick={() => setLocation("/login")}>Sign in</Button>
+                <Button size="sm" onClick={() => setLocation("/login")}>
                   Start Free Trial <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </>
@@ -246,7 +246,7 @@ export default function Home() {
                   <Button
                     size="lg"
                     className="flex-1 text-base min-h-[52px] gap-2"
-                    onClick={() => { window.location.href = getLoginUrl(); }}
+                    onClick={() => setLocation("/login")}
                     aria-label="Start free trial for individual learners"
                   >
                     <User className="h-4 w-4" />
@@ -469,7 +469,7 @@ export default function Home() {
               Free forever for up to 5 learners. No credit card required.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button size="lg" className="text-base px-8" onClick={() => { window.location.href = getLoginUrl(); }}>
+              <Button size="lg" className="text-base px-8" onClick={() => setLocation("/login")}>
                 Get Started — It's Free
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -500,7 +500,7 @@ export default function Home() {
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
               <button onClick={() => setLocation("/pricing")} className="hover:text-foreground transition-fast">Pricing</button>
               <button onClick={() => setLocation("/consent")} className="hover:text-foreground transition-fast">Privacy</button>
-              <button onClick={() => { window.location.href = getLoginUrl(); }} className="hover:text-foreground transition-fast">Sign in</button>
+              <button onClick={() => setLocation("/login")} className="hover:text-foreground transition-fast">Sign in</button>
               <button onClick={() => setLocation("/admin-crm")} className="hover:text-foreground transition-fast text-xs opacity-40 hover:opacity-70">Admin</button>
             </div>
             <p className="text-xs text-muted-foreground">

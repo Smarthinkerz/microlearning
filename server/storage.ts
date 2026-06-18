@@ -1,102 +1,119 @@
-// Preconfigured storage helpers for Manus WebDev templates
-// Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+/**
+ * Supabase Storage helpers — replaces the Manus S3 proxy
+ *
+ * Uses the Supabase JS client (service role key) for server-side file operations.
+ * Files are stored in a bucket named "media" by default.
+ *
+ * Bucket setup (run once in Supabase dashboard or via SQL):
+ *   INSERT INTO storage.buckets (id, name, public) VALUES ('media', 'media', true);
+ *
+ * Environment variables required:
+ *   SUPABASE_URL
+ *   SUPABASE_SERVICE_ROLE_KEY
+ */
 
-import { ENV } from './_core/env';
+import { createClient } from "@supabase/supabase-js";
+import { ENV } from "./_core/env";
 
-type StorageConfig = { baseUrl: string; apiKey: string };
+// Default bucket for all media uploads
+const DEFAULT_BUCKET = "media";
 
-function getStorageConfig(): StorageConfig {
-  const baseUrl = ENV.forgeApiUrl;
-  const apiKey = ENV.forgeApiKey;
+/**
+ * Lazy Supabase client — created on first use to avoid startup errors
+ * when env vars are not yet configured.
+ */
+let _supabaseAdmin: ReturnType<typeof createClient> | null = null;
 
-  if (!baseUrl || !apiKey) {
+function getSupabaseAdmin() {
+  if (_supabaseAdmin) return _supabaseAdmin;
+
+  if (!ENV.supabaseUrl || !ENV.supabaseServiceRoleKey) {
     throw new Error(
-      "Storage proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY"
+      "[Storage] SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set for file storage."
     );
   }
 
-  return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
-}
-
-function buildUploadUrl(baseUrl: string, relKey: string): URL {
-  const url = new URL("v1/storage/upload", ensureTrailingSlash(baseUrl));
-  url.searchParams.set("path", normalizeKey(relKey));
-  return url;
-}
-
-async function buildDownloadUrl(
-  baseUrl: string,
-  relKey: string,
-  apiKey: string
-): Promise<string> {
-  const downloadApiUrl = new URL(
-    "v1/storage/downloadUrl",
-    ensureTrailingSlash(baseUrl)
-  );
-  downloadApiUrl.searchParams.set("path", normalizeKey(relKey));
-  const response = await fetch(downloadApiUrl, {
-    method: "GET",
-    headers: buildAuthHeaders(apiKey),
+  _supabaseAdmin = createClient(ENV.supabaseUrl, ENV.supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
   });
-  return (await response.json()).url;
-}
 
-function ensureTrailingSlash(value: string): string {
-  return value.endsWith("/") ? value : `${value}/`;
+  return _supabaseAdmin;
 }
 
 function normalizeKey(relKey: string): string {
   return relKey.replace(/^\/+/, "");
 }
 
-function toFormData(
-  data: Buffer | Uint8Array | string,
-  contentType: string,
-  fileName: string
-): FormData {
-  const blob =
-    typeof data === "string"
-      ? new Blob([data], { type: contentType })
-      : new Blob([data as any], { type: contentType });
-  const form = new FormData();
-  form.append("file", blob, fileName || "file");
-  return form;
-}
-
-function buildAuthHeaders(apiKey: string): HeadersInit {
-  return { Authorization: `Bearer ${apiKey}` };
-}
-
+/**
+ * Upload a file to Supabase Storage.
+ *
+ * @param relKey - Relative storage path, e.g. "voice-audio/abc123.mp3"
+ * @param data   - File content as Buffer, Uint8Array, or string
+ * @param contentType - MIME type, e.g. "audio/mpeg"
+ * @returns { key, url } where url is the public CDN URL
+ */
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
+  const supabase = getSupabaseAdmin();
   const key = normalizeKey(relKey);
-  const uploadUrl = buildUploadUrl(baseUrl, key);
-  const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: buildAuthHeaders(apiKey),
-    body: formData,
-  });
 
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Storage upload failed (${response.status} ${response.statusText}): ${message}`
-    );
+  // Convert string data to Buffer
+  const body: Buffer | Uint8Array =
+    typeof data === "string" ? Buffer.from(data, "utf-8") : data;
+
+  const { error } = await supabase.storage
+    .from(DEFAULT_BUCKET)
+    .upload(key, body, {
+      contentType,
+      upsert: true, // overwrite if exists (idempotent uploads)
+    });
+
+  if (error) {
+    throw new Error(`[Storage] Upload failed for key "${key}": ${error.message}`);
   }
-  const url = (await response.json()).url;
-  return { key, url };
+
+  const { data: urlData } = supabase.storage
+    .from(DEFAULT_BUCKET)
+    .getPublicUrl(key);
+
+  return { key, url: urlData.publicUrl };
 }
 
-export async function storageGet(relKey: string): Promise<{ key: string; url: string; }> {
-  const { baseUrl, apiKey } = getStorageConfig();
+/**
+ * Get a public URL for a stored file.
+ *
+ * @param relKey - Relative storage path
+ * @returns { key, url } where url is the public CDN URL
+ */
+export async function storageGet(
+  relKey: string
+): Promise<{ key: string; url: string }> {
+  const supabase = getSupabaseAdmin();
   const key = normalizeKey(relKey);
-  return {
-    key,
-    url: await buildDownloadUrl(baseUrl, key, apiKey),
-  };
+
+  const { data } = supabase.storage.from(DEFAULT_BUCKET).getPublicUrl(key);
+
+  return { key, url: data.publicUrl };
+}
+
+/**
+ * Delete a file from Supabase Storage.
+ *
+ * @param relKey - Relative storage path
+ */
+export async function storageDelete(relKey: string): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  const key = normalizeKey(relKey);
+
+  const { error } = await supabase.storage.from(DEFAULT_BUCKET).remove([key]);
+
+  if (error) {
+    console.warn(`[Storage] Delete failed for key "${key}": ${error.message}`);
+  }
 }

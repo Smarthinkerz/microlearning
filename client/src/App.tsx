@@ -32,6 +32,7 @@ import { CheckoutSuccess } from "./pages/CheckoutSuccess";
 import { CheckoutFailed } from "./pages/CheckoutFailed";
 import { PaymentCallback } from "./pages/PaymentCallback";
 import { OfflineBanner } from "./components/OfflineBanner";
+import Login from "./pages/Login";
 import CompletionReport from "./pages/CompletionReport";
 
 function DashboardRoutes() {
@@ -79,6 +80,7 @@ function Router() {
       <Route path="/checkout/success" component={CheckoutSuccess} />
       <Route path="/checkout/failed" component={CheckoutFailed} />
       <Route path="/payment-callback" component={PaymentCallback} />
+      <Route path="/login" component={Login} />
       <Route path="/404" component={NotFound} />
       <Route>
         <DashboardRoutes />

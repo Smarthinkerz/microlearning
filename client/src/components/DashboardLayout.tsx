@@ -20,7 +20,6 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 import { trpc } from "@/lib/trpc";
@@ -152,7 +151,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Access your personalized micro-learning dashboard and shift-aware training.
             </p>
           </div>
-          <Button onClick={() => { window.location.href = getLoginUrl(); }} size="lg" className="w-full shadow-lg hover:shadow-xl transition-all">
+          <Button onClick={() => { window.location.href = "/login"; }} size="lg" className="w-full shadow-lg hover:shadow-xl transition-all">
             Sign in
           </Button>
         </div>
